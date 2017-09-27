@@ -73,8 +73,8 @@ public class Client {
      *      quit
      *      list
      *      list-me
-     *      download [fileName]
-     *      upload [filePath]
+     *      download | [fileName]
+     *      upload | [filePath]
      *
      * NOTE: "stay" is also a valid command,
      * but is reserved for system call and is inaccessible to user
@@ -397,8 +397,9 @@ public class Client {
      */
     private static void setDirectory() {
         directory = new File("Client/FilesDirectory");
-        String absolutePath = directory.getAbsolutePath().replace("\\src", "");
-        System.out.println(absolutePath);
+        String absolutePath = directory.getAbsolutePath();
+        absolutePath = absolutePath.replace("\\src", "");
+        absolutePath = absolutePath.replace("\\Client\\Client", "\\Client");
         directory = new File(absolutePath);
     }
 

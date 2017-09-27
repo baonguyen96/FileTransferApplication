@@ -318,8 +318,9 @@ public class Server {
      */
     private static void setDirectory() {
         directory = new File("Server/FilesDirectory");
-        String absolutePath = directory.getAbsolutePath().replace("\\src", "");
-        System.out.println(absolutePath);
+        String absolutePath = directory.getAbsolutePath();
+        absolutePath = absolutePath.replace("\\src", "");
+        absolutePath = absolutePath.replace("\\Server\\Server", "\\Server");
         directory = new File(absolutePath);
     }
 
