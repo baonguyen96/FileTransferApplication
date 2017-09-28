@@ -73,6 +73,7 @@ public class Client {
      *      quit
      *      list
      *      list-me
+     *      help
      *      download | [fileName]
      *      upload | [filePath]
      *

@@ -114,7 +114,7 @@ public class Server {
     /***
      * method: communicate
      *
-     *
+     * communication session between server and client
      *
      * @return true if stop communication, false if not
      * @throws FileNotFoundException
@@ -192,6 +192,7 @@ public class Server {
             System.out.println(">> " + messageToSend.toString());
             printWriter.println(messageToSend.toString());
             printWriter.flush();
+            printWriter.close();
         }
         else if (files.length == 0) {
             messageToSend.append("Empty files directory.");
@@ -199,6 +200,7 @@ public class Server {
             System.out.println(">> " + messageToSend.toString());
             printWriter.println(messageToSend.toString());
             printWriter.flush();
+            printWriter.close();
         }
         else {
             System.out.println(">> Sending list of files...");
@@ -225,7 +227,7 @@ public class Server {
      *
      * download [file]
      *
-     * let uer download files from the library
+     * let client download files from the library
      *
      * @param commandTokens: parts of client's command
      * @throws IOException
@@ -246,8 +248,9 @@ public class Server {
             bufferedInputStream = new BufferedInputStream(fileInputStream);
 
             // confirmation message
-            printWriter.printf("Sending \"%s\" ...\n", fileToSendName);
-            System.out.printf(">> Sending \"%s\" ...\n", fileToSendName);
+            String confirmationMessage = String.format("Sending \"%s\" ...\n", fileToSendName);
+            printWriter.println(confirmationMessage);
+            System.out.println(">> " + confirmationMessage);
 
             // file transfer
             bufferedInputStream.read(byteArray, 0, byteArray.length);
@@ -276,7 +279,7 @@ public class Server {
      *
      * upload [filePath] command
      *
-     * receive the file from user and save it
+     * receive the file from client and save it
      *
      * @param commandTokens: parts of client's command
      * @throws IOException
