@@ -92,10 +92,12 @@ public class Server {
      * validate the command
      *
      * @param clientCommand: client's command
+     * @param delimiter: split signature
+     *
      * @return true if valid command, false if not
      */
-    private static boolean isValidCommand(String clientCommand) {
-        String[] commandTokens = clientCommand.split("\\s+\\|\\s+");
+    private static boolean isValidCommand(String clientCommand, String delimiter) {
+        String[] commandTokens = clientCommand.split(delimiter);
         boolean isQuit = commandTokens.length == 1 &&
                 commandTokens[0].equalsIgnoreCase("quit");
         boolean isList = commandTokens.length == 1 &&
@@ -125,6 +127,7 @@ public class Server {
         boolean stopConnectionAfterThisCommunication = false;
         InputStream inputStream = clientSocket.getInputStream();
         Scanner receivedInput = new Scanner(new InputStreamReader(inputStream));
+        String delimiter = "\\s+\\|\\s+";
 
         if (receivedInput.hasNextLine()) {
             receivedCommand = receivedInput.nextLine();
@@ -134,39 +137,34 @@ public class Server {
              *      error on client side and client is trying to fix
              *      internal command for client
              */
-            if(isValidCommand(receivedCommand) &&
+            if(isValidCommand(receivedCommand, delimiter) &&
                     !receivedCommand.equalsIgnoreCase("stay")) {
+
                 System.out.println("[Client]: " + receivedCommand);
+                String[] commandTokens = receivedCommand.split(delimiter);
+
+                if(commandTokens[0].equalsIgnoreCase("quit")) {
+                    stopConnectionAfterThisCommunication = true;
+                }
+                else if(commandTokens[0].equalsIgnoreCase("list")) {
+                    list();
+                }
+                else if(commandTokens[0].equalsIgnoreCase("download")) {
+                    clientDownload(commandTokens);
+                }
+                else if(commandTokens[0].equalsIgnoreCase("upload")){
+                    clientUpload(commandTokens);
+                }
+                else {
+
+                }
             }
         }
         else {
             System.out.println(">> Client is offline.");
-            return true;
+            stopConnectionAfterThisCommunication = true;
         }
 
-        // process to send message
-        if (isValidCommand(receivedCommand)) {
-            String[] commandTokens = receivedCommand.split("\\s+\\|\\s+");
-
-            if(commandTokens[0].equalsIgnoreCase("quit")) {
-                stopConnectionAfterThisCommunication = true;
-            }
-            else if(commandTokens[0].equalsIgnoreCase("list")) {
-                list();
-            }
-            else if(commandTokens[0].equalsIgnoreCase("download")) {
-                clientDownload(commandTokens);
-            }
-            else if(commandTokens[0].equalsIgnoreCase("upload")){
-               clientUpload(commandTokens);
-            }
-            else {
-
-            }
-
-        }
-
-        // call to disconnect when the client initiates bye
         return stopConnectionAfterThisCommunication;
     }
 
@@ -248,7 +246,7 @@ public class Server {
             bufferedInputStream = new BufferedInputStream(fileInputStream);
 
             // confirmation message
-            String confirmationMessage = String.format("Sending \"%s\" ...\n", fileToSendName);
+            String confirmationMessage = String.format("Sending \"%s\" ...", fileToSendName);
             printWriter.println(confirmationMessage);
             System.out.println(">> " + confirmationMessage);
 
