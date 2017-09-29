@@ -9,14 +9,15 @@ import java.util.Scanner;
 public class Client {
     private static Socket clientSocket = null;
     private static File directory = null;
-    private static final String BIG_DIV = "\n======================================================\n";
-    private static final String SMALL_DIV = "\n---------------------\n";
 
     public static void main(String[] args) {
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        Date date;
+        Date date = null;
         boolean connectSuccess = false;
         boolean stopCommunication = false;
+        final String BIG_DIV = "\n======================================================\n";
+        final String SMALL_DIV = "\n---------------------\n";
+
         setDirectory();
 
         System.out.println(BIG_DIV);

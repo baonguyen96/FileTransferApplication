@@ -22,14 +22,15 @@ import java.util.Scanner;
 public class Server {
     private static Socket clientSocket = null;
     private static File directory = null;
-    private static final String BIG_DIV = "\n======================================================\n";
-    private static final String SMALL_DIV = "\n---------------------\n";
 
     public static void main(String[] args) {
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         Date date;
         boolean connectSuccess = false;
         boolean stopCommunication = false;
+        final String BIG_DIV = "\n======================================================\n";
+        final String SMALL_DIV = "\n---------------------\n";
+
         setDirectory();
 
         try {
@@ -223,7 +224,7 @@ public class Server {
     /***
      * method: clientDownload
      *
-     * download [file]
+     * download | file
      *
      * let client download files from the library
      *
@@ -275,7 +276,7 @@ public class Server {
     /***
      * method: clientUpload
      *
-     * upload [filePath] command
+     * upload | filePath command
      *
      * receive the file from client and save it
      *
