@@ -29,6 +29,8 @@ public class Client {
         System.out.println("Setting up the connection...");
 
         try {
+            // temporary connection
+
             while (!stopCommunication) {
                 // create a socket for client with the local host and port 1111
                 clientSocket = new Socket(serverIPAddress, 1111);
@@ -400,8 +402,17 @@ public class Client {
     private static void setDirectory() {
         directory = new File("Client/FilesDirectory");
         String absolutePath = directory.getAbsolutePath();
-        absolutePath = absolutePath.replace("\\src", "");
-        absolutePath = absolutePath.replace("\\Client\\Client", "\\Client");
+        String os = System.getProperty("os.name").toLowerCase();
+
+        if(os.contains("mac") || os.contains("linux")) {
+            absolutePath = absolutePath.replace("/src", "");
+            absolutePath = absolutePath.replace("/Client/Client", "/Client");
+        }
+        else {
+            absolutePath = absolutePath.replace("\\src", "");
+            absolutePath = absolutePath.replace("\\Client\\Client", "\\Client");
+        }
+
         directory = new File(absolutePath);
     }
 
