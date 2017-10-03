@@ -270,13 +270,13 @@ public class Client {
      */
     private static void download(String command, String[] commandComponents) throws IOException {
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
-        Scanner serverInput = new Scanner(new InputStreamReader(clientSocket.getInputStream()));
+        InputStream inputStream = clientSocket.getInputStream();
+        Scanner serverInput = new Scanner(new InputStreamReader(inputStream));
         String messageReceived = "";
         byte[] byteBlock = new byte[1];
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         FileOutputStream fileOutputStream = null;
         BufferedOutputStream bufferedOutputStream = null;
-        InputStream inputStream = clientSocket.getInputStream();
         String fileToDownloadName = commandComponents[1];
 
         printWriter.println(command);
@@ -333,7 +333,7 @@ public class Client {
         File uploadedFile = new File(fileNameFormattedPath);
         byte[] byteArray = new byte[(int) uploadedFile.length()];
         FileInputStream fileInputStream = null;
-        PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
+        PrintWriter printWriter = new PrintWriter(outputStream, true);
 
         try {
             fileInputStream = new FileInputStream(uploadedFile);
@@ -402,17 +402,9 @@ public class Client {
     private static void setDirectory() {
         directory = new File("Client/FilesDirectory");
         String absolutePath = directory.getAbsolutePath();
-        String os = System.getProperty("os.name").toLowerCase();
-
-        if(os.contains("mac") || os.contains("linux")) {
-            absolutePath = absolutePath.replace("/src", "");
-            absolutePath = absolutePath.replace("/Client/Client", "/Client");
-        }
-        else {
-            absolutePath = absolutePath.replace("\\src", "");
-            absolutePath = absolutePath.replace("\\Client\\Client", "\\Client");
-        }
-
+        absolutePath = absolutePath.replace("\\", "/");
+        absolutePath = absolutePath.replace("/src", "");
+        absolutePath = absolutePath.replace("/Client/Client", "/Client");
         directory = new File(absolutePath);
     }
 
