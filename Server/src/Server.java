@@ -284,7 +284,8 @@ public class Server {
      * @throws IOException
      */
     private static void clientUpload(String[] commandTokens) throws IOException {
-        String[] uploadedFilePathComponents = commandTokens[1].split("\\\\");
+        String filePath = commandTokens[1].replace("\\", "/");
+        String[] uploadedFilePathComponents = filePath.split("/");
         String uploadedFileName = uploadedFilePathComponents[uploadedFilePathComponents.length - 1];
         File receivingFile = new File(directory.getAbsolutePath() +
                 "/" + uploadedFileName);
@@ -321,9 +322,11 @@ public class Server {
     private static void setDirectory() {
         directory = new File("Server/FilesDirectory");
         String absolutePath = directory.getAbsolutePath();
-        absolutePath = absolutePath.replace("\\src", "");
-        absolutePath = absolutePath.replace("\\Server\\Server", "\\Server");
+        absolutePath = absolutePath.replace("\\", "/");
+        absolutePath = absolutePath.replace("/src", "");
+        absolutePath = absolutePath.replace("/Server/Server", "/Server");
         directory = new File(absolutePath);
     }
 
 }
+
