@@ -9,6 +9,7 @@ import java.util.Scanner;
 public class Client {
     private static Socket clientSocket = null;
     private static File directory = null;
+    private static final String SERVER_PUBLIC_KEY = Server.PUBLIC_KEY;
 
     public static void main(String[] args) {
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
@@ -29,8 +30,10 @@ public class Client {
         System.out.println("Setting up the connection...");
 
         try {
-            // temporary connection
+            // authentication
+            authenticate();
 
+            // authentication success
             while (!stopCommunication) {
                 // create a socket for client with the local host and port 1111
                 clientSocket = new Socket(serverIPAddress, 1111);
@@ -406,6 +409,16 @@ public class Client {
         absolutePath = absolutePath.replace("/src", "");
         absolutePath = absolutePath.replace("/Client/Client", "/Client");
         directory = new File(absolutePath);
+    }
+
+
+    /***
+     * method: authenticate
+     *
+     * client authenticates server with keys
+     */
+    private static void authenticate() {
+
     }
 
 }
