@@ -22,45 +22,18 @@ import java.util.Scanner;
 public class Server {
     private static Socket clientSocket = null;
     private static File directory = null;
-    private static final String PRIVATE_KEY  =
-            "MIIEpAIBAAKCAQEAzGR56LvGNRH5vhtjx9EdRWVNcYQtbvdk6VnyAhChCB1yquDH" +
-            "uoTaF2WxCf2B0DQLdq+OmOwUHr4EHv9zg+C/NJd1jwyNOZf4nE8qTDgIzDVjL9o2" +
-            "0JnaJ/kEARjOIJAAEpcMSUrwbBnBwmsdXiGiFKSw7A8kFDCm5OIqe2bPe5GVMRjj" +
-            "n4/l/VWn5AZTRLF2SNzESslsKWnnX0Art9RMHItt/WsXXUAmQWZboZ73zhEST+K6" +
-            "LD1SjRlIOriUP/qyIInNS4VDXFtPDup4+KOZ3Hskh+bCKloGU4PWJzCSuiEOIan2" +
-            "u2lMB+i2pGxIHFRustcZrKA4hFbNYpifFGBQmQIDAQABAoIBABUh7ljZ0Ux7Z074" +
-            "lgB65oPeTXuHJwtqGMznt9Xu0jd8k/aG9x+ZzNLOeNeHlnxoZScIT74P6qSjENoD" +
-            "n3XrLtnJLyZzLcbep53BsaXfxUkX3AF+llxLC/tGC9vxLJ7BRMCnTWXmkaUbpKTt" +
-            "XkP1RkTMIl7F0f0kap0PpUTNBHbKD012qqAv8pDia9OLWp+CJWHngiW9euzKs2eE" +
-            "fIHCKfX/AThhypAogrTgqqzB0ohiXJGAHSO5kkVUSpVJCLzNYj01fUQlqbyCZgtU" +
-            "CX5yOADuKNXdOzITLNg/VwWgEP9we7y4kJXfdNfrfL4yP+biisZGwruE9+5/+5YW" +
-            "rOSyoYECgYEA5gN4KL9ckOr/LFrFe8MEx2xoBPBimylL/zExhNq4vdA8y60N+15V" +
-            "HGTN0X52fWkKynLkurBf3TTRDF58wA28jrJYGoZAQ4xlIcaAyDvg6IF2l/HcKTfz" +
-            "tHuyIHLLoH8cOhJvdX8l9ptuflig92UL66385yvtTqBf5+HXKxpW4L0CgYEA43v8" +
-            "TmntG50uaJJZ/0tkkHvbDgpSPR4g7AZ3ri8Q1jnVdtBmq3zWYLRFIytzdhRxY9Ny" +
-            "HFqqwdqacoG58GL5kL6Z4PO0TgLib0H8s10chIEreMnMS5lMq3rfVpzakiLIj9uv" +
-            "RcCk2wnvAwmkGHSyiVXLpse8wd0EHcsFpbgqcw0CgYAhB5CCsXAWc1hvQx2mtwuB" +
-            "o6SQSQCv7U83dxX4UPxEbZm9Wb1vQk2QhT00/yb+vU3KYpNL57XsawA1+X+KiK5y" +
-            "A1Q5gtvJl2iSYBHwLwEOAkFIcne+B4XcfgLHPBTXmEkyYaFVywtljU5hoFKFFCKR" +
-            "FmwBukIaj1cWUkz2qJKfNQKBgQCqzE6VuWZzU0Ki9S9pRPwOl0/TbOBuTw685+Y3" +
-            "+9KSZf3mJXbQzvxOw0sdquQYBiVUpE+LBnAq+Kz5yHkJCecDTHhQs+nuoK/OhSbs" +
-            "rL5apnkzSaCAKmusXKcPatmY21Dm4jTpFEkyxHSWPUjdq9DY2Hf9kv4gOId8rxBg" +
-            "arREiQKBgQDjm8aiSHKaCFYuT5cTsMQwc3MSTLmPnN5W4uAwc4D4LIW66LcSgaXb" +
-            "VQYELCJIl2jgymwV1fmQOCUbOmN0lnw5vuD7a8fDsJyVQRJyZ8kg5Gsn6r5Qx92H" +
-            "JBPUS6d2lnLe/dgiXimCH8KETMNobOcNTEYWxR+JrrAIl8udqfdvmg==";
-    public static final String PUBLIC_KEY =
-            "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzGR56LvGNRH5vhtjx9Ed" +
-            "RWVNcYQtbvdk6VnyAhChCB1yquDHuoTaF2WxCf2B0DQLdq+OmOwUHr4EHv9zg+C/" +
-            "NJd1jwyNOZf4nE8qTDgIzDVjL9o20JnaJ/kEARjOIJAAEpcMSUrwbBnBwmsdXiGi" +
-            "FKSw7A8kFDCm5OIqe2bPe5GVMRjjn4/l/VWn5AZTRLF2SNzESslsKWnnX0Art9RM" +
-            "HItt/WsXXUAmQWZboZ73zhEST+K6LD1SjRlIOriUP/qyIInNS4VDXFtPDup4+KOZ" +
-            "3Hskh+bCKloGU4PWJzCSuiEOIan2u2lMB+i2pGxIHFRustcZrKA4hFbNYpifFGBQ" +
-            "mQIDAQAB";
+    private static final String PRIVATE_KEY = getKey("PrivateKey.txt");
+    private static final String PUBLIC_KEY = getKey("PublicKey.txt");
 
 
     public static void main(String[] args) {
+        // error with keys then stop
+        if(PRIVATE_KEY == null || PUBLIC_KEY == null) {
+            return;
+        }
+
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        Date date;
+        Date date = null;
         boolean connectSuccess = false;
         boolean stopCommunication = false;
         final String BIG_DIV = "\n======================================================\n";
@@ -106,7 +79,7 @@ public class Server {
             System.out.println("\nError: waited too long for connection.");
         }
         catch (FileNotFoundException e) {
-            System.out.println("\nError: cannot find file.");
+            System.out.println("\nError: cannot create or find file.");
         }
         catch (IOException e) {
             System.out.println("\nError: sockets corrupted.");
@@ -160,48 +133,47 @@ public class Server {
      */
     private static boolean communicate() throws IOException {
         String receivedCommand = "";
-        boolean stopConnectionAfterThisCommunication = false;
+        final boolean STOP_CONNECTION_AFTER_THIS = true;
         InputStream inputStream = clientSocket.getInputStream();
         Scanner receivedInput = new Scanner(new InputStreamReader(inputStream));
-        String delimiter = "\\s+\\|\\s+";
+        final String DELIMITER = "\\s+\\|\\s+";
 
-        if (receivedInput.hasNextLine()) {
-            receivedCommand = receivedInput.nextLine();
+        if(!receivedInput.hasNextLine()) {
+            System.out.println(">> Client is offline.");
+            return STOP_CONNECTION_AFTER_THIS;
+        }
 
-            /*
-             * stay command can either be:
-             *      error on client side and client is trying to fix
-             *      internal command for client
-             */
-            if(isValidCommand(receivedCommand, delimiter) &&
-                    !receivedCommand.equalsIgnoreCase("stay")) {
+        receivedCommand = receivedInput.nextLine();
 
-                System.out.println("[Client]: " + receivedCommand);
-                String[] commandTokens = receivedCommand.split(delimiter);
+        /*
+         * stay command can either be:
+         *      error on client side and client is trying to fix
+         *      internal command for client
+         */
+        if(isValidCommand(receivedCommand, DELIMITER) &&
+                !receivedCommand.equalsIgnoreCase("stay")) {
 
-                if(commandTokens[0].equalsIgnoreCase("quit")) {
-                    stopConnectionAfterThisCommunication = true;
-                }
-                else if(commandTokens[0].equalsIgnoreCase("list")) {
-                    list();
-                }
-                else if(commandTokens[0].equalsIgnoreCase("download")) {
-                    clientDownload(commandTokens);
-                }
-                else if(commandTokens[0].equalsIgnoreCase("upload")){
-                    clientUpload(commandTokens);
-                }
-                else {
+            System.out.println("[Client]: " + receivedCommand);
+            String[] commandTokens = receivedCommand.split(DELIMITER);
 
-                }
+            if(commandTokens[0].equalsIgnoreCase("quit")) {
+                return STOP_CONNECTION_AFTER_THIS;
+            }
+            else if(commandTokens[0].equalsIgnoreCase("list")) {
+                list();
+            }
+            else if(commandTokens[0].equalsIgnoreCase("download")) {
+                clientDownload(commandTokens);
+            }
+            else if(commandTokens[0].equalsIgnoreCase("upload")){
+                clientUpload(commandTokens);
+            }
+            else {
+                // don't do anything for "stay" command
             }
         }
-        else {
-            System.out.println(">> Client is offline.");
-            stopConnectionAfterThisCommunication = true;
-        }
 
-        return stopConnectionAfterThisCommunication;
+        return !STOP_CONNECTION_AFTER_THIS;
     }
 
 
@@ -369,9 +341,34 @@ public class Server {
      *
      * client authenticates server with keys
      */
-    private static void authenticate() {
+    private static void authenticate() throws IOException {
 
     }
 
+
+    private static String getKey(String keyFileName) {
+        File file = new File(keyFileName);
+        if(!file.exists()) {
+            keyFileName = "Server/src/" + keyFileName;
+            file = new File(keyFileName);
+        }
+        StringBuilder key = new StringBuilder();
+        boolean getKeySuccess = false;
+
+        try {
+            Scanner scanner = new Scanner(file);
+            key = new StringBuilder();
+            while(scanner.hasNextLine()) {
+                key.append(scanner.nextLine());
+            }
+            getKeySuccess = true;
+        }
+        catch (FileNotFoundException e) {
+            System.out.println("Error: Cannot find " + keyFileName);
+            e.printStackTrace();
+        }
+
+        return getKeySuccess ? key.toString() : null;
+    }
 }
 

@@ -9,7 +9,6 @@ import java.util.Scanner;
 public class Client {
     private static Socket clientSocket = null;
     private static File directory = null;
-    private static final String SERVER_PUBLIC_KEY = Server.PUBLIC_KEY;
 
     public static void main(String[] args) {
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
@@ -31,7 +30,7 @@ public class Client {
 
         try {
             // authentication
-            authenticate();
+//            authenticate(serverIPAddress);
 
             // authentication success
             while (!stopCommunication) {
@@ -55,10 +54,10 @@ public class Client {
             System.out.println("\nError: unknown IP address.");
         }
         catch (FileNotFoundException e) {
-            System.out.println("\nError: cannot create or find file");
+            System.out.println("\nError: cannot create or find file.");
         }
         catch(IOException e) {
-            System.out.println("\nError: failed to connect to server.");
+            System.out.println("\nError: sockets corrupted.");
         }
         finally {
             System.out.println(SMALL_DIV);
@@ -115,18 +114,17 @@ public class Client {
      * communication session between server and client
      *
      * @return true if stop communication, false if not
-     * @throws FileNotFoundException
      * @throws IOException
      */
     private static boolean communicate() throws IOException {
-        String delimiter = "\\s+\\|\\s+";
-        String command = getCommand(delimiter);
-        String[] commandComponents = command.split(delimiter);
-        boolean stopSessionAfterThisCommunication = false;
+        final String DELIMITER = "\\s+\\|\\s+";
+        String command = getCommand(DELIMITER);
+        String[] commandComponents = command.split(DELIMITER);
+        final boolean STOP_CONNECTION_AFTER_THIS = true;
 
         if(commandComponents[0].equalsIgnoreCase("quit")) {
             quit(commandComponents[0]);
-            stopSessionAfterThisCommunication = true;
+            return STOP_CONNECTION_AFTER_THIS;
         }
         else if(commandComponents[0].equalsIgnoreCase("list")) {
             list(commandComponents[0]);
@@ -144,7 +142,7 @@ public class Client {
             upload(command, commandComponents);
         }
 
-        return stopSessionAfterThisCommunication;
+        return !STOP_CONNECTION_AFTER_THIS;
     }
 
 
@@ -416,9 +414,12 @@ public class Client {
      * method: authenticate
      *
      * client authenticates server with keys
+     *
+     * @param serverIP: IP address of server
+     * @throws IOException if authenticate fail
      */
-    private static void authenticate() {
-
+    private static void authenticate(String serverIP) throws IOException {
+        clientSocket = new Socket(serverIP, 1111);
     }
 
 }
