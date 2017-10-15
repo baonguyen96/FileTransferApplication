@@ -38,37 +38,43 @@ public class Server {
         boolean stopCommunication = false;
         final String BIG_DIV = "\n======================================================\n";
         final String SMALL_DIV = "\n---------------------\n";
+        String clientAddress = "";
 
         setDirectory();
 
         try {
             System.out.println(BIG_DIV);
-            System.out.println("IP address: " + Inet6Address.getLocalHost().getHostAddress());
+            System.out.println("IP address: " + InetAddress.getLocalHost().getHostAddress());
             System.out.println("Waiting for connection...");
 
-            /*
-             * create new server socket and bind with port 1111 (same as client)
-             * wait 2 minutes for client to connect
-             * without connection within this time frame,
-             * then close the socket automatically
-             */
-            ServerSocket serverSocket = new ServerSocket(1111);
+            ServerSocket serverSocket = new ServerSocket(1111, 1);
             serverSocket.setSoTimeout(120000);
 
-            // stay connected until the client disconnects
+            /*
+             * stay connected until the client disconnects
+             * after the first successful connection, remember the IP address of the client
+             * so that in the subsequent reconnection, does not accept any host that has different address
+             */
             while (!stopCommunication) {
                 clientSocket = serverSocket.accept();
-                serverSocket.setSoTimeout(Integer.MAX_VALUE);
 
-                if(!connectSuccess) {
+                if (!connectSuccess) {
                     date = new Date();
+                    clientAddress = clientSocket.getInetAddress().getHostAddress();
                     System.out.println("Connection established at " + dateFormat.format(date));
                     System.out.println(SMALL_DIV);
                     connectSuccess = true;
                 }
+                else {
+                    if(!clientSocket.getInetAddress().getHostAddress().equals(clientAddress)) {
+                        clientSocket.close();
+                        continue;
+                    }
+                }
 
                 stopCommunication = communicate();
                 clientSocket.close();
+
             }
 
         }
@@ -111,14 +117,14 @@ public class Server {
                 commandTokens[0].equalsIgnoreCase("quit");
         boolean isList = commandTokens.length == 1 &&
                 commandTokens[0].equalsIgnoreCase("list");
+        boolean isStay = commandTokens.length == 1 &&
+                commandTokens[0].equalsIgnoreCase("stay");
         boolean isDownload = commandTokens.length == 2 &&
                 commandTokens[0].equalsIgnoreCase("download");
         boolean isUpload = commandTokens.length == 2 &&
                 commandTokens[0].equalsIgnoreCase("upload");
-        boolean isStay = commandTokens.length == 1 &&
-                commandTokens[0].equalsIgnoreCase("stay");
 
-        return isQuit || isList || isDownload || isUpload || isStay;
+        return isQuit || isList || isStay || isDownload || isUpload;
     }
 
 
@@ -138,39 +144,34 @@ public class Server {
         Scanner receivedInput = new Scanner(new InputStreamReader(inputStream));
         final String DELIMITER = "\\s+\\|\\s+";
 
+        // offline
         if(!receivedInput.hasNextLine()) {
             System.out.println(">> Client is offline.");
             return STOP_CONNECTION_AFTER_THIS;
         }
 
+        // invalid command or stay command
         receivedCommand = receivedInput.nextLine();
+        if(!isValidCommand(receivedCommand, DELIMITER) ||
+                receivedCommand.equalsIgnoreCase("stay")) {
+            return !STOP_CONNECTION_AFTER_THIS;
+        }
 
-        /*
-         * stay command can either be:
-         *      error on client side and client is trying to fix
-         *      internal command for client
-         */
-        if(isValidCommand(receivedCommand, DELIMITER) &&
-                !receivedCommand.equalsIgnoreCase("stay")) {
+        // valid command
+        System.out.println("[Client]: " + receivedCommand);
+        String[] commandTokens = receivedCommand.split(DELIMITER);
 
-            System.out.println("[Client]: " + receivedCommand);
-            String[] commandTokens = receivedCommand.split(DELIMITER);
-
-            if(commandTokens[0].equalsIgnoreCase("quit")) {
-                return STOP_CONNECTION_AFTER_THIS;
-            }
-            else if(commandTokens[0].equalsIgnoreCase("list")) {
-                list();
-            }
-            else if(commandTokens[0].equalsIgnoreCase("download")) {
-                clientDownload(commandTokens);
-            }
-            else if(commandTokens[0].equalsIgnoreCase("upload")){
-                clientUpload(commandTokens);
-            }
-            else {
-                // don't do anything for "stay" command
-            }
+        if(commandTokens[0].equalsIgnoreCase("quit")) {
+            return STOP_CONNECTION_AFTER_THIS;
+        }
+        else if(commandTokens[0].equalsIgnoreCase("list")) {
+            list();
+        }
+        else if(commandTokens[0].equalsIgnoreCase("download")) {
+            clientDownload(commandTokens);
+        }
+        else if(commandTokens[0].equalsIgnoreCase("upload")){
+            clientUpload(commandTokens);
         }
 
         return !STOP_CONNECTION_AFTER_THIS;
@@ -346,11 +347,18 @@ public class Server {
     }
 
 
+    /***
+     * method: getKey
+     *
+     * read the key from the local file and return as string
+     *
+     * @param keyFileName: local file that contains the key
+     * @return key as string
+     */
     private static String getKey(String keyFileName) {
         File file = new File(keyFileName);
         if(!file.exists()) {
-            keyFileName = "Server/src/" + keyFileName;
-            file = new File(keyFileName);
+            file = new File("Server/src/" + keyFileName);
         }
         StringBuilder key = new StringBuilder();
         boolean getKeySuccess = false;
@@ -365,7 +373,6 @@ public class Server {
         }
         catch (FileNotFoundException e) {
             System.out.println("Error: Cannot find " + keyFileName);
-            e.printStackTrace();
         }
 
         return getKeySuccess ? key.toString() : null;

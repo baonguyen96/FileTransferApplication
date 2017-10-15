@@ -1,6 +1,5 @@
 import java.io.*;
-import java.net.Socket;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -17,18 +16,19 @@ public class Client {
         boolean stopCommunication = false;
         final String BIG_DIV = "\n======================================================\n";
         final String SMALL_DIV = "\n---------------------\n";
-
-        setDirectory();
-
-        System.out.println(BIG_DIV);
         Scanner scanner = new Scanner(System.in);
 
-        // get server's IP address and port
-        System.out.print("Enter server's IP address: ");
-        String serverIPAddress = scanner.nextLine();
-        System.out.println("Setting up the connection...");
+        setDirectory();
+        System.out.println(BIG_DIV);
 
         try {
+//            System.out.println("IP address: " + InetAddress.getLocalHost().getHostAddress());
+
+            // get server's IP address and port
+            System.out.print("Enter server's IP address: ");
+            String serverIPAddress = scanner.nextLine();
+            System.out.println("Setting up the connection...");
+
             // authentication
 //            authenticate(serverIPAddress);
 
@@ -36,6 +36,7 @@ public class Client {
             while (!stopCommunication) {
                 // create a socket for client with the local host and port 1111
                 clientSocket = new Socket(serverIPAddress, 1111);
+                clientSocket.setSoTimeout(30000);
 
                 if(!connectSuccess) {
                     date = new Date();
@@ -52,6 +53,9 @@ public class Client {
         }
         catch (UnknownHostException e) {
             System.out.println("\nError: unknown IP address.");
+        }
+        catch (SocketTimeoutException e) {
+            System.out.println("\nError: server is busy.");
         }
         catch (FileNotFoundException e) {
             System.out.println("\nError: cannot create or find file.");
