@@ -21,14 +21,12 @@ public class Client {
         setDirectory();
         System.out.println(BIG_DIV);
 
+        // get server's IP address
+        System.out.print("Enter server's IP address: ");
+        String serverIPAddress = scanner.nextLine();
+        System.out.println("Setting up the connection...");
+
         try {
-//            System.out.println("IP address: " + InetAddress.getLocalHost().getHostAddress());
-
-            // get server's IP address and port
-            System.out.print("Enter server's IP address: ");
-            String serverIPAddress = scanner.nextLine();
-            System.out.println("Setting up the connection...");
-
             // authentication
 //            authenticate(serverIPAddress);
 
@@ -418,12 +416,18 @@ public class Client {
      * method: authenticate
      *
      * client authenticates server with keys
+     * if server is busy -> return false
+     * otherwise -> key exchange
      *
      * @param serverIP: IP address of server
+     * @return true if success, false if not
      * @throws IOException if authenticate fail
      */
-    private static void authenticate(String serverIP) throws IOException {
+    private static boolean authenticate(String serverIP) throws IOException {
+        boolean authenticateSuccess = false;
         clientSocket = new Socket(serverIP, 1111);
+
+        return authenticateSuccess;
     }
 
 }

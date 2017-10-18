@@ -24,6 +24,7 @@ public class Server {
     private static File directory = null;
     private static final String PRIVATE_KEY = getKey("PrivateKey.txt");
     private static final String PUBLIC_KEY = getKey("PublicKey.txt");
+    private static boolean isBusy = false;
 
 
     public static void main(String[] args) {
@@ -34,11 +35,9 @@ public class Server {
 
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         Date date = null;
-        boolean connectSuccess = false;
         boolean stopCommunication = false;
         final String BIG_DIV = "\n======================================================\n";
         final String SMALL_DIV = "\n---------------------\n";
-        String clientAddress = "";
 
         setDirectory();
 
@@ -57,19 +56,27 @@ public class Server {
              */
             while (!stopCommunication) {
                 clientSocket = serverSocket.accept();
+                
+                // authenticate
 
-                if (!connectSuccess) {
+                /*
+                 * if successfully connect for the first time (from now is busy):
+                 *      set initial connection start time
+                 *      remember client IP address
+                 * if not successfully connect (not busy):
+                 *      NOTE: this can either be someone else trying to connect OR
+                 *            another instance of Client
+                 *      close that particular client socket and continue
+                 */
+                if (!isBusy) {
                     date = new Date();
-                    clientAddress = clientSocket.getInetAddress().getHostAddress();
                     System.out.println("Connection established at " + dateFormat.format(date));
                     System.out.println(SMALL_DIV);
-                    connectSuccess = true;
+                    isBusy = true;
                 }
                 else {
-                    if(!clientSocket.getInetAddress().getHostAddress().equals(clientAddress)) {
-                        clientSocket.close();
-                        continue;
-                    }
+                    clientSocket.close();
+                    continue;
                 }
 
                 stopCommunication = communicate();
@@ -94,7 +101,7 @@ public class Server {
             System.out.println(SMALL_DIV);
             date = new Date();
             System.out.printf("Connection %s at %s\n",
-                    connectSuccess ? "ended" : "failed",
+                    isBusy ? "ended" : "failed",
                     dateFormat.format(date));
             System.out.println(BIG_DIV);
         }
@@ -341,9 +348,15 @@ public class Server {
      * method: authenticate
      *
      * client authenticates server with keys
+     * if busy -> send busy command and return false
+     * otherwise -> key exchange
+     *
+     * @throws IOException
      */
-    private static void authenticate() throws IOException {
+    private static boolean authenticate() throws IOException {
+        boolean authenticateSuccess = false;
 
+        return authenticateSuccess;
     }
 
 
@@ -377,5 +390,6 @@ public class Server {
 
         return getKeySuccess ? key.toString() : null;
     }
+
 }
 
