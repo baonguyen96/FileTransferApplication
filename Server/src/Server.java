@@ -49,20 +49,17 @@ public class Server {
             ServerSocket serverSocket = new ServerSocket(1111, 1);
             serverSocket.setSoTimeout(120000);
 
-            /*
-             * stay connected until the client disconnects
-             * after the first successful connection, remember the IP address of the client
-             * so that in the subsequent reconnection, does not accept any host that has different address
-             */
+            // stay connected until the client disconnects
             while (!stopCommunication) {
                 clientSocket = serverSocket.accept();
-                
+
                 // authenticate
 
+
                 /*
-                 * if successfully connect for the first time (from now is busy):
+                 * if successfully connect for the first time:
                  *      set initial connection start time
-                 *      remember client IP address
+                 *      from now is busy
                  * if not successfully connect (not busy):
                  *      NOTE: this can either be someone else trying to connect OR
                  *            another instance of Client
@@ -351,6 +348,8 @@ public class Server {
      * if busy -> send busy command and return false
      * otherwise -> key exchange
      *
+     * @return true if successfully authenticate and exchange keys
+     *         false otherwise
      * @throws IOException
      */
     private static boolean authenticate() throws IOException {
