@@ -421,7 +421,7 @@ public class Client {
      *
      * @param serverIP: IP address of server
      * @return true if success, false if not
-     * @throws IOException if authenticate fail
+     * @throws IOException if socket error
      */
     private static boolean authenticate(String serverIP) throws IOException {
         boolean authenticateSuccess = false;
