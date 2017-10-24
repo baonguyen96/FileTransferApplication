@@ -60,6 +60,9 @@ public class Server {
                 clientSocket = serverSocket.accept();
                 
                 // authenticate
+//                if(!authenticate()) {
+//                    continue;
+//                }
 
                 /*
                  * if successfully connect for the first time (from now is busy):
@@ -360,9 +363,21 @@ public class Server {
      * @throws IOException
      */
     private static boolean authenticate() throws IOException {
-        boolean authenticateSuccess = false;
 
-        return authenticateSuccess;
+        /*
+         * if not busy (waiting for first connection):
+         *      key exchange
+         *      receive encrypted client id
+         *      decrypt client id and store
+         * if busy:
+         *      receive encrypted client id
+         *      decrypt and check
+         *      if not the same then reject
+         *
+         * NOTE: session key will be increment after each session
+         */
+
+        return true;
     }
 
 
@@ -380,21 +395,19 @@ public class Server {
             file = new File("Server/src/" + keyFileName);
         }
         StringBuilder key = new StringBuilder();
-        boolean getKeySuccess = false;
 
         try {
             Scanner scanner = new Scanner(file);
-            key = new StringBuilder();
             while(scanner.hasNextLine()) {
                 key.append(scanner.nextLine());
             }
-            getKeySuccess = true;
         }
         catch (FileNotFoundException e) {
             System.out.println("Error: Cannot find " + keyFileName);
+            key = null;
         }
 
-        return getKeySuccess ? key.toString() : null;
+        return key == null ? null : key.toString();
     }
 
 }
