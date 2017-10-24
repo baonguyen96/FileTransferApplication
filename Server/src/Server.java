@@ -49,6 +49,8 @@ public class Server {
             ServerSocket serverSocket = new ServerSocket(1111, 1);
             serverSocket.setSoTimeout(120000);
 
+            String clientIpAddress = "";
+
             /*
              * stay connected until the client disconnects
              * after the first successful connection, remember the IP address of the client
@@ -63,18 +65,22 @@ public class Server {
                  * if successfully connect for the first time (from now is busy):
                  *      set initial connection start time
                  *      remember client IP address
-                 * if not successfully connect (not busy):
-                 *      NOTE: this can either be someone else trying to connect OR
+                 * if busy:
+                 *      if same client:
+                 *          do nothing
+                 *      else:                  
+                 *          NOTE: this can either be someone else trying to connect OR
                  *            another instance of Client
-                 *      close that particular client socket and continue
+                 *          close that particular client socket and continue
                  */
                 if (!isBusy) {
                     date = new Date();
                     System.out.println("Connection established at " + dateFormat.format(date));
                     System.out.println(SMALL_DIV);
                     isBusy = true;
+                    clientIpAddress = clientSocket.getInetAddress().getHostAddress();
                 }
-                else {
+                else if(!clientSocket.getInetAddress().getHostAddress().equals(clientIpAddress)) {
                     clientSocket.close();
                     continue;
                 }
