@@ -68,7 +68,7 @@ public class Server {
                  * if busy:
                  *      if same client:
                  *          do nothing
-                 *      else:                  
+                 *      else:
                  *          NOTE: this can either be someone else trying to connect OR
                  *            another instance of Client
                  *          close that particular client socket and continue
