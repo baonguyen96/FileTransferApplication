@@ -29,14 +29,18 @@ public class Client {
         System.out.println("Setting up the connection...");
 
         try {
-            // authentication
-//            authenticate(serverIPAddress);
 
-            // authentication success
             while (!stopCommunication) {
                 // create a socket for client with the local host and port 1111
                 clientSocket = new Socket(serverIPAddress, 1111);
                 clientSocket.setSoTimeout(30000);
+
+                // authentication
+                if(!authenticate()) {
+                    System.out.println("Access denied.");
+                    clientSocket.close();
+                    break;
+                }
 
                 if(!connectSuccess) {
                     date = new Date();
@@ -418,16 +422,29 @@ public class Client {
      * method: authenticate
      *
      * client authenticates server with keys
-     * if server is busy -> return false
-     * otherwise -> key exchange
      *
-     * @param serverIP: IP address of server
      * @return true if success, false if not
      * @throws IOException if socket error
      */
-    private static boolean authenticate(String serverIP) throws IOException {
-        boolean authenticateSuccess = false;
-        clientSocket = new Socket(serverIP, 1111);
+    private static boolean authenticate() throws IOException {
+        boolean authenticateSuccess = true;
+        OutputStream outputStream = clientSocket.getOutputStream();
+        PrintWriter printWriter = new PrintWriter(outputStream, true);
+        InputStream inputStream = clientSocket.getInputStream();
+        Scanner serverInput = new Scanner(new InputStreamReader(inputStream));
+
+        printWriter.println(id);
+        printWriter.flush();
+
+        if(!serverInput.hasNextLine()) {
+            authenticateSuccess = false;
+            return authenticateSuccess;
+        }
+
+        String serverResponse = serverInput.nextLine();
+        if(serverResponse == null || serverResponse.equalsIgnoreCase("busy")) {
+            authenticateSuccess = false;
+        }
 
         return authenticateSuccess;
     }

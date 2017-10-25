@@ -25,6 +25,8 @@ public class Server {
     private static final String PRIVATE_KEY = getKey("PrivateKey.txt");
     private static final String PUBLIC_KEY = getKey("PublicKey.txt");
     private static boolean isBusy = false;
+    private static String clientIpAddress = null;
+    private static String clientId = null;
 
 
     public static void main(String[] args) {
@@ -49,7 +51,6 @@ public class Server {
             ServerSocket serverSocket = new ServerSocket(1111, 1);
             serverSocket.setSoTimeout(120000);
 
-            String clientIpAddress = "";
 
             /*
              * stay connected until the client disconnects
@@ -60,9 +61,10 @@ public class Server {
                 clientSocket = serverSocket.accept();
                 
                 // authenticate
-//                if(!authenticate()) {
-//                    continue;
-//                }
+                if(!authenticate()) {
+                    clientSocket.close();
+                    continue;
+                }
 
                 /*
                  * if successfully connect for the first time (from now is busy):
@@ -81,11 +83,6 @@ public class Server {
                     System.out.println("Connection established at " + dateFormat.format(date));
                     System.out.println(SMALL_DIV);
                     isBusy = true;
-                    clientIpAddress = clientSocket.getInetAddress().getHostAddress();
-                }
-                else if(!clientSocket.getInetAddress().getHostAddress().equals(clientIpAddress)) {
-                    clientSocket.close();
-                    continue;
                 }
 
                 stopCommunication = communicate();
@@ -363,6 +360,7 @@ public class Server {
      * @throws IOException
      */
     private static boolean authenticate() throws IOException {
+        boolean authenticateSuccess = false;
 
         /*
          * if not busy (waiting for first connection):
@@ -377,7 +375,30 @@ public class Server {
          * NOTE: session key will be increment after each session
          */
 
-        return true;
+        // key exchange
+
+
+        // just to check the id
+        OutputStream outputStream = clientSocket.getOutputStream();
+        PrintWriter printWriter = new PrintWriter(outputStream, true);
+        InputStream inputStream = clientSocket.getInputStream();
+        Scanner receivedInput = new Scanner(new InputStreamReader(inputStream));
+        String clientMessage = receivedInput.nextLine();
+
+        if(clientId == null) {
+            clientId = clientMessage;
+            clientIpAddress = clientSocket.getInetAddress().getHostAddress();
+            authenticateSuccess = true;
+        }
+        else {
+            authenticateSuccess = clientMessage.equals(clientId) &&
+                    clientSocket.getInetAddress().getHostAddress().equals(clientIpAddress);
+        }
+
+        printWriter.println(authenticateSuccess ? "ok" : "busy");
+        printWriter.flush();
+
+        return authenticateSuccess;
     }
 
 
