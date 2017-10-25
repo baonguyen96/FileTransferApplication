@@ -48,7 +48,7 @@ public class Server {
             System.out.println("IP address: " + InetAddress.getLocalHost().getHostAddress());
             System.out.println("Waiting for connection...");
 
-            ServerSocket serverSocket = new ServerSocket(1111, 1);
+            ServerSocket serverSocket = new ServerSocket(1111);
             serverSocket.setSoTimeout(120000);
 
 
@@ -89,6 +89,7 @@ public class Server {
                 clientSocket.close();
 
             }
+            serverSocket.close();
 
         }
         catch (UnknownHostException e) {

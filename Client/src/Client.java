@@ -31,7 +31,7 @@ public class Client {
         try {
 
             while (!stopCommunication) {
-                // create a socket for client with the local host and port 1111
+                // create a socket to connect to the server on port 1111
                 clientSocket = new Socket(serverIPAddress, 1111);
                 clientSocket.setSoTimeout(30000);
 
