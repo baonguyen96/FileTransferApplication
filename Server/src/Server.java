@@ -60,23 +60,16 @@ public class Server {
             while (!stopCommunication) {
                 clientSocket = serverSocket.accept();
                 
-                // authenticate
+                // make sure to talk to the same client over several sessions
                 if(!authenticate()) {
                     clientSocket.close();
                     continue;
                 }
 
                 /*
-                 * if successfully connect for the first time (from now is busy):
+                 * if successfully connect for the first time:
                  *      set initial connection start time
-                 *      remember client IP address
-                 * if busy:
-                 *      if same client:
-                 *          do nothing
-                 *      else:
-                 *          NOTE: this can either be someone else trying to connect OR
-                 *            another instance of Client
-                 *          close that particular client socket and continue
+                 *      from now is busy
                  */
                 if (!isBusy) {
                     date = new Date();
@@ -355,8 +348,7 @@ public class Server {
      * method: authenticate
      *
      * client authenticates server with keys
-     * if busy -> send busy command and return false
-     * otherwise -> key exchange
+     * prevent multiple clients to connect simultaneously
      *
      * @throws IOException
      */
@@ -364,6 +356,8 @@ public class Server {
         boolean authenticateSuccess = false;
 
         /*
+         * PROTOTYPE:
+         *
          * if not busy (waiting for first connection):
          *      key exchange
          *      receive encrypted client id
@@ -377,7 +371,7 @@ public class Server {
          */
 
         // key exchange
-
+        // encrypt/decrypt
 
         // just to check the id
         OutputStream outputStream = clientSocket.getOutputStream();

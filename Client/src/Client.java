@@ -427,6 +427,12 @@ public class Client {
      * @throws IOException if socket error
      */
     private static boolean authenticate() throws IOException {
+
+        /*
+         * this is a prototype to authenticate based on the same initial IP address and ID
+         * need to expand the protocol to cover keys exchange and encryption/decryption
+         * see Server.authenticate() for more information
+         */
         boolean authenticateSuccess = true;
         OutputStream outputStream = clientSocket.getOutputStream();
         PrintWriter printWriter = new PrintWriter(outputStream, true);
@@ -442,7 +448,7 @@ public class Client {
         }
 
         String serverResponse = serverInput.nextLine();
-        if(serverResponse == null || serverResponse.equalsIgnoreCase("busy")) {
+        if(serverResponse == null || !serverResponse.equalsIgnoreCase("ok")) {
             authenticateSuccess = false;
         }
 
