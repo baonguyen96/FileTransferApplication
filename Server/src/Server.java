@@ -27,7 +27,7 @@ public class Server {
     private static boolean isBusy = false;
     private static String clientIpAddress = null;
     private static String clientId = null;
-
+    
 
     public static void main(String[] args) {
         // error with keys then stop
@@ -51,7 +51,6 @@ public class Server {
             ServerSocket serverSocket = new ServerSocket(1111);
             serverSocket.setSoTimeout(120000);
 
-
             /*
              * stay connected until the client disconnects
              * after the first successful connection, remember the IP address of the client
@@ -59,7 +58,7 @@ public class Server {
              */
             while (!stopCommunication) {
                 clientSocket = serverSocket.accept();
-                
+               
                 // make sure to talk to the same client over several sessions
                 if(!authenticate()) {
                     clientSocket.close();
@@ -77,8 +76,7 @@ public class Server {
                     System.out.println(SMALL_DIV);
                     isBusy = true;
                 }
-
-                stopCommunication = communicate();
+                stopCommunication = communicate();				
                 clientSocket.close();
 
             }
@@ -370,8 +368,7 @@ public class Server {
          * NOTE: session key will be increment after each session
          */
 
-        // key exchange
-        // encrypt/decrypt
+		 
 
         // just to check the id
         OutputStream outputStream = clientSocket.getOutputStream();
@@ -425,6 +422,7 @@ public class Server {
 
         return key == null ? null : key.toString();
     }
+	 
 
 }
 

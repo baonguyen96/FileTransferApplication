@@ -1,16 +1,29 @@
 import java.io.*;
 import java.net.*;
+import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateExpiredException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.CertificateNotYetValidException;
+import java.security.cert.X509Certificate;
+import java.security.spec.X509EncodedKeySpec;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Scanner;
+import sun.misc.BASE64Decoder;
+
 
 public class Client {
     private static Socket clientSocket = null;
     private static File directory = null;
     private static final long id = System.currentTimeMillis();
     private static boolean connectSuccess = false;
-
+	private static boolean certificateSuccess = false;
+	private static String certPath ="CA-certificate.crt";
+    private static String[] sendCert = {"download","CA-certificate.crt"};
 
     public static void main(String[] args) {
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
@@ -29,18 +42,20 @@ public class Client {
         System.out.println("Setting up the connection...");
 
         try {
-
+			
             while (!stopCommunication) {
                 // create a socket to connect to the server on port 1111
                 clientSocket = new Socket(serverIPAddress, 1111);
                 clientSocket.setSoTimeout(30000);
-
+				
+				
                 // authentication
                 if(!authenticate()) {
                     System.out.println("Access denied.");
                     clientSocket.close();
                     break;
                 }
+								
 
                 if(!connectSuccess) {
                     date = new Date();
@@ -49,7 +64,16 @@ public class Client {
                     System.out.println(SMALL_DIV);
                     connectSuccess = true;
                 }
-
+				//Verify the certificate
+				if(!certificateSuccess) {					
+					//download("download | CA-certificate.crt",sendCert);					
+					 if(!certificate()) {
+						System.out.println("certificate denied.");
+						clientSocket.close();
+                    break;
+					}
+                    certificateSuccess = true;
+                }	
                 stopCommunication = communicate();
                 clientSocket.close();
             }
@@ -66,7 +90,10 @@ public class Client {
         }
         catch(IOException e) {
             System.out.println("\nError: sockets corrupted.");
-        }
+        } catch (Exception e) {
+			// TODO Auto-generated catch block
+        	System.out.println("\nError: certificate.");
+		}
         finally {
             System.out.println(SMALL_DIV);
             date = new Date();
@@ -438,7 +465,7 @@ public class Client {
         PrintWriter printWriter = new PrintWriter(outputStream, true);
         InputStream inputStream = clientSocket.getInputStream();
         Scanner serverInput = new Scanner(new InputStreamReader(inputStream));
-
+        
         printWriter.println(id);
         printWriter.flush();
 
@@ -453,6 +480,124 @@ public class Client {
         }
 
         return authenticateSuccess;
+    }
+   
+    /***
+     * method: certificate
+     *
+     * read the key from the local file and return as string
+     *
+     * @return true if verify succeeds, false if not
+     */        
+    private static boolean certificate() throws Exception {
+    	boolean certificateSuccess = true;
+    	if(!Verify(certPath)) 			 
+    		certificateSuccess=false;		
+    	return certificateSuccess;
+    }
+    
+    /***
+     * method: getKey
+     *
+     * read the key from the local file and return as string
+     *
+     * @param keyFileName: local file that contains the key
+     * @return key as string
+     */
+    private static String getKey(String keyFileName) {
+        File file = new File(keyFileName);
+        if(!file.exists()) {
+            file = new File("Client/src/" + keyFileName);
+        }
+        StringBuilder key = new StringBuilder();
+
+        try {
+            Scanner scanner = new Scanner(file);
+            while(scanner.hasNextLine()) {
+                key.append(scanner.nextLine());
+            }
+        }
+        catch (FileNotFoundException e) {
+            System.out.println("Error: Cannot find " + keyFileName);
+            key = null;
+        }
+
+        return key == null ? null : key.toString();
+    }
+    
+    /***
+     * method: getPublicKey
+     *
+     * Transfer the key from format String to PublicKey
+     *
+     * @param key: key of format string
+     * @return key as PublicKey
+     */
+	   private static PublicKey getPublicKey(String key)  
+            throws Exception {  
+		   byte[] keyBytes;
+	       keyBytes = (new BASE64Decoder()).decodeBuffer(key);
+	       X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
+	       KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+	       PublicKey publicKey = keyFactory.generatePublic(keySpec);
+	       return publicKey;
+    }  
+    
+	   /***
+	     * method: Verify
+	     *
+	     * Use the public key to verify the certificate
+	     *
+	     * @param certPath: the path of certificate path
+	     * @return true if the verify succeeds, false if not
+	     */
+    
+    public static boolean Verify(String certPath) throws Exception {
+        Certificate cert;
+        PublicKey caPublicKey;
+        String PublicKey;
+        boolean verifysuccess=true;
+		
+		certPath = directory.getAbsolutePath() + "/" + certPath;
+        try {
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            FileInputStream in = new FileInputStream(certPath);
+            cert = cf.generateCertificate(in);
+            in.close();
+            X509Certificate t = (X509Certificate) cert;
+            Date timeNow = new Date();
+            t.checkValidity(timeNow);
+			
+			
+            PublicKey=getKey("CAPublicKey.txt");
+            caPublicKey = getPublicKey(PublicKey);
+            try {
+                cert.verify(caPublicKey);
+				System.out.println("The Ceritificate is verified.\n");
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+            	verifysuccess=false;
+                System.out.println("The verify is not pass.\n");
+                e.printStackTrace();
+            }
+         
+        } catch (CertificateExpiredException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        } catch (CertificateNotYetValidException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        } catch (CertificateException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        } catch (FileNotFoundException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        } catch (IOException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
+        return verifysuccess;
     }
 
 }
