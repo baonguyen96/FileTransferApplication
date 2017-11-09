@@ -13,17 +13,20 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Scanner;
+
 import sun.misc.BASE64Decoder;
 
 
 public class Client {
     private static Socket clientSocket = null;
-    private static File directory = null;
+    private static File fileDirectory = null;
+    private static File src = null;
     private static final long id = System.currentTimeMillis();
     private static boolean connectSuccess = false;
-	private static boolean certificateSuccess = false;
-	private static String certPath ="CA-certificate.crt";
-    private static String[] sendCert = {"download","CA-certificate.crt"};
+    private static boolean hasReceivedCertificate = false;
+    private static boolean hasSentKey = false;
+    private static long masterKey = 0;
+    private static final String CERTIFICATION = "CA-certificate.crt";
 
     public static void main(String[] args) {
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
@@ -42,38 +45,33 @@ public class Client {
         System.out.println("Setting up the connection...");
 
         try {
-			
+
             while (!stopCommunication) {
                 // create a socket to connect to the server on port 1111
                 clientSocket = new Socket(serverIPAddress, 1111);
                 clientSocket.setSoTimeout(30000);
-				
-				
+
+
                 // authentication
-                if(!authenticate()) {
+                if (!authenticate()) {
                     System.out.println("Access denied.");
                     clientSocket.close();
                     break;
                 }
-								
 
-                if(!connectSuccess) {
+                /*
+                 * first time pass authentication -> continue for key exchange
+                 */
+                if (!connectSuccess) {
                     date = new Date();
                     System.out.println("Connection established at " +
                             dateFormat.format(date));
                     System.out.println(SMALL_DIV);
                     connectSuccess = true;
+                    continue;
                 }
-				//Verify the certificate
-				if(!certificateSuccess) {					
-					//download("download | CA-certificate.crt",sendCert);					
-					 if(!certificate()) {
-						System.out.println("certificate denied.");
-						clientSocket.close();
-                    break;
-					}
-                    certificateSuccess = true;
-                }	
+
+
                 stopCommunication = communicate();
                 clientSocket.close();
             }
@@ -88,13 +86,15 @@ public class Client {
         catch (FileNotFoundException e) {
             System.out.println("\nError: cannot create or find file.");
         }
-        catch(IOException e) {
+        catch (IOException e) {
             System.out.println("\nError: sockets corrupted.");
-        } catch (Exception e) {
-			// TODO Auto-generated catch block
-        	System.out.println("\nError: certificate.");
-		}
+        }
+        catch (Exception e) {
+            // TODO Auto-generated catch block
+            System.out.println("\nError: certificate.");
+        }
         finally {
+            deleteCertificate();
             System.out.println(SMALL_DIV);
             date = new Date();
             System.out.printf("Connection %s at %s\n",
@@ -157,20 +157,20 @@ public class Client {
         String[] commandComponents = command.split(DELIMITER);
         final boolean STOP_CONNECTION_AFTER_THIS = true;
 
-        if(commandComponents[0].equalsIgnoreCase("quit")) {
+        if (commandComponents[0].equalsIgnoreCase("quit")) {
             quit(commandComponents[0]);
             return STOP_CONNECTION_AFTER_THIS;
         }
-        else if(commandComponents[0].equalsIgnoreCase("list")) {
+        else if (commandComponents[0].equalsIgnoreCase("list")) {
             list(commandComponents[0]);
         }
-        else if(commandComponents[0].equalsIgnoreCase("list-me")) {
+        else if (commandComponents[0].equalsIgnoreCase("list-me")) {
             listMe();
         }
-        else if(commandComponents[0].equalsIgnoreCase("help")) {
+        else if (commandComponents[0].equalsIgnoreCase("help")) {
             help();
         }
-        else if(commandComponents[0].equalsIgnoreCase("download")) {
+        else if (commandComponents[0].equalsIgnoreCase("download")) {
             download(command, commandComponents);
         }
         else {
@@ -198,7 +198,7 @@ public class Client {
             System.out.print("[You]:    ");
             command = input.nextLine();
 
-            if(!isValidCommand(command, delimiter)) {
+            if (!isValidCommand(command, delimiter)) {
                 System.out.println(">> Invalid command. " +
                         "Please enter a correct command or " +
                         "enter \"help\" for help.\n");
@@ -207,7 +207,7 @@ public class Client {
                 isValid = true;
             }
 
-        } while(!isValid);
+        } while (!isValid);
 
         return command;
     }
@@ -263,16 +263,16 @@ public class Client {
      */
     private static void listMe() throws IOException {
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
-        File[] files = directory.listFiles();
+        File[] files = fileDirectory.listFiles();
         StringBuilder listOfFiles = new StringBuilder();
 
         System.out.print(">> ");
 
-        if(files == null) {
-            System.out.println("Error: cannot find files directory.");
+        if (files == null) {
+            System.out.println("Error: cannot find files fileDirectory.");
         }
-        else if(files.length == 0) {
-            System.out.println("Empty files directory");
+        else if (files.length == 0) {
+            System.out.println("Empty files fileDirectory");
         }
         else {
             for (int i = 0; i < files.length; i++) {
@@ -322,12 +322,12 @@ public class Client {
         messageReceived = serverInput.nextLine();
 
         // error
-        if(!messageReceived.contains(fileToDownloadName)) {
+        if (!messageReceived.contains(fileToDownloadName)) {
             System.out.println("\n[Server]: " + messageReceived);
         }
         // valid file to download
         else {
-            fileToDownloadName = directory.getAbsolutePath() + "/" + fileToDownloadName;
+            fileToDownloadName = fileDirectory.getAbsolutePath() + "/" + fileToDownloadName;
             File downloadedFile = new File(fileToDownloadName);
             fileOutputStream = new FileOutputStream(downloadedFile);
             bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
@@ -405,6 +405,50 @@ public class Client {
     }
 
 
+    private static void requestCertificate() throws IOException {
+        PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
+        InputStream inputStream = clientSocket.getInputStream();
+        Scanner serverInput = new Scanner(new InputStreamReader(inputStream));
+        String messageReceived = "";
+        byte[] byteBlock = new byte[1];
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        FileOutputStream fileOutputStream = null;
+        BufferedOutputStream bufferedOutputStream = null;
+
+        // send request
+        printWriter.println("requestCertificate");
+        printWriter.flush();
+
+        messageReceived = serverInput.nextLine();
+
+        // error
+        if (messageReceived == null ||
+                !messageReceived.equals("sending certificate")) {
+            throw new IOException();
+        }
+
+        // valid file to download
+        else {
+            File certificate = new File(src.getAbsolutePath() + "/" + CERTIFICATION);
+            fileOutputStream = new FileOutputStream(certificate);
+            bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
+            int byteRead = inputStream.read(byteBlock, 0, byteBlock.length);
+
+            while (byteRead >= 0) {
+                byteArrayOutputStream.write(byteBlock);
+                byteRead = inputStream.read(byteBlock);
+            }
+
+            bufferedOutputStream.write(byteArrayOutputStream.toByteArray());
+            bufferedOutputStream.flush();
+            bufferedOutputStream.close();
+            printWriter.close();
+
+        }
+        System.out.println();
+    }
+
+
     /***
      * method: help
      *
@@ -436,12 +480,19 @@ public class Client {
      * remove the "\src" in the path when run from the command line environment
      */
     private static void setDirectory() {
-        directory = new File("Client/FilesDirectory");
-        String absolutePath = directory.getAbsolutePath();
+        fileDirectory = new File("Client/FilesDirectory");
+        String absolutePath = fileDirectory.getAbsolutePath();
         absolutePath = absolutePath.replace("\\", "/");
         absolutePath = absolutePath.replace("/src", "");
         absolutePath = absolutePath.replace("/Client/Client", "/Client");
-        directory = new File(absolutePath);
+        fileDirectory = new File(absolutePath);
+
+        src = new File("Client/src");
+        absolutePath = src.getAbsolutePath();
+        absolutePath = absolutePath.replace("\\", "/");
+//        absolutePath = absolutePath.replace("/src", "");
+        absolutePath = absolutePath.replace("/Client/Client", "/Client");
+        src = new File(absolutePath);
     }
 
 
@@ -453,49 +504,141 @@ public class Client {
      * @return true if success, false if not
      * @throws IOException if socket error
      */
-    private static boolean authenticate() throws IOException {
+    private static boolean authenticate() throws Exception {
 
         /*
          * this is a prototype to authenticate based on the same initial IP address and ID
          * need to expand the protocol to cover keys exchange and encryption/decryption
          * see Server.authenticate() for more information
          */
-        boolean authenticateSuccess = true;
+        final boolean AUTHENTICATE_SUCCESS = true;
+        final boolean AUTHENTICATE_FAILURE = false;
         OutputStream outputStream = clientSocket.getOutputStream();
         PrintWriter printWriter = new PrintWriter(outputStream, true);
         InputStream inputStream = clientSocket.getInputStream();
         Scanner serverInput = new Scanner(new InputStreamReader(inputStream));
-        
-        printWriter.println(id);
-        printWriter.flush();
 
-        if(!serverInput.hasNextLine()) {
-            authenticateSuccess = false;
-            return authenticateSuccess;
+        if(!connectSuccess) {
+            try {
+                requestCertificate();
+                if (!verifyCertificate()) {
+                    System.out.println("certificate denied.");
+                    clientSocket.close();
+                    return AUTHENTICATE_FAILURE;
+                }
+
+            }
+            catch (IOException e) {
+                return AUTHENTICATE_FAILURE;
+            }
+        }
+//        else if(!hasSentKey) {
+//            printWriter.println(id);
+//            printWriter.flush();
+//            printWriter.println(masterKey);
+//            printWriter.flush();
+//            hasSentKey = true;
+//        }
+        else {
+
+            printWriter.println(id);
+            printWriter.flush();
+
+            if (!serverInput.hasNextLine()) {
+                return AUTHENTICATE_FAILURE;
+            }
+
+            String serverResponse = serverInput.nextLine();
+            if (serverResponse == null || !serverResponse.equalsIgnoreCase("ok")) {
+                return AUTHENTICATE_FAILURE;
+            }
         }
 
-        String serverResponse = serverInput.nextLine();
-        if(serverResponse == null || !serverResponse.equalsIgnoreCase("ok")) {
-            authenticateSuccess = false;
-        }
-
-        return authenticateSuccess;
+        return AUTHENTICATE_SUCCESS;
     }
-   
+
+
+
     /***
-     * method: certificate
+     * method: getPublicKey
      *
-     * read the key from the local file and return as string
+     * Transfer the key from format String to PublicKey
      *
-     * @return true if verify succeeds, false if not
-     */        
-    private static boolean certificate() throws Exception {
-    	boolean certificateSuccess = true;
-    	if(!Verify(certPath)) 			 
-    		certificateSuccess=false;		
-    	return certificateSuccess;
+     * @param key: key of format string
+     * @return key as PublicKey
+     */
+    private static PublicKey getPublicKey(String key) throws Exception {
+        byte[] keyBytes;
+        keyBytes = (new BASE64Decoder()).decodeBuffer(key);
+        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        PublicKey publicKey = keyFactory.generatePublic(keySpec);
+        return publicKey;
     }
-    
+
+    /***
+     * method: Verify
+     *
+     * Use the public key to verify the certificate
+     *
+     //     * @param certPath: the path of certificate path
+     * @return true if the verify succeeds, false if not
+     */
+
+    private static boolean verifyCertificate() {
+        Certificate cert;
+        PublicKey caPublicKey;
+        boolean verifysuccess = true;
+
+        try {
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            FileInputStream in = new FileInputStream(src.getAbsolutePath() + "/" + CERTIFICATION);
+            cert = cf.generateCertificate(in);
+            in.close();
+            X509Certificate t = (X509Certificate) cert;
+            Date timeNow = new Date();
+            t.checkValidity(timeNow);
+            String publicKey = getKey("CAPublicKey.txt");
+            caPublicKey = getPublicKey(publicKey);
+            try {
+                cert.verify(caPublicKey);
+                System.out.println("The Ceritificate is verified.\n");
+            }
+            catch (Exception e) {
+                // TODO Auto-generated catch block
+                verifysuccess = false;
+                System.out.println("The verify is not pass.\n");
+                e.printStackTrace();
+            }
+
+        }
+        catch (CertificateExpiredException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
+        catch (CertificateNotYetValidException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
+        catch (CertificateException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
+        catch (FileNotFoundException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
+        catch (IOException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        return verifysuccess;
+    }
+
+
     /***
      * method: getKey
      *
@@ -524,80 +667,14 @@ public class Client {
 
         return key == null ? null : key.toString();
     }
-    
-    /***
-     * method: getPublicKey
-     *
-     * Transfer the key from format String to PublicKey
-     *
-     * @param key: key of format string
-     * @return key as PublicKey
-     */
-	   private static PublicKey getPublicKey(String key)  
-            throws Exception {  
-		   byte[] keyBytes;
-	       keyBytes = (new BASE64Decoder()).decodeBuffer(key);
-	       X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
-	       KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-	       PublicKey publicKey = keyFactory.generatePublic(keySpec);
-	       return publicKey;
-    }  
-    
-	   /***
-	     * method: Verify
-	     *
-	     * Use the public key to verify the certificate
-	     *
-	     * @param certPath: the path of certificate path
-	     * @return true if the verify succeeds, false if not
-	     */
-    
-    public static boolean Verify(String certPath) throws Exception {
-        Certificate cert;
-        PublicKey caPublicKey;
-        String PublicKey;
-        boolean verifysuccess=true;
-		
-		certPath = directory.getAbsolutePath() + "/" + certPath;
-        try {
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            FileInputStream in = new FileInputStream(certPath);
-            cert = cf.generateCertificate(in);
-            in.close();
-            X509Certificate t = (X509Certificate) cert;
-            Date timeNow = new Date();
-            t.checkValidity(timeNow);
-			
-			
-            PublicKey=getKey("CAPublicKey.txt");
-            caPublicKey = getPublicKey(PublicKey);
-            try {
-                cert.verify(caPublicKey);
-				System.out.println("The Ceritificate is verified.\n");
-            } catch (Exception e) {
-                // TODO Auto-generated catch block
-            	verifysuccess=false;
-                System.out.println("The verify is not pass.\n");
-                e.printStackTrace();
-            }
-         
-        } catch (CertificateExpiredException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
-        } catch (CertificateNotYetValidException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
-        } catch (CertificateException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
-        } catch (FileNotFoundException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
-        } catch (IOException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
+
+
+    private static void deleteCertificate() {
+        File certificate = new File(src.getAbsolutePath() + "/" + CERTIFICATION);
+
+        if(certificate.exists()) {
+            certificate.delete();
         }
-        return verifysuccess;
     }
 
 }

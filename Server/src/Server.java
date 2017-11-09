@@ -21,13 +21,18 @@ import java.util.Scanner;
 
 public class Server {
     private static Socket clientSocket = null;
-    private static File directory = null;
+    private static File filesDirectory = null;
+    private static File src = null;
     private static final String PRIVATE_KEY = getKey("PrivateKey.txt");
     private static final String PUBLIC_KEY = getKey("PublicKey.txt");
     private static boolean isBusy = false;
+    private static boolean hasSentCertificate = false;
+    private static boolean hasReceivedKeys = false;
+    private static long masterKey = 0;
     private static String clientIpAddress = null;
     private static String clientId = null;
-    
+    private static final String CERTIFICATION = "CA-certificate.crt";
+
 
     public static void main(String[] args) {
         // error with keys then stop
@@ -41,7 +46,7 @@ public class Server {
         final String BIG_DIV = "\n======================================================\n";
         final String SMALL_DIV = "\n---------------------\n";
 
-        setDirectory();
+        setDirectories();
 
         try {
             System.out.println(BIG_DIV);
@@ -58,25 +63,29 @@ public class Server {
              */
             while (!stopCommunication) {
                 clientSocket = serverSocket.accept();
-               
+
                 // make sure to talk to the same client over several sessions
                 if(!authenticate()) {
                     clientSocket.close();
                     continue;
                 }
 
+
                 /*
                  * if successfully connect for the first time:
                  *      set initial connection start time
                  *      from now is busy
+                 *      continue to key exchange on next authentication
                  */
                 if (!isBusy) {
                     date = new Date();
                     System.out.println("Connection established at " + dateFormat.format(date));
                     System.out.println(SMALL_DIV);
                     isBusy = true;
+                    continue;
                 }
-                stopCommunication = communicate();				
+
+                stopCommunication = communicate();
                 clientSocket.close();
 
             }
@@ -193,13 +202,13 @@ public class Server {
      * @throws IOException
      */
     private static void list() throws IOException {
-        File[] files = directory.listFiles();
+        File[] files = filesDirectory.listFiles();
         StringBuilder messageToSend = new StringBuilder();
         OutputStream outputStream = clientSocket.getOutputStream();
         PrintWriter printWriter = new PrintWriter(outputStream, true);
 
         if(files == null) {
-            messageToSend.append("Error: cannot find files directory.");
+            messageToSend.append("Error: cannot find files filesDirectory.");
 
             System.out.println(">> " + messageToSend.toString());
             printWriter.println(messageToSend.toString());
@@ -207,7 +216,7 @@ public class Server {
             printWriter.close();
         }
         else if (files.length == 0) {
-            messageToSend.append("Empty files directory.");
+            messageToSend.append("Empty files filesDirectory.");
 
             System.out.println(">> " + messageToSend.toString());
             printWriter.println(messageToSend.toString());
@@ -253,7 +262,7 @@ public class Server {
         String fileToSendName = commandTokens[1];
 
         try {
-            File fileToSend = new File(directory.getAbsolutePath()
+            File fileToSend = new File(filesDirectory.getAbsolutePath()
                     + "/" + fileToSendName);
             byte[] byteArray = new byte[(int) fileToSend.length()];
             fileInputStream = new FileInputStream(fileToSend);
@@ -300,7 +309,7 @@ public class Server {
         String filePath = commandTokens[1].replace("\\", "/");
         String[] uploadedFilePathComponents = filePath.split("/");
         String uploadedFileName = uploadedFilePathComponents[uploadedFilePathComponents.length - 1];
-        File receivingFile = new File(directory.getAbsolutePath() +
+        File receivingFile = new File(filesDirectory.getAbsolutePath() +
                 "/" + uploadedFileName);
         InputStream inputStream = clientSocket.getInputStream();
         byte[] byteBlock = new byte[1];
@@ -327,18 +336,65 @@ public class Server {
 
 
     /***
-     * method: setDirectory
+     * method: sendCertificate
+     *
+     * send the CA certificate to client
+     * @throws IOException
+     */
+    private static void sendCertificate() throws IOException {
+        OutputStream outputStream = clientSocket.getOutputStream();
+        PrintWriter printWriter = new PrintWriter(outputStream, true);
+        BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
+        FileInputStream fileInputStream = null;
+        BufferedInputStream bufferedInputStream = null;
+
+        try {
+            File fileToSend = new File(src.getAbsolutePath() + "/" + CERTIFICATION);
+            byte[] byteArray = new byte[(int) fileToSend.length()];
+            fileInputStream = new FileInputStream(fileToSend);
+            bufferedInputStream = new BufferedInputStream(fileInputStream);
+
+            // confirm
+            printWriter.println("sending certificate");
+
+            // file transfer
+            bufferedInputStream.read(byteArray, 0, byteArray.length);
+            bufferedOutputStream.write(byteArray, 0, byteArray.length);
+            bufferedOutputStream.flush();
+            bufferedOutputStream.close();
+        }
+        catch (FileNotFoundException e) {
+            printWriter.println("error");
+            printWriter.flush();
+            printWriter.close();
+        }
+        finally {
+            System.out.println();
+        }
+
+    }
+
+
+    /***
+     * method: setDirectories
      *
      * set the Files Directory to store all files
      * remove the "\src" in the path when run from the command line environment
      */
-    private static void setDirectory() {
-        directory = new File("Server/FilesDirectory");
-        String absolutePath = directory.getAbsolutePath();
+    private static void setDirectories() {
+        filesDirectory = new File("Server/FilesDirectory");
+        String absolutePath = filesDirectory.getAbsolutePath();
         absolutePath = absolutePath.replace("\\", "/");
         absolutePath = absolutePath.replace("/src", "");
         absolutePath = absolutePath.replace("/Server/Server", "/Server");
-        directory = new File(absolutePath);
+        filesDirectory = new File(absolutePath);
+
+        src = new File("Server/src");
+        absolutePath = src.getAbsolutePath();
+        absolutePath = absolutePath.replace("\\", "/");
+//        absolutePath = absolutePath.replace("/src", "");
+        absolutePath = absolutePath.replace("/Server/Server", "/Server");
+        src = new File(absolutePath);
     }
 
 
@@ -368,27 +424,47 @@ public class Server {
          * NOTE: session key will be increment after each session
          */
 
-		 
-
-        // just to check the id
         OutputStream outputStream = clientSocket.getOutputStream();
         PrintWriter printWriter = new PrintWriter(outputStream, true);
         InputStream inputStream = clientSocket.getInputStream();
         Scanner receivedInput = new Scanner(new InputStreamReader(inputStream));
         String clientMessage = receivedInput.nextLine();
 
-        if(clientId == null) {
-            clientId = clientMessage;
-            clientIpAddress = clientSocket.getInetAddress().getHostAddress();
-            authenticateSuccess = true;
-        }
-        else {
-            authenticateSuccess = clientMessage.equals(clientId) &&
-                    clientSocket.getInetAddress().getHostAddress().equals(clientIpAddress);
-        }
+        // first time connect (certificate)
+        if(!isBusy) {
 
-        printWriter.println(authenticateSuccess ? "ok" : "busy");
-        printWriter.flush();
+            if(clientMessage.equals("requestCertificate")) {
+                sendCertificate();
+                hasSentCertificate = true;
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+//        else if(!hasReceivedKeys) {
+//            clientId = clientMessage;
+//            clientIpAddress = clientSocket.getInetAddress().getHostAddress();
+//            masterKey = receivedInput.nextLong();
+//            authenticateSuccess = true;
+//            hasReceivedKeys = true;
+//        }
+        // already send certificate and receive keys
+        else {
+            if(clientId == null) {
+
+                clientId = clientMessage;
+                clientIpAddress = clientSocket.getInetAddress().getHostAddress();
+                authenticateSuccess = true;
+            }
+            else {
+                authenticateSuccess = clientMessage.equals(clientId) &&
+                        clientSocket.getInetAddress().getHostAddress().equals(clientIpAddress);
+            }
+
+            printWriter.println(authenticateSuccess ? "ok" : "busy");
+            printWriter.flush();
+        }
 
         return authenticateSuccess;
     }
@@ -422,7 +498,7 @@ public class Server {
 
         return key == null ? null : key.toString();
     }
-	 
+
 
 }
 
