@@ -60,7 +60,7 @@ public class Server {
 
         try {
             System.out.println(BIG_DIV);
-            System.out.println("IP address: " + InetAddress.getLocalHost().getHostAddress());
+            System.out.println("IP address: " + Inet6Address.getLocalHost().getHostAddress());
             System.out.println("Waiting for connection...");
 
             ServerSocket serverSocket = new ServerSocket(1111);
@@ -364,25 +364,20 @@ public class Server {
         BufferedInputStream bufferedInputStream = null;
 
         try {
-
-            String certificatePath = src.getAbsolutePath() + "/" + CERTIFICATION;
-            System.out.println(certificatePath);
-
-            File fileToSend = new File(certificatePath);
+            File fileToSend = new File(src.getAbsolutePath() + "/" + CERTIFICATION);
             byte[] byteArray = new byte[(int) fileToSend.length()];
             fileInputStream = new FileInputStream(fileToSend);
             bufferedInputStream = new BufferedInputStream(fileInputStream);
 
             // confirm
             printWriter.println("sending certificate");
-            printWriter.flush();
+//            printWriter.flush();
 
             // file transfer
             bufferedInputStream.read(byteArray, 0, byteArray.length);
             bufferedOutputStream.write(byteArray, 0, byteArray.length);
             bufferedOutputStream.flush();
             bufferedOutputStream.close();
-
         }
         catch (FileNotFoundException e) {
             printWriter.println("error");
@@ -407,11 +402,11 @@ public class Server {
         absolutePath = absolutePath.replace("/Server/Server", "/Server");
         filesDirectory = new File(absolutePath);
 
-
         src = new File("Server/src");
         absolutePath = src.getAbsolutePath();
         absolutePath = absolutePath.replace("\\", "/");
-        absolutePath = absolutePath.replace("Server/src/Server/src", "Server/src");
+//        absolutePath = absolutePath.replace("/src", "");
+        absolutePath = absolutePath.replace("/Server/Server", "/Server");
         src = new File(absolutePath);
     }
 
@@ -425,6 +420,7 @@ public class Server {
      * @throws IOException
      */
     private boolean authenticate() throws IOException {
+        boolean authenticateSuccess = false;
 
         /*
          * PROTOTYPE:
@@ -441,7 +437,6 @@ public class Server {
          * NOTE: session key will be increment after each session
          */
 
-        boolean authenticateSuccess = false;
         OutputStream outputStream = clientSocket.getOutputStream();
         PrintWriter printWriter = new PrintWriter(outputStream, true);
         InputStream inputStream = clientSocket.getInputStream();

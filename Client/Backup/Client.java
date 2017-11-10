@@ -50,15 +50,16 @@ public class Client {
         setDirectory();
         System.out.println(BIG_DIV);
 
+        // get server's IP address
+        System.out.print("Enter server's IP address: ");
+        String serverIPAddress = scanner.nextLine();
+        System.out.println("Setting up the connection...");
+
         try {
-            // get server's IP address
-            System.out.print("Enter server's IP address: ");
-            String serverIPAddress = scanner.nextLine();
-            InetAddress serverAddress = InetAddress.getByName(serverIPAddress);
-            System.out.println("Setting up the connection...");
 
             while (!stopCommunication) {
-                clientSocket = new Socket(serverAddress, 1111);
+                // create a socket to connect to the server on port 1111
+                clientSocket = new Socket(serverIPAddress, 1111);
                 clientSocket.setSoTimeout(30000);
 
 
@@ -69,7 +70,12 @@ public class Client {
                         clientSocket.close();
                         break;
                     }
-
+                    else {
+                        System.out.println("communicate");
+                        stopCommunication = communicate();
+                        clientSocket.close();
+                        continue;
+                    }
                 }
                 else if(hasReceivedCertificate && !hasSentKey) {
                     clientSocket.close();
@@ -101,7 +107,6 @@ public class Client {
         }
         catch (IOException e) {
             System.out.println("\nError: sockets corrupted.");
-            e.printStackTrace();
         }
 //        catch (Exception e) {
 //            System.out.println("\nError: certificate.");
@@ -440,14 +445,11 @@ public class Client {
 
         // error
         if(!messageReceived.equals("sending certificate")) {
-            System.out.println(messageReceived);
             throw new IOException();
         }
         // valid certificate
         else {
-            String certificatePath = src.getAbsolutePath() + "/" + CERTIFICATION;
-            File certificate = new File(certificatePath);
-            System.out.println(certificate.getAbsolutePath());
+            File certificate = new File(src.getAbsolutePath() + "/" + CERTIFICATION);
             fileOutputStream = new FileOutputStream(certificate);
             bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
             int byteRead = inputStream.read(byteBlock, 0, byteBlock.length);
@@ -461,6 +463,7 @@ public class Client {
             bufferedOutputStream.flush();
             bufferedOutputStream.close();
             printWriter.close();
+
         }
     }
 
@@ -506,7 +509,8 @@ public class Client {
         src = new File("Client/src");
         absolutePath = src.getAbsolutePath();
         absolutePath = absolutePath.replace("\\", "/");
-        absolutePath = absolutePath.replace("Client/src/Client/src", "Client/src");
+//        absolutePath = absolutePath.replace("/src", "");
+        absolutePath = absolutePath.replace("/Client/Client", "/Client");
         src = new File(absolutePath);
     }
 
@@ -605,8 +609,7 @@ public class Client {
 
         try {
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            File certificate = new File(src.getAbsolutePath() + "/" + CERTIFICATION);
-            FileInputStream in = new FileInputStream(certificate);
+            FileInputStream in = new FileInputStream(src.getAbsolutePath() + "/" + CERTIFICATION);
             cert = cf.generateCertificate(in);
             in.close();
             X509Certificate t = (X509Certificate) cert;
@@ -679,7 +682,7 @@ public class Client {
 
     private void deleteCertificate() {
         File certificate = new File(src.getAbsolutePath() + "/" + CERTIFICATION);
-        System.out.println(certificate.getAbsolutePath());
+
         if(certificate.exists()) {
             certificate.delete();
         }
