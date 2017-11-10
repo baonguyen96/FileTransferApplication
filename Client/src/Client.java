@@ -25,7 +25,7 @@ public class Client {
     private static boolean connectSuccess = false;
     private static boolean hasReceivedCertificate = false;
     private static boolean hasSentKey = false;
-    private static long masterKey = 0;
+    private static long masterKey = 99;
     private static final String CERTIFICATION = "CA-certificate.crt";
 
     public static void main(String[] args) {
@@ -54,9 +54,12 @@ public class Client {
 
                 // authentication
                 if (!authenticate()) {
-                    System.out.println("Access denied.");
+                    System.out.println("\nAccess denied.");
                     clientSocket.close();
                     break;
+                }
+                else if(hasReceivedCertificate && !hasSentKey) {
+                    continue;
                 }
 
                 /*
@@ -68,7 +71,6 @@ public class Client {
                             dateFormat.format(date));
                     System.out.println(SMALL_DIV);
                     connectSuccess = true;
-                    continue;
                 }
 
 
@@ -89,10 +91,9 @@ public class Client {
         catch (IOException e) {
             System.out.println("\nError: sockets corrupted.");
         }
-        catch (Exception e) {
-            // TODO Auto-generated catch block
-            System.out.println("\nError: certificate.");
-        }
+//        catch (Exception e) {
+//            System.out.println("\nError: certificate.");
+//        }
         finally {
             deleteCertificate();
             System.out.println(SMALL_DIV);
@@ -406,6 +407,7 @@ public class Client {
 
 
     private static void requestCertificate() throws IOException {
+
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
         InputStream inputStream = clientSocket.getInputStream();
         Scanner serverInput = new Scanner(new InputStreamReader(inputStream));
@@ -415,19 +417,21 @@ public class Client {
         FileOutputStream fileOutputStream = null;
         BufferedOutputStream bufferedOutputStream = null;
 
-        // send request
         printWriter.println("requestCertificate");
         printWriter.flush();
 
-        messageReceived = serverInput.nextLine();
-
-        // error
-        if (messageReceived == null ||
-                !messageReceived.equals("sending certificate")) {
+        if (!serverInput.hasNextLine()) {
             throw new IOException();
         }
 
-        // valid file to download
+        // confirmation message
+        messageReceived = serverInput.nextLine();
+
+        // error
+        if(!messageReceived.equals("sending certificate")) {
+            throw new IOException();
+        }
+        // valid certificate
         else {
             File certificate = new File(src.getAbsolutePath() + "/" + CERTIFICATION);
             fileOutputStream = new FileOutputStream(certificate);
@@ -445,6 +449,7 @@ public class Client {
             printWriter.close();
 
         }
+
         System.out.println();
     }
 
@@ -504,7 +509,7 @@ public class Client {
      * @return true if success, false if not
      * @throws IOException if socket error
      */
-    private static boolean authenticate() throws Exception {
+    private static boolean authenticate() throws IOException {
 
         /*
          * this is a prototype to authenticate based on the same initial IP address and ID
@@ -518,27 +523,27 @@ public class Client {
         InputStream inputStream = clientSocket.getInputStream();
         Scanner serverInput = new Scanner(new InputStreamReader(inputStream));
 
-        if(!connectSuccess) {
+        if(!hasReceivedCertificate) {
             try {
                 requestCertificate();
                 if (!verifyCertificate()) {
                     System.out.println("certificate denied.");
-                    clientSocket.close();
                     return AUTHENTICATE_FAILURE;
                 }
+                hasReceivedCertificate = true;
 
             }
             catch (IOException e) {
                 return AUTHENTICATE_FAILURE;
             }
         }
-//        else if(!hasSentKey) {
-//            printWriter.println(id);
+        else if(!hasSentKey) {
+            printWriter.println(id);
 //            printWriter.flush();
-//            printWriter.println(masterKey);
+            printWriter.println(masterKey);
 //            printWriter.flush();
-//            hasSentKey = true;
-//        }
+            hasSentKey = true;
+        }
         else {
 
             printWriter.println(id);
@@ -613,23 +618,18 @@ public class Client {
 
         }
         catch (CertificateExpiredException e1) {
-            // TODO Auto-generated catch block
             e1.printStackTrace();
         }
         catch (CertificateNotYetValidException e1) {
-            // TODO Auto-generated catch block
             e1.printStackTrace();
         }
         catch (CertificateException e1) {
-            // TODO Auto-generated catch block
             e1.printStackTrace();
         }
         catch (FileNotFoundException e1) {
-            // TODO Auto-generated catch block
             e1.printStackTrace();
         }
         catch (IOException e1) {
-            // TODO Auto-generated catch block
             e1.printStackTrace();
         }
         catch (Exception e) {

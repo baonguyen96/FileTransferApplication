@@ -66,7 +66,11 @@ public class Server {
 
                 // make sure to talk to the same client over several sessions
                 if(!authenticate()) {
+                    isBusy = hasReceivedKeys = hasSentCertificate = false;
                     clientSocket.close();
+                    continue;
+                }
+                else if(hasSentCertificate && !hasReceivedKeys) {
                     continue;
                 }
 
@@ -80,9 +84,13 @@ public class Server {
                 if (!isBusy) {
                     date = new Date();
                     System.out.println("Connection established at " + dateFormat.format(date));
+
+                    System.out.println(clientId);
+                    System.out.println(clientIpAddress);
+                    System.out.println(masterKey);
+
                     System.out.println(SMALL_DIV);
                     isBusy = true;
-                    continue;
                 }
 
                 stopCommunication = communicate();
@@ -356,6 +364,7 @@ public class Server {
 
             // confirm
             printWriter.println("sending certificate");
+//            printWriter.flush();
 
             // file transfer
             bufferedInputStream.read(byteArray, 0, byteArray.length);
@@ -431,7 +440,7 @@ public class Server {
         String clientMessage = receivedInput.nextLine();
 
         // first time connect (certificate)
-        if(!isBusy) {
+        if(!hasSentCertificate) {
 
             if(clientMessage.equals("requestCertificate")) {
                 sendCertificate();
@@ -442,25 +451,17 @@ public class Server {
                 return false;
             }
         }
-//        else if(!hasReceivedKeys) {
-//            clientId = clientMessage;
-//            clientIpAddress = clientSocket.getInetAddress().getHostAddress();
-//            masterKey = receivedInput.nextLong();
-//            authenticateSuccess = true;
-//            hasReceivedKeys = true;
-//        }
+        else if(!hasReceivedKeys) {
+            clientId = clientMessage;
+            clientIpAddress = clientSocket.getInetAddress().getHostAddress();
+            masterKey = Long.parseLong(receivedInput.nextLine());
+            authenticateSuccess = true;
+            hasReceivedKeys = true;
+        }
         // already send certificate and receive keys
         else {
-            if(clientId == null) {
-
-                clientId = clientMessage;
-                clientIpAddress = clientSocket.getInetAddress().getHostAddress();
-                authenticateSuccess = true;
-            }
-            else {
-                authenticateSuccess = clientMessage.equals(clientId) &&
-                        clientSocket.getInetAddress().getHostAddress().equals(clientIpAddress);
-            }
+            authenticateSuccess = clientMessage.equals(clientId) &&
+                    clientSocket.getInetAddress().getHostAddress().equals(clientIpAddress);
 
             printWriter.println(authenticateSuccess ? "ok" : "busy");
             printWriter.flush();
