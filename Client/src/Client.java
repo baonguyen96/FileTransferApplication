@@ -18,17 +18,28 @@ import sun.misc.BASE64Decoder;
 
 
 public class Client {
-    private static Socket clientSocket = null;
-    private static File fileDirectory = null;
-    private static File src = null;
-    private static final long id = System.currentTimeMillis();
-    private static boolean connectSuccess = false;
-    private static boolean hasReceivedCertificate = false;
-    private static boolean hasSentKey = false;
-    private static long masterKey = 99;
-    private static final String CERTIFICATION = "CA-certificate.crt";
+    private Socket clientSocket = null;
+    private File fileDirectory = null;
+    private File src = null;
+    private final long id = System.currentTimeMillis();
+    private boolean connectSuccess = false;
+    private boolean hasReceivedCertificate = false;
+    private boolean hasSentKey = false;
+    private long masterKey = 99;
+    private final String CERTIFICATION = "CA-certificate.crt";
+
+
+    private Client() {
+    }
+
 
     public static void main(String[] args) {
+        Client client = new Client();
+        client.exec();
+    }
+
+
+    private void exec() {
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         Date date = null;
         boolean stopCommunication = false;
@@ -54,17 +65,24 @@ public class Client {
 
                 // authentication
                 if (!authenticate()) {
-                    System.out.println("\nAccess denied.");
-                    clientSocket.close();
-                    break;
+                    if(!connectSuccess) {
+                        System.out.println("\nAccess denied.");
+                        clientSocket.close();
+                        break;
+                    }
+                    else {
+                        System.out.println("communicate");
+                        stopCommunication = communicate();
+                        clientSocket.close();
+                        continue;
+                    }
                 }
                 else if(hasReceivedCertificate && !hasSentKey) {
+                    clientSocket.close();
                     continue;
                 }
 
-                /*
-                 * first time pass authentication -> continue for key exchange
-                 */
+
                 if (!connectSuccess) {
                     date = new Date();
                     System.out.println("Connection established at " +
@@ -72,7 +90,6 @@ public class Client {
                     System.out.println(SMALL_DIV);
                     connectSuccess = true;
                 }
-
 
                 stopCommunication = communicate();
                 clientSocket.close();
@@ -105,7 +122,6 @@ public class Client {
         }
     }
 
-
     /***
      * method: isValidCommand
      *
@@ -125,7 +141,7 @@ public class Client {
      * @param delimiter: regex to split
      * @return true if valid command, false otherwise
      */
-    private static boolean isValidCommand(String clientCommand, String delimiter) {
+    private boolean isValidCommand(String clientCommand, String delimiter) {
         String[] commandTokens = clientCommand.split(delimiter);
         boolean isQuit = commandTokens.length == 1 &&
                 commandTokens[0].equalsIgnoreCase("quit");
@@ -152,7 +168,7 @@ public class Client {
      * @return true if stop communication, false if not
      * @throws IOException
      */
-    private static boolean communicate() throws IOException {
+    private boolean communicate() throws IOException {
         final String DELIMITER = "\\s+\\|\\s+";
         String command = getCommand(DELIMITER);
         String[] commandComponents = command.split(DELIMITER);
@@ -190,7 +206,7 @@ public class Client {
      * @param delimiter: regex to split
      * @return a valid command
      */
-    private static String getCommand(String delimiter) {
+    private String getCommand(String delimiter) {
         Scanner input = new Scanner(System.in);
         String command = "";
         boolean isValid = false;
@@ -222,7 +238,7 @@ public class Client {
      * @param command: client's command
      * @throws IOException
      */
-    private static void quit(String command) throws IOException {
+    private void quit(String command) throws IOException {
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
         printWriter.println(command);
         printWriter.flush();
@@ -239,7 +255,7 @@ public class Client {
      * @param command: client's command
      * @throws IOException
      */
-    private static void list(String command) throws IOException {
+    private void list(String command) throws IOException {
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
         Scanner serverInput = new Scanner(new InputStreamReader(clientSocket.getInputStream()));
         String messageReceived = "";
@@ -262,7 +278,7 @@ public class Client {
      * list-me command
      * show a list of files the client contains
      */
-    private static void listMe() throws IOException {
+    private void listMe() throws IOException {
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
         File[] files = fileDirectory.listFiles();
         StringBuilder listOfFiles = new StringBuilder();
@@ -305,7 +321,7 @@ public class Client {
      * @param commandComponents: parts of command
      * @throws IOException
      */
-    private static void download(String command, String[] commandComponents) throws IOException {
+    private void download(String command, String[] commandComponents) throws IOException {
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
         InputStream inputStream = clientSocket.getInputStream();
         Scanner serverInput = new Scanner(new InputStreamReader(inputStream));
@@ -363,7 +379,7 @@ public class Client {
      * @param commandComponents: parts of command
      * @throws IOException
      */
-    private static void upload(String command, String[] commandComponents) throws IOException {
+    private void upload(String command, String[] commandComponents) throws IOException {
         OutputStream outputStream = clientSocket.getOutputStream();
         String fileName = commandComponents[1];
         String fileNameFormattedPath = fileName.replace("\\", "\\\\");
@@ -406,7 +422,7 @@ public class Client {
     }
 
 
-    private static void requestCertificate() throws IOException {
+    private void requestCertificate() throws IOException {
 
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
         InputStream inputStream = clientSocket.getInputStream();
@@ -449,8 +465,6 @@ public class Client {
             printWriter.close();
 
         }
-
-        System.out.println();
     }
 
 
@@ -461,7 +475,7 @@ public class Client {
      *
      * @throws IOException
      */
-    private static void help() throws IOException {
+    private void help() throws IOException {
         System.out.println(">> All commands: ");
         System.out.println("       quit:            end session");
         System.out.println("       list:            list all files of the server");
@@ -484,7 +498,7 @@ public class Client {
      * set the Files Directory to store all files
      * remove the "\src" in the path when run from the command line environment
      */
-    private static void setDirectory() {
+    private void setDirectory() {
         fileDirectory = new File("Client/FilesDirectory");
         String absolutePath = fileDirectory.getAbsolutePath();
         absolutePath = absolutePath.replace("\\", "/");
@@ -509,7 +523,7 @@ public class Client {
      * @return true if success, false if not
      * @throws IOException if socket error
      */
-    private static boolean authenticate() throws IOException {
+    private boolean authenticate() throws IOException {
 
         /*
          * this is a prototype to authenticate based on the same initial IP address and ID
@@ -539,15 +553,13 @@ public class Client {
         }
         else if(!hasSentKey) {
             printWriter.println(id);
-//            printWriter.flush();
             printWriter.println(masterKey);
-//            printWriter.flush();
             hasSentKey = true;
         }
         else {
 
             printWriter.println(id);
-            printWriter.flush();
+//            printWriter.flush();
 
             if (!serverInput.hasNextLine()) {
                 return AUTHENTICATE_FAILURE;
@@ -572,7 +584,7 @@ public class Client {
      * @param key: key of format string
      * @return key as PublicKey
      */
-    private static PublicKey getPublicKey(String key) throws Exception {
+    private PublicKey getPublicKey(String key) throws Exception {
         byte[] keyBytes;
         keyBytes = (new BASE64Decoder()).decodeBuffer(key);
         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
@@ -590,7 +602,7 @@ public class Client {
      * @return true if the verify succeeds, false if not
      */
 
-    private static boolean verifyCertificate() {
+    private boolean verifyCertificate() {
         Certificate cert;
         PublicKey caPublicKey;
         boolean verifysuccess = true;
@@ -610,7 +622,6 @@ public class Client {
                 System.out.println("The Ceritificate is verified.\n");
             }
             catch (Exception e) {
-                // TODO Auto-generated catch block
                 verifysuccess = false;
                 System.out.println("The verify is not pass.\n");
                 e.printStackTrace();
@@ -647,7 +658,7 @@ public class Client {
      * @param keyFileName: local file that contains the key
      * @return key as string
      */
-    private static String getKey(String keyFileName) {
+    private String getKey(String keyFileName) {
         File file = new File(keyFileName);
         if(!file.exists()) {
             file = new File("Client/src/" + keyFileName);
@@ -669,7 +680,7 @@ public class Client {
     }
 
 
-    private static void deleteCertificate() {
+    private void deleteCertificate() {
         File certificate = new File(src.getAbsolutePath() + "/" + CERTIFICATION);
 
         if(certificate.exists()) {

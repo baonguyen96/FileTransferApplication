@@ -20,21 +20,31 @@ import java.util.Date;
 import java.util.Scanner;
 
 public class Server {
-    private static Socket clientSocket = null;
-    private static File filesDirectory = null;
-    private static File src = null;
-    private static final String PRIVATE_KEY = getKey("PrivateKey.txt");
-    private static final String PUBLIC_KEY = getKey("PublicKey.txt");
-    private static boolean isBusy = false;
-    private static boolean hasSentCertificate = false;
-    private static boolean hasReceivedKeys = false;
-    private static long masterKey = 0;
-    private static String clientIpAddress = null;
-    private static String clientId = null;
-    private static final String CERTIFICATION = "CA-certificate.crt";
+    private Socket clientSocket = null;
+    private File filesDirectory = null;
+    private File src = null;
+    private final String PRIVATE_KEY = getKey("PrivateKey.txt");
+    private final String PUBLIC_KEY = getKey("PublicKey.txt");
+    private boolean isBusy = false;
+    private boolean hasSentCertificate = false;
+    private boolean hasReceivedKeys = false;
+    private long masterKey = 0;
+    private String clientIpAddress = null;
+    private String clientId = null;
+    private final String CERTIFICATION = "CA-certificate.crt";
 
+
+    private Server() {
+
+    }
 
     public static void main(String[] args) {
+        Server server = new Server();
+        server.exec();
+    }
+
+
+    private void exec() {
         // error with keys then stop
         if(PRIVATE_KEY == null || PUBLIC_KEY == null) {
             return;
@@ -50,7 +60,7 @@ public class Server {
 
         try {
             System.out.println(BIG_DIV);
-            System.out.println("IP address: " + InetAddress.getLocalHost().getHostAddress());
+            System.out.println("IP address: " + Inet6Address.getLocalHost().getHostAddress());
             System.out.println("Waiting for connection...");
 
             ServerSocket serverSocket = new ServerSocket(1111);
@@ -66,7 +76,6 @@ public class Server {
 
                 // make sure to talk to the same client over several sessions
                 if(!authenticate()) {
-                    isBusy = hasReceivedKeys = hasSentCertificate = false;
                     clientSocket.close();
                     continue;
                 }
@@ -79,7 +88,6 @@ public class Server {
                  * if successfully connect for the first time:
                  *      set initial connection start time
                  *      from now is busy
-                 *      continue to key exchange on next authentication
                  */
                 if (!isBusy) {
                     date = new Date();
@@ -122,7 +130,6 @@ public class Server {
         }
     }
 
-
     /***
      * method: isValidCommand
      *
@@ -133,7 +140,7 @@ public class Server {
      *
      * @return true if valid command, false if not
      */
-    private static boolean isValidCommand(String clientCommand, String delimiter) {
+    private boolean isValidCommand(String clientCommand, String delimiter) {
         String[] commandTokens = clientCommand.split(delimiter);
         boolean isQuit = commandTokens.length == 1 &&
                 commandTokens[0].equalsIgnoreCase("quit");
@@ -159,7 +166,7 @@ public class Server {
      * @throws FileNotFoundException
      * @throws IOException
      */
-    private static boolean communicate() throws IOException {
+    private boolean communicate() throws IOException {
         String receivedCommand = "";
         final boolean STOP_CONNECTION_AFTER_THIS = true;
         InputStream inputStream = clientSocket.getInputStream();
@@ -209,7 +216,7 @@ public class Server {
      *
      * @throws IOException
      */
-    private static void list() throws IOException {
+    private void list() throws IOException {
         File[] files = filesDirectory.listFiles();
         StringBuilder messageToSend = new StringBuilder();
         OutputStream outputStream = clientSocket.getOutputStream();
@@ -261,7 +268,7 @@ public class Server {
      * @param commandTokens: parts of client's command
      * @throws IOException
      */
-    private static void clientDownload(String[] commandTokens) throws IOException {
+    private void clientDownload(String[] commandTokens) throws IOException {
         OutputStream outputStream = clientSocket.getOutputStream();
         PrintWriter printWriter = new PrintWriter(outputStream, true);
         BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
@@ -313,7 +320,7 @@ public class Server {
      * @param commandTokens: parts of client's command
      * @throws IOException
      */
-    private static void clientUpload(String[] commandTokens) throws IOException {
+    private void clientUpload(String[] commandTokens) throws IOException {
         String filePath = commandTokens[1].replace("\\", "/");
         String[] uploadedFilePathComponents = filePath.split("/");
         String uploadedFileName = uploadedFilePathComponents[uploadedFilePathComponents.length - 1];
@@ -349,7 +356,7 @@ public class Server {
      * send the CA certificate to client
      * @throws IOException
      */
-    private static void sendCertificate() throws IOException {
+    private void sendCertificate() throws IOException {
         OutputStream outputStream = clientSocket.getOutputStream();
         PrintWriter printWriter = new PrintWriter(outputStream, true);
         BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
@@ -377,9 +384,6 @@ public class Server {
             printWriter.flush();
             printWriter.close();
         }
-        finally {
-            System.out.println();
-        }
 
     }
 
@@ -390,7 +394,7 @@ public class Server {
      * set the Files Directory to store all files
      * remove the "\src" in the path when run from the command line environment
      */
-    private static void setDirectories() {
+    private void setDirectories() {
         filesDirectory = new File("Server/FilesDirectory");
         String absolutePath = filesDirectory.getAbsolutePath();
         absolutePath = absolutePath.replace("\\", "/");
@@ -415,7 +419,7 @@ public class Server {
      *
      * @throws IOException
      */
-    private static boolean authenticate() throws IOException {
+    private boolean authenticate() throws IOException {
         boolean authenticateSuccess = false;
 
         /*
@@ -479,7 +483,7 @@ public class Server {
      * @param keyFileName: local file that contains the key
      * @return key as string
      */
-    private static String getKey(String keyFileName) {
+    private String getKey(String keyFileName) {
         File file = new File(keyFileName);
         if(!file.exists()) {
             file = new File("Server/src/" + keyFileName);
