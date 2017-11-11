@@ -1,17 +1,3 @@
-/***
- * Server
- *
- * Bao Nguyen
- * CS 6349.001
- *
- * Possible client commands:
- *      quit:            end session
- *      list:            list all files in the FilesDirectory of the server
- *      download | file: download the existing "file" in the FilesDirectory of the server
- *      upload | file:   upload the "file" to the FilesDirectory of the server
- *      stay:            keep session alive (command error on client side)
- */
-
 import java.io.*;
 import java.net.*;
 import java.text.DateFormat;
@@ -93,9 +79,9 @@ public class Server {
                     date = new Date();
                     System.out.println("Connection established at " + dateFormat.format(date));
 
-                    System.out.println(clientId);
-                    System.out.println(clientIpAddress);
-                    System.out.println(masterKey);
+//                    System.out.println(clientId);
+//                    System.out.println(clientIpAddress);
+//                    System.out.println(masterKey);
 
                     System.out.println(SMALL_DIV);
                     isBusy = true;
@@ -169,6 +155,7 @@ public class Server {
     private boolean communicate() throws IOException {
         String receivedCommand = "";
         final boolean STOP_CONNECTION_AFTER_THIS = true;
+        final boolean CONTINUE_CONNECTION_AFTER_THIS = false;
         InputStream inputStream = clientSocket.getInputStream();
         Scanner receivedInput = new Scanner(new InputStreamReader(inputStream));
         final String DELIMITER = "\\s+\\|\\s+";
@@ -183,7 +170,7 @@ public class Server {
         receivedCommand = receivedInput.nextLine();
         if(!isValidCommand(receivedCommand, DELIMITER) ||
                 receivedCommand.equalsIgnoreCase("stay")) {
-            return !STOP_CONNECTION_AFTER_THIS;
+            return CONTINUE_CONNECTION_AFTER_THIS;
         }
 
         // valid command
@@ -203,7 +190,7 @@ public class Server {
             clientUpload(commandTokens);
         }
 
-        return !STOP_CONNECTION_AFTER_THIS;
+        return CONTINUE_CONNECTION_AFTER_THIS;
     }
 
 
@@ -364,10 +351,7 @@ public class Server {
         BufferedInputStream bufferedInputStream = null;
 
         try {
-
             String certificatePath = src.getAbsolutePath() + "/" + CERTIFICATION;
-            System.out.println(certificatePath);
-
             File fileToSend = new File(certificatePath);
             byte[] byteArray = new byte[(int) fileToSend.length()];
             fileInputStream = new FileInputStream(fileToSend);
@@ -425,22 +409,6 @@ public class Server {
      * @throws IOException
      */
     private boolean authenticate() throws IOException {
-
-        /*
-         * PROTOTYPE:
-         *
-         * if not busy (waiting for first connection):
-         *      key exchange
-         *      receive encrypted client id
-         *      decrypt client id and store
-         * if busy:
-         *      receive encrypted client id
-         *      decrypt and check
-         *      if not the same then reject
-         *
-         * NOTE: session key will be increment after each session
-         */
-
         boolean authenticateSuccess = false;
         OutputStream outputStream = clientSocket.getOutputStream();
         PrintWriter printWriter = new PrintWriter(outputStream, true);
@@ -460,7 +428,12 @@ public class Server {
                 return false;
             }
         }
+        // get keys
         else if(!hasReceivedKeys) {
+            /*
+             * note: encrypted client message
+             * -> have to decrypt and verify before save
+             */
             clientId = clientMessage;
             clientIpAddress = clientSocket.getInetAddress().getHostAddress();
             masterKey = Long.parseLong(receivedInput.nextLine());
@@ -469,6 +442,9 @@ public class Server {
         }
         // already send certificate and receive keys
         else {
+            /*
+             * encrypted messages
+             */
             authenticateSuccess = clientMessage.equals(clientId) &&
                     clientSocket.getInetAddress().getHostAddress().equals(clientIpAddress);
 

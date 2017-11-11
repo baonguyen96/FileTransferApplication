@@ -679,7 +679,6 @@ public class Client {
 
     private void deleteCertificate() {
         File certificate = new File(src.getAbsolutePath() + "/" + CERTIFICATION);
-        System.out.println(certificate.getAbsolutePath());
         if(certificate.exists()) {
             certificate.delete();
         }
