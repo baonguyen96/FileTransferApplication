@@ -25,8 +25,10 @@ public class Server {
     }
 
     public static void main(String[] args) {
-        Server server = new Server();
-        server.exec();
+        Message message = new Message();
+
+//        Server server = new Server();
+//        server.exec();
     }
 
 
@@ -78,11 +80,6 @@ public class Server {
                 if (!isBusy) {
                     date = new Date();
                     System.out.println("Connection established at " + dateFormat.format(date));
-
-//                    System.out.println(clientId);
-//                    System.out.println(clientIpAddress);
-//                    System.out.println(masterKey);
-
                     System.out.println(SMALL_DIV);
                     isBusy = true;
                 }
@@ -198,7 +195,6 @@ public class Server {
      * method: list
      *
      * list command
-     *
      * send to client a list of all files the server contains
      *
      * @throws IOException

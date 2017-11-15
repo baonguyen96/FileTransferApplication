@@ -2,5 +2,11 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>FileTransferApplication</groupId>
   <artifactId>FileTransferApplication</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <version>0.0.1-SNAPSHOT</version>
+    <modules>
+        <module>Client</module>
+        <module>Server</module>
+        <module>Message</module>
+    </modules>
 </project>

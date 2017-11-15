@@ -1,27 +1,33 @@
+/*
+ * FakeClient
+ *
+ * try to connect to the server in the middle of the legit conversation
+ * and break the communication
+ * demonstrate the importance of securing client's ID
+ */
+
+import sun.misc.BASE64Decoder;
+
 import java.io.*;
-import java.net.*;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.security.KeyFactory;
 import java.security.PublicKey;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateExpiredException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.CertificateNotYetValidException;
-import java.security.cert.X509Certificate;
+import java.security.cert.*;
 import java.security.spec.X509EncodedKeySpec;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Scanner;
 
-import sun.misc.BASE64Decoder;
 
-
-public class Client {
+public class FakeClient {
     private Socket clientSocket = null;
     private File fileDirectory = null;
     private File src = null;
-    private final long id = System.currentTimeMillis();
+    private final String id = "1510454279597";  // change when server show
     private boolean connectSuccess = false;
     private boolean hasReceivedCertificate = false;
     private boolean hasSentKey = false;
@@ -29,12 +35,12 @@ public class Client {
     private final String CERTIFICATION = "CA-certificate.crt";
 
 
-    private Client() {
+    private FakeClient() {
     }
 
 
     public static void main(String[] args) {
-        Client client = new Client();
+        FakeClient client = new FakeClient();
         client.exec();
     }
 
@@ -54,10 +60,11 @@ public class Client {
             // get server's IP address
             System.out.print("Enter server's IP address: ");
             String serverIPAddress = scanner.nextLine();
+            InetAddress serverAddress = InetAddress.getByName(serverIPAddress);
             System.out.println("Setting up the connection...");
 
             while (!stopCommunication) {
-                clientSocket = new Socket(serverIPAddress, 1111);
+                clientSocket = new Socket(serverAddress, 1111);
                 clientSocket.setSoTimeout(30000);
 
 
@@ -167,7 +174,6 @@ public class Client {
         String command = getCommand(DELIMITER);
         String[] commandComponents = command.split(DELIMITER);
         final boolean STOP_CONNECTION_AFTER_THIS = true;
-        final boolean CONTINUE_CONNECTION_AFTER_THIS = true;
 
         if (commandComponents[0].equalsIgnoreCase("quit")) {
             quit(commandComponents[0]);
@@ -189,7 +195,7 @@ public class Client {
             upload(command, commandComponents);
         }
 
-        return CONTINUE_CONNECTION_AFTER_THIS;
+        return !STOP_CONNECTION_AFTER_THIS;
     }
 
 
@@ -367,6 +373,7 @@ public class Client {
      * method: upload
      *
      * upload [filePath] command
+     *
      * let the client upload a file using absolute path
      *
      * @param command: client's command
@@ -439,13 +446,14 @@ public class Client {
 
         // error
         if(!messageReceived.equals("sending certificate")) {
+            System.out.println(messageReceived);
             throw new IOException();
         }
-
         // valid certificate
         else {
             String certificatePath = src.getAbsolutePath() + "/" + CERTIFICATION;
             File certificate = new File(certificatePath);
+            System.out.println(certificate.getAbsolutePath());
             fileOutputStream = new FileOutputStream(certificate);
             bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
             int byteRead = inputStream.read(byteBlock, 0, byteBlock.length);
@@ -531,38 +539,16 @@ public class Client {
         InputStream inputStream = clientSocket.getInputStream();
         Scanner serverInput = new Scanner(new InputStreamReader(inputStream));
 
-        if(!hasReceivedCertificate) {
-            try {
-                requestCertificate();
-                if (!verifyCertificate()) {
-                    System.out.println("Error: certificate denied.");
-                    return AUTHENTICATE_FAILURE;
-                }
-                hasReceivedCertificate = true;
+        printWriter.println(id);
+//            printWriter.flush();
 
-            }
-            catch (IOException e) {
-                return AUTHENTICATE_FAILURE;
-            }
+        if (!serverInput.hasNextLine()) {
+            return AUTHENTICATE_FAILURE;
         }
-        else if(!hasSentKey) {
-            printWriter.println(id);
-            printWriter.println(masterKey);
-            hasSentKey = true;
-        }
-        else {
 
-            printWriter.println(id);
-            printWriter.flush();
-
-            if (!serverInput.hasNextLine()) {
-                return AUTHENTICATE_FAILURE;
-            }
-
-            String serverResponse = serverInput.nextLine();
-            if (serverResponse == null || !serverResponse.equalsIgnoreCase("ok")) {
-                return AUTHENTICATE_FAILURE;
-            }
+        String serverResponse = serverInput.nextLine();
+        if (serverResponse == null || !serverResponse.equalsIgnoreCase("ok")) {
+            return AUTHENTICATE_FAILURE;
         }
 
         return AUTHENTICATE_SUCCESS;
