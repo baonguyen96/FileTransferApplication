@@ -85,3 +85,8 @@ where 	sn = sequence number
 		id = client's id
 		msg = message in plaintext
 		k = session key to encrypt
+
+But what to do when out-of-sync?
+    Don't have enough time, therefore just end the connection for client if out of sync
+    For server, can't because the fake client will of course be out of sync,
+    but the real client isn't -> end server will affect real client

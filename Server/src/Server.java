@@ -15,9 +15,11 @@ public class Server {
     private boolean hasSentCertificate = false;
     private boolean hasReceivedKeys = false;
     private long masterKey = 0;
+    private int messageSequence = 1;
     private String clientIpAddress = null;
     private String clientId = null;
     private final String CERTIFICATION = "CA-certificate.crt";
+    private final String DELIMITER = "\\s+\\|\\s+";
 
 
     private Server() {
@@ -25,10 +27,8 @@ public class Server {
     }
 
     public static void main(String[] args) {
-        Message message = new Message();
-
-//        Server server = new Server();
-//        server.exec();
+        Server server = new Server();
+        server.exec();
     }
 
 
@@ -88,6 +88,7 @@ public class Server {
                 clientSocket.close();
 
             }
+
             serverSocket.close();
 
         }
@@ -112,6 +113,7 @@ public class Server {
             System.out.println(BIG_DIV);
         }
     }
+
 
     /***
      * method: isValidCommand
@@ -155,7 +157,6 @@ public class Server {
         final boolean CONTINUE_CONNECTION_AFTER_THIS = false;
         InputStream inputStream = clientSocket.getInputStream();
         Scanner receivedInput = new Scanner(new InputStreamReader(inputStream));
-        final String DELIMITER = "\\s+\\|\\s+";
 
         // offline
         if(!receivedInput.hasNextLine()) {
@@ -374,29 +375,6 @@ public class Server {
 
 
     /***
-     * method: setDirectories
-     *
-     * set the Files Directory to store all files
-     * remove the "\src" in the path when run from the command line environment
-     */
-    private void setDirectories() {
-        filesDirectory = new File("Server/FilesDirectory");
-        String absolutePath = filesDirectory.getAbsolutePath();
-        absolutePath = absolutePath.replace("\\", "/");
-        absolutePath = absolutePath.replace("/src", "");
-        absolutePath = absolutePath.replace("/Server/Server", "/Server");
-        filesDirectory = new File(absolutePath);
-
-
-        src = new File("Server/src");
-        absolutePath = src.getAbsolutePath();
-        absolutePath = absolutePath.replace("\\", "/");
-        absolutePath = absolutePath.replace("Server/src/Server/src", "Server/src");
-        src = new File(absolutePath);
-    }
-
-
-    /***
      * method: authenticate
      *
      * client authenticates server with keys
@@ -404,18 +382,23 @@ public class Server {
      *
      * @throws IOException
      */
-    private boolean authenticate() throws IOException {
+    private boolean authenticate() throws IOException, MessageOutOfSyncException {
         boolean authenticateSuccess = false;
         OutputStream outputStream = clientSocket.getOutputStream();
         PrintWriter printWriter = new PrintWriter(outputStream, true);
         InputStream inputStream = clientSocket.getInputStream();
         Scanner receivedInput = new Scanner(new InputStreamReader(inputStream));
-        String clientMessage = receivedInput.nextLine();
+        String[] receiveMessageTokens = null;
+
+        if(!receivedInput.hasNextLine()) {
+            throw new IOException();
+        }
 
         // first time connect (certificate)
         if(!hasSentCertificate) {
+            receiveMessageTokens = receivedInput.nextLine().split(DELIMITER);
 
-            if(clientMessage.equals("requestCertificate")) {
+            if(Message.validateMessageSequenceNumber(receiveMessageTokens[0], ++messageSequence) || receiveMessageTokens[1].equals("requestCertificate")) {
                 sendCertificate();
                 hasSentCertificate = true;
                 return true;
@@ -430,8 +413,18 @@ public class Server {
              * note: encrypted client message
              * -> have to decrypt and verify before save
              */
-            clientId = clientMessage;
+            // remember IP address
             clientIpAddress = clientSocket.getInetAddress().getHostAddress();
+
+            // client ID
+            receiveMessageTokens = receivedInput.nextLine().split(DELIMITER);
+            if(Message.validateMessageSequenceNumber(receiveMessageTokens[0], ++messageSequence)) {
+                clientId = clientMessage;
+            }
+
+            // master key
+            receiveMessageTokens = receivedInput.nextLine().split(DELIMITER);
+
             masterKey = Long.parseLong(receivedInput.nextLine());
             authenticateSuccess = true;
             hasReceivedKeys = true;
@@ -481,6 +474,27 @@ public class Server {
         return key == null ? null : key.toString();
     }
 
+
+    /***
+     * method: setDirectories
+     *
+     * set the Files Directory to store all files
+     * remove the "\src" in the path when run from the command line environment
+     */
+    private void setDirectories() {
+        filesDirectory = new File("Server/FilesDirectory");
+        String absolutePath = filesDirectory.getAbsolutePath();
+        absolutePath = absolutePath.replace("\\", "/");
+        absolutePath = absolutePath.replace("/src", "");
+        absolutePath = absolutePath.replace("/Server/Server", "/Server");
+        filesDirectory = new File(absolutePath);
+
+        src = new File("Server/src");
+        absolutePath = src.getAbsolutePath();
+        absolutePath = absolutePath.replace("\\", "/");
+        absolutePath = absolutePath.replace("Server/src/Server/src", "Server/src");
+        src = new File(absolutePath);
+    }
 
 }
 
