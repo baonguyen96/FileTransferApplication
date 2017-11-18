@@ -13,7 +13,9 @@ public class Message {
      * @return new message with its sequence number
      */
     public static String appendMessageSequence(int sequence, String message) {
-        return String.format("%d | %s\n", sequence, message);
+        String newMessage = String.format("%d | %s", sequence, message);
+        System.out.println(newMessage);
+        return newMessage;
     }
 
 
@@ -52,10 +54,12 @@ public class Message {
      * @param expectedSequenceNumber: expected sequence to be
      * @return true if correct sequence number, false otherwise
      */
-    public static boolean validateMessageSequenceNumber(String message, int expectedSequenceNumber) {
+    public static boolean validateMessageSequenceNumber(int expectedSequenceNumber, String message) {
         boolean isValidSequence = false;
         int actualSequenceNumber = 0;
         String seq = null;
+
+        System.out.println(message);
 
         if(!message.contains(" ")) {
             return false;
@@ -83,7 +87,7 @@ public class Message {
      * @param expectedSequenceNumber: expected sequence to be
      * @return true if correct sequence number, false otherwise
      */
-    public static boolean validateMessageSequenceNumber(byte[] message, int expectedSequenceNumber) {
+    public static boolean validateMessageSequenceNumber(int expectedSequenceNumber, byte[] message) {
         boolean isValidSequence = false;
         int actualSequenceNumber = 0;
         byte[] sequenceNumberAsBytes = new byte[4];

@@ -15,9 +15,13 @@ public class Server {
     private boolean hasSentCertificate = false;
     private boolean hasReceivedKeys = false;
     private long masterKey = 0;
+    private int sequenceNumber = 0;
+    private int totalInvalidMessagesReceived = 0;
+    private static final int MAX_INVALID_MESSAGES_ALLOWED = 5;
     private String clientIpAddress = null;
     private String clientId = null;
     private final String CERTIFICATION = "CA-certificate.crt";
+    private final String DELIMITER = "\\s+\\|\\s+";
 
 
     private Server() {
@@ -32,6 +36,11 @@ public class Server {
     }
 
 
+    /***
+     * method: exec
+     *
+     * execute the Server and control the flow of the program
+     */
     private void exec() {
         // error with keys then stop
         if(PRIVATE_KEY == null || PUBLIC_KEY == null) {
@@ -60,6 +69,15 @@ public class Server {
              * so that in the subsequent reconnection, does not accept any host that has different address
              */
             while (!stopCommunication) {
+
+                // end if detect intruder
+                if(isIntruderDetected()) {
+                    System.out.println("\nWarning: intruder detected. Abort connection.");
+                    clientSocket.close();
+                    serverSocket.close();
+                    break;
+                }
+
                 clientSocket = serverSocket.accept();
 
                 // make sure to talk to the same client over several sessions
@@ -113,6 +131,21 @@ public class Server {
         }
     }
 
+
+
+    /***
+     * method: isIntruderDetected
+     *
+     * intruder is detected if the total invalid messages received
+     * is more than the allowed threshold
+     *
+     * @return true if detect intruder, false otherwise
+     */
+    private boolean isIntruderDetected() {
+        return totalInvalidMessagesReceived > MAX_INVALID_MESSAGES_ALLOWED;
+    }
+
+
     /***
      * method: isValidCommand
      *
@@ -155,7 +188,6 @@ public class Server {
         final boolean CONTINUE_CONNECTION_AFTER_THIS = false;
         InputStream inputStream = clientSocket.getInputStream();
         Scanner receivedInput = new Scanner(new InputStreamReader(inputStream));
-        final String DELIMITER = "\\s+\\|\\s+";
 
         // offline
         if(!receivedInput.hasNextLine()) {
@@ -354,10 +386,11 @@ public class Server {
             bufferedInputStream = new BufferedInputStream(fileInputStream);
 
             // confirm
-            printWriter.println("sending certificate");
+//            printWriter.println("sending certificate");
+            printWriter.println(Message.appendMessageSequence(++sequenceNumber, "sending certificate"));
             printWriter.flush();
 
-            // file transfer
+            // file transfer (does not have sequence number yet)
             bufferedInputStream.read(byteArray, 0, byteArray.length);
             bufferedOutputStream.write(byteArray, 0, byteArray.length);
             bufferedOutputStream.flush();
@@ -365,34 +398,12 @@ public class Server {
 
         }
         catch (FileNotFoundException e) {
-            printWriter.println("error");
+//            printWriter.println("error");
+            printWriter.println(Message.appendMessageSequence(++sequenceNumber, "error"));
             printWriter.flush();
             printWriter.close();
         }
 
-    }
-
-
-    /***
-     * method: setDirectories
-     *
-     * set the Files Directory to store all files
-     * remove the "\src" in the path when run from the command line environment
-     */
-    private void setDirectories() {
-        filesDirectory = new File("Server/FilesDirectory");
-        String absolutePath = filesDirectory.getAbsolutePath();
-        absolutePath = absolutePath.replace("\\", "/");
-        absolutePath = absolutePath.replace("/src", "");
-        absolutePath = absolutePath.replace("/Server/Server", "/Server");
-        filesDirectory = new File(absolutePath);
-
-
-        src = new File("Server/src");
-        absolutePath = src.getAbsolutePath();
-        absolutePath = absolutePath.replace("\\", "/");
-        absolutePath = absolutePath.replace("Server/src/Server/src", "Server/src");
-        src = new File(absolutePath);
     }
 
 
@@ -405,6 +416,9 @@ public class Server {
      * @throws IOException
      */
     private boolean authenticate() throws IOException {
+
+        final boolean AUTHENTICATE_SUCCESS = true;
+        final boolean AUTHENTICATE_FAILURE = false;
         boolean authenticateSuccess = false;
         OutputStream outputStream = clientSocket.getOutputStream();
         PrintWriter printWriter = new PrintWriter(outputStream, true);
@@ -414,14 +428,16 @@ public class Server {
 
         // first time connect (certificate)
         if(!hasSentCertificate) {
-
-            if(clientMessage.equals("requestCertificate")) {
+            if(!Message.validateMessageSequenceNumber(sequenceNumber, clientMessage)) {
+                return AUTHENTICATE_FAILURE;
+            }
+            else if(clientMessage.equals("0 | requestCertificate")) {
                 sendCertificate();
                 hasSentCertificate = true;
-                return true;
+                return AUTHENTICATE_SUCCESS;
             }
             else {
-                return false;
+                return AUTHENTICATE_FAILURE;
             }
         }
         // get keys
@@ -430,10 +446,32 @@ public class Server {
              * note: encrypted client message
              * -> have to decrypt and verify before save
              */
-            clientId = clientMessage;
+            // ip
             clientIpAddress = clientSocket.getInetAddress().getHostAddress();
-            masterKey = Long.parseLong(receivedInput.nextLine());
-            authenticateSuccess = true;
+//            clientId = clientMessage;
+//            masterKey = Long.parseLong(receivedInput.nextLine());
+
+            // id
+            if(!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
+                totalInvalidMessagesReceived++;
+                return AUTHENTICATE_FAILURE;
+            }
+            else {
+                clientId = clientMessage.split(DELIMITER)[1];
+            }
+
+            // master key
+            clientMessage = receivedInput.nextLine();
+
+            if(!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
+                totalInvalidMessagesReceived++;
+                return AUTHENTICATE_FAILURE;
+            }
+            else {
+                masterKey = Long.parseLong(clientMessage.split(DELIMITER)[1]);
+            }
+
+            authenticateSuccess = AUTHENTICATE_SUCCESS;
             hasReceivedKeys = true;
         }
         // already send certificate and receive keys
@@ -441,10 +479,16 @@ public class Server {
             /*
              * encrypted messages
              */
-            authenticateSuccess = clientMessage.equals(clientId) &&
-                    clientSocket.getInetAddress().getHostAddress().equals(clientIpAddress);
+            if(!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
+                totalInvalidMessagesReceived++;
+                return AUTHENTICATE_FAILURE;
+            }
 
-            printWriter.println(authenticateSuccess ? "ok" : "busy");
+            String id = clientMessage.split(DELIMITER)[1];
+            authenticateSuccess = id.equals(clientId) &&
+                    clientSocket.getInetAddress().getHostAddress().equals(clientIpAddress);
+            String confirmMessage = authenticateSuccess ? "ok" : "busy";
+            printWriter.println(Message.appendMessageSequence(++sequenceNumber, confirmMessage));
             printWriter.flush();
         }
 
@@ -479,6 +523,29 @@ public class Server {
         }
 
         return key == null ? null : key.toString();
+    }
+
+
+    /***
+     * method: setDirectories
+     *
+     * set the Files Directory to store all files
+     * remove the "\src" in the path when run from the command line environment
+     */
+    private void setDirectories() {
+        filesDirectory = new File("Server/FilesDirectory");
+        String absolutePath = filesDirectory.getAbsolutePath();
+        absolutePath = absolutePath.replace("\\", "/");
+        absolutePath = absolutePath.replace("/src", "");
+        absolutePath = absolutePath.replace("/Server/Server", "/Server");
+        filesDirectory = new File(absolutePath);
+
+
+        src = new File("Server/src");
+        absolutePath = src.getAbsolutePath();
+        absolutePath = absolutePath.replace("\\", "/");
+        absolutePath = absolutePath.replace("Server/src/Server/src", "Server/src");
+        src = new File(absolutePath);
     }
 
 
