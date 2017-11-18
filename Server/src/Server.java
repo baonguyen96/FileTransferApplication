@@ -25,12 +25,9 @@ public class Server {
 
 
     private Server() {
-
     }
 
     public static void main(String[] args) {
-//        Message message = new Message();
-
         Server server = new Server();
         server.exec();
     }
@@ -222,7 +219,7 @@ public class Server {
         else if(commandTokens[0].equalsIgnoreCase("upload")){
             clientUpload(commandTokens);
         }
-        else {
+        else if(commandTokens[1].equalsIgnoreCase("stay")){
             // stay -> don't do anything
         }
 

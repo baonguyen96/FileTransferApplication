@@ -160,6 +160,8 @@ public class Client {
      *
      * NOTE: "stay" is also a valid command,
      * but is reserved for system call and is inaccessible to user
+     * NOTE: this only validate the raw input from the user
+     * (before the command is appended with the sequence number)
      *
      * @param clientCommand: command from client
      * @return true if valid command, false otherwise
@@ -327,7 +329,8 @@ public class Client {
         System.out.println();
 
         // keep connection alive
-        printWriter.println("stay");
+//        printWriter.println("stay");
+        printWriter.println(Message.appendMessageSequence(++sequenceNumber, "stay"));
         printWriter.flush();
         printWriter.close();
     }
@@ -435,7 +438,8 @@ public class Client {
             System.out.println();
 
             // keep connection alive
-            printWriter.println("stay");
+//            printWriter.println("stay");
+            printWriter.println(Message.appendMessageSequence(++sequenceNumber, "stay"));
             printWriter.flush();
             printWriter.close();
         }
@@ -711,6 +715,7 @@ public class Client {
      * to prevent break-in attack
      */
     private void deleteCertificate() {
+        System.out.println("deleteCertificate");
         File certificate = new File(src.getAbsolutePath() + "/" + CERTIFICATION);
         if(certificate.exists()) {
             certificate.delete();
