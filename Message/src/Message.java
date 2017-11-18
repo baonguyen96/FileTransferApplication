@@ -1,31 +1,109 @@
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
+
 public class Message {
+
+    /***
+     * method: appendMessageSequence
+     *
+     * add the message sequence to the front of the message
+     *
+     * @param sequence: message sequence number
+     * @param message: the message
+     * @return new message with its sequence number
+     */
+    public static String appendMessageSequence(int sequence, String message) {
+        return String.format("%d | %s\n", sequence, message);
+    }
+
+
+    /***
+     * method: appendMessageSequence
+     *
+     * add the message sequence to the front of the message
+     *
+     * @param sequence: message sequence number
+     * @param message: the message (as byte array)
+     * @return new message with its sequence number
+     */
+    public static byte[] appendMessageSequence(int sequence, byte[] message) {
+        byte[] newMessage = new byte[message.length + 7];
+        byte[] intAsByteArray = ByteBuffer.allocate(4).putInt(sequence).array();
+
+        // message sequence
+        System.arraycopy(intAsByteArray, 0, newMessage, 0, 4);
+        newMessage[4] = ' ';
+        newMessage[5] = '|';
+        newMessage[6] = ' ';
+
+        // original message
+        System.arraycopy(message, 0, newMessage, 7, message.length);
+
+        return newMessage;
+    }
+
 
     /***
      * method: validateMessageSequenceNumber
      *
      * validate if the message is the expected one
      *
-     * @param messageSequence: actual sequence number of the message
+     * @param message: the message
      * @param expectedSequenceNumber: expected sequence to be
      * @return true if correct sequence number, false otherwise
-     * @throws MessageOutOfSyncException if out of sync
      */
-    public static boolean validateMessageSequenceNumber(String messageSequence, int expectedSequenceNumber) throws MessageOutOfSyncException {
+    public static boolean validateMessageSequenceNumber(String message, int expectedSequenceNumber) {
         boolean isValidSequence = false;
+        int actualSequenceNumber = 0;
+        String seq = null;
+
+        if(!message.contains(" ")) {
+            return false;
+        }
 
         try {
-            int actualSequenceNumber = Integer.parseInt(messageSequence);
+            seq = message.substring(0, message.indexOf(" "));
+            actualSequenceNumber = Integer.parseInt(seq);
             isValidSequence = actualSequenceNumber == expectedSequenceNumber;
         }
         catch (NumberFormatException e) {
             isValidSequence = false;
         }
 
-        if(!isValidSequence) {
-            throw new MessageOutOfSyncException();
+        return isValidSequence;
+    }
+
+
+    /***
+     * method: validateMessageSequenceNumber
+     *
+     * validate if the message is the expected one
+     *
+     * @param message: the message
+     * @param expectedSequenceNumber: expected sequence to be
+     * @return true if correct sequence number, false otherwise
+     */
+    public static boolean validateMessageSequenceNumber(byte[] message, int expectedSequenceNumber) {
+        boolean isValidSequence = false;
+        int actualSequenceNumber = 0;
+        byte[] sequenceNumberAsBytes = new byte[4];
+        ByteBuffer byteBuffer = null;
+
+        // extract first 4 bytes as sequence number
+        System.arraycopy(message, 0, sequenceNumberAsBytes, 0, 4);
+        byteBuffer = ByteBuffer.wrap(sequenceNumberAsBytes);
+
+        // check
+        try {
+            actualSequenceNumber = byteBuffer.getInt();
+            isValidSequence = actualSequenceNumber == expectedSequenceNumber;
+        }
+        catch (BufferUnderflowException e) {
+            isValidSequence = false;
         }
 
-        return true;
+        return isValidSequence;
     }
+
 
 }

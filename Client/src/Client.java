@@ -26,9 +26,7 @@ public class Client {
     private boolean hasReceivedCertificate = false;
     private boolean hasSentKey = false;
     private long masterKey = 99;
-    private int messageSequence = 0;
     private final String CERTIFICATION = "CA-certificate.crt";
-    private final String DELIMITER = "\\s+\\|\\s+";
 
 
     private Client() {
@@ -102,11 +100,11 @@ public class Client {
         }
         catch (IOException e) {
             System.out.println("\nError: sockets corrupted.");
-//            e.printStackTrace();
+            e.printStackTrace();
         }
-        catch (MessageOutOfSyncException e) {
-            System.out.println("\nError: Intruder detected.");
-        }
+//        catch (Exception e) {
+//            System.out.println("\nError: certificate.");
+//        }
         finally {
             deleteCertificate();
             System.out.println(SMALL_DIV);
@@ -164,31 +162,27 @@ public class Client {
      * @return true if stop communication, false if not
      * @throws IOException
      */
-    private boolean communicate() throws IOException, MessageOutOfSyncException {
+    private boolean communicate() throws IOException {
+        final String DELIMITER = "\\s+\\|\\s+";
         String command = getCommand(DELIMITER);
-
-        // append messsage sequence to the front
-        command = String.format("%d | ", messageSequence).concat(command);
-        // now all command has the format: int | string
-
         String[] commandComponents = command.split(DELIMITER);
         final boolean STOP_CONNECTION_AFTER_THIS = true;
         final boolean CONTINUE_CONNECTION_AFTER_THIS = true;
 
-        if (commandComponents[1].equalsIgnoreCase("quit")) {
-            quit(commandComponents[1]);
+        if (commandComponents[0].equalsIgnoreCase("quit")) {
+            quit(commandComponents[0]);
             return STOP_CONNECTION_AFTER_THIS;
         }
-        else if (commandComponents[1].equalsIgnoreCase("list")) {
-            list(commandComponents[1]);
+        else if (commandComponents[0].equalsIgnoreCase("list")) {
+            list(commandComponents[0]);
         }
-        else if (commandComponents[1].equalsIgnoreCase("list-me")) {
+        else if (commandComponents[0].equalsIgnoreCase("list-me")) {
             listMe();
         }
-        else if (commandComponents[1].equalsIgnoreCase("help")) {
+        else if (commandComponents[0].equalsIgnoreCase("help")) {
             help();
         }
-        else if (commandComponents[1].equalsIgnoreCase("download")) {
+        else if (commandComponents[0].equalsIgnoreCase("download")) {
             download(command, commandComponents);
         }
         else {
@@ -243,6 +237,7 @@ public class Client {
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
         printWriter.println(command);
         printWriter.flush();
+        printWriter.close();
     }
 
 
@@ -255,7 +250,7 @@ public class Client {
      * @param command: client's command
      * @throws IOException
      */
-    private void list(String command) throws IOException, MessageOutOfSyncException {
+    private void list(String command) throws IOException {
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
         Scanner serverInput = new Scanner(new InputStreamReader(clientSocket.getInputStream()));
         String messageReceived = "";
@@ -265,14 +260,8 @@ public class Client {
 
         if (serverInput.hasNextLine()) {
             messageReceived = serverInput.nextLine();
-
-            String[] messageTokens = messageReceived.split(DELIMITER);
-
-            if(Message.validateMessageSequenceNumber(messageTokens[0], messageSequence + 1)) {
-                System.out.println("\n[Server]: " + messageTokens[1] + "\n");
-            }
+            System.out.println("\n[Server]: " + messageReceived + "\n");
         }
-        // else ?
 
         printWriter.close();
     }
@@ -311,7 +300,7 @@ public class Client {
         System.out.println();
 
         // keep connection alive
-        printWriter.printf("%d | stay\n", messageSequence);
+        printWriter.println("stay");
         printWriter.flush();
         printWriter.close();
     }
@@ -327,31 +316,26 @@ public class Client {
      * @param commandComponents: parts of command
      * @throws IOException
      */
-    private void download(String command, String[] commandComponents) throws IOException, MessageOutOfSyncException {
+    private void download(String command, String[] commandComponents) throws IOException {
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
         InputStream inputStream = clientSocket.getInputStream();
         Scanner serverInput = new Scanner(new InputStreamReader(inputStream));
+        String messageReceived = "";
         byte[] byteBlock = new byte[1];
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         FileOutputStream fileOutputStream = null;
         BufferedOutputStream bufferedOutputStream = null;
-        String fileToDownloadName = commandComponents[2];
+        String fileToDownloadName = commandComponents[1];
 
         printWriter.println(command);
         printWriter.flush();
-        
-        // no input from server?
-        if(!serverInput.hasNextLine()) {
-            return;
-        }
 
         // confirmation message
-        String[] messageTokens = serverInput.nextLine().split(DELIMITER);
+        messageReceived = serverInput.nextLine();
 
         // error
-        if (Message.validateMessageSequenceNumber(messageTokens[0], messageSequence + 1) ||
-                !messageTokens[1].contains(fileToDownloadName)) {
-            System.out.println("\n[Server]: " + messageTokens[1]);
+        if (!messageReceived.contains(fileToDownloadName)) {
+            System.out.println("\n[Server]: " + messageReceived);
         }
         // valid file to download
         else {
@@ -363,9 +347,6 @@ public class Client {
 
             System.out.println(">> Downloading...");
 
-            // skip the message sequence?
-            
-            // actual file
             while (byteRead >= 0) {
                 byteArrayOutputStream.write(byteBlock);
                 byteRead = inputStream.read(byteBlock);
@@ -394,7 +375,7 @@ public class Client {
      */
     private void upload(String command, String[] commandComponents) throws IOException {
         OutputStream outputStream = clientSocket.getOutputStream();
-        String fileName = commandComponents[2];
+        String fileName = commandComponents[1];
         String fileNameFormattedPath = fileName.replace("\\", "\\\\");
         File uploadedFile = new File(fileNameFormattedPath);
         byte[] byteArray = new byte[(int) uploadedFile.length()];
@@ -408,9 +389,6 @@ public class Client {
             printWriter.println(command);
             printWriter.flush();
 
-            // append new message sequence number?
-            
-            // actual file
             BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
 
@@ -430,7 +408,7 @@ public class Client {
             System.out.println();
 
             // keep connection alive
-            printWriter.printf("%d | stay\n", messageSequence);
+            printWriter.println("stay");
             printWriter.flush();
             printWriter.close();
         }
@@ -438,37 +416,30 @@ public class Client {
     }
 
 
-    /***
-     * method: requestCertificate
-     *
-     * request the server to send the CA Certificate
-     *
-     * @throws IOException
-     */
-    private void requestCertificate() throws IOException, MessageOutOfSyncException {
+    private void requestCertificate() throws IOException {
+
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
         InputStream inputStream = clientSocket.getInputStream();
         Scanner serverInput = new Scanner(new InputStreamReader(inputStream));
+        String messageReceived = "";
         byte[] byteBlock = new byte[1];
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         FileOutputStream fileOutputStream = null;
         BufferedOutputStream bufferedOutputStream = null;
 
-        printWriter.printf("%d | requestCertificate\n", messageSequence);
+        printWriter.println("requestCertificate");
         printWriter.flush();
 
-        
         if (!serverInput.hasNextLine()) {
             throw new IOException();
         }
 
         // confirmation message
-        String[] messageTokens = serverInput.nextLine().split(DELIMITER);
+        messageReceived = serverInput.nextLine();
 
         // error
-        if(Message.validateMessageSequenceNumber(messageTokens[0], ++messageSequence) ||
-                !messageTokens[1].equals("sending certificate")) {
-            throw new MessageOutOfSyncException();
+        if(!messageReceived.equals("sending certificate")) {
+            throw new IOException();
         }
 
         // valid certificate
@@ -479,9 +450,6 @@ public class Client {
             bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
             int byteRead = inputStream.read(byteBlock, 0, byteBlock.length);
 
-            // sequence number?
-            
-            // actual file
             while (byteRead >= 0) {
                 byteArrayOutputStream.write(byteBlock);
                 byteRead = inputStream.read(byteBlock);
@@ -513,9 +481,31 @@ public class Client {
         System.out.println();
 
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
-        printWriter.printf("%d | stay\n", messageSequence);
+        printWriter.println("stay");
         printWriter.flush();
         printWriter.close();
+    }
+
+
+    /***
+     * method: setDirectory
+     *
+     * set the Files Directory to store all files
+     * remove the "\src" in the path when run from the command line environment
+     */
+    private void setDirectory() {
+        fileDirectory = new File("Client/FilesDirectory");
+        String absolutePath = fileDirectory.getAbsolutePath();
+        absolutePath = absolutePath.replace("\\", "/");
+        absolutePath = absolutePath.replace("/src", "");
+        absolutePath = absolutePath.replace("/Client/Client", "/Client");
+        fileDirectory = new File(absolutePath);
+
+        src = new File("Client/src");
+        absolutePath = src.getAbsolutePath();
+        absolutePath = absolutePath.replace("\\", "/");
+        absolutePath = absolutePath.replace("Client/src/Client/src", "Client/src");
+        src = new File(absolutePath);
     }
 
 
@@ -527,7 +517,7 @@ public class Client {
      * @return true if success, false if not
      * @throws IOException if socket error
      */
-    private boolean authenticate() throws IOException, MessageOutOfSyncException {
+    private boolean authenticate() throws IOException {
 
         /*
          * this is a prototype to authenticate based on the same initial IP address and ID
@@ -549,28 +539,28 @@ public class Client {
                     return AUTHENTICATE_FAILURE;
                 }
                 hasReceivedCertificate = true;
+
             }
             catch (IOException e) {
                 return AUTHENTICATE_FAILURE;
             }
         }
         else if(!hasSentKey) {
-            printWriter.printf("%d | %d\n", ++messageSequence, id);
-            printWriter.printf("%d | %d\n", ++messageSequence, masterKey);
+            printWriter.println(id);
+            printWriter.println(masterKey);
             hasSentKey = true;
         }
         else {
-            printWriter.printf("%d | %d\n", ++messageSequence, id); // 4
+
+            printWriter.println(id);
             printWriter.flush();
 
             if (!serverInput.hasNextLine()) {
                 return AUTHENTICATE_FAILURE;
             }
 
-            String[] serverResponseTokens = serverInput.nextLine().split(DELIMITER);
-            
-            if (!Message.validateMessageSequenceNumber(serverResponseTokens[0], ++messageSequence) ||
-                    !serverResponseTokens[1].equalsIgnoreCase("ok")) {
+            String serverResponse = serverInput.nextLine();
+            if (serverResponse == null || !serverResponse.equalsIgnoreCase("ok")) {
                 return AUTHENTICATE_FAILURE;
             }
         }
@@ -597,14 +587,15 @@ public class Client {
         return publicKey;
     }
 
-
     /***
-     * method: verifyCertificate
+     * method: Verify
      *
      * Use the public key to verify the certificate
      *
+     //     * @param certPath: the path of certificate path
      * @return true if the verify succeeds, false if not
      */
+
     private boolean verifyCertificate() {
         Certificate cert;
         PublicKey caPublicKey;
@@ -684,39 +675,11 @@ public class Client {
     }
 
 
-    /***
-     * method: deleteCertificate
-     *
-     * delete the CA Certificate file from the src folder
-     * to protect against break-in attack
-     */
     private void deleteCertificate() {
         File certificate = new File(src.getAbsolutePath() + "/" + CERTIFICATION);
         if(certificate.exists()) {
             certificate.delete();
         }
-    }
-
-
-    /***
-     * method: setDirectory
-     *
-     * set the Files Directory to store all files
-     * remove the "\src" in the path when run from the command line environment
-     */
-    private void setDirectory() {
-        fileDirectory = new File("Client/FilesDirectory");
-        String absolutePath = fileDirectory.getAbsolutePath();
-        absolutePath = absolutePath.replace("\\", "/");
-        absolutePath = absolutePath.replace("/src", "");
-        absolutePath = absolutePath.replace("/Client/Client", "/Client");
-        fileDirectory = new File(absolutePath);
-
-        src = new File("Client/src");
-        absolutePath = src.getAbsolutePath();
-        absolutePath = absolutePath.replace("\\", "/");
-        absolutePath = absolutePath.replace("Client/src/Client/src", "Client/src");
-        src = new File(absolutePath);
     }
 
 }
