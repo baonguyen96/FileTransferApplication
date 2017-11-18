@@ -103,7 +103,6 @@ public class Client {
                 stopCommunication = communicate();
                 clientSocket.close();
 
-                System.out.println("stopCommunication = " + stopCommunication);
             }
 
         }
@@ -124,7 +123,6 @@ public class Client {
 //            System.out.println("\nError: certificate.");
 //        }
         finally {
-            deleteCertificate();
             System.out.println(SMALL_DIV);
             date = new Date();
             System.out.printf("Connection %s at %s\n",
@@ -164,11 +162,10 @@ public class Client {
      * but is reserved for system call and is inaccessible to user
      *
      * @param clientCommand: command from client
-     * @param delimiter: regex to split
      * @return true if valid command, false otherwise
      */
-    private boolean isValidCommand(String clientCommand, String delimiter) {
-        String[] commandTokens = clientCommand.split(delimiter);
+    private boolean isValidCommand(String clientCommand) {
+        String[] commandTokens = clientCommand.split(DELIMITER);
         boolean isQuit = commandTokens.length == 1 &&
                 commandTokens[0].equalsIgnoreCase("quit");
         boolean isList = commandTokens.length == 1 &&
@@ -195,7 +192,7 @@ public class Client {
      * @throws IOException
      */
     private boolean communicate() throws IOException {
-        String command = getCommand(DELIMITER);
+        String command = getCommand();
         String[] commandComponents = command.split(DELIMITER);
         final boolean STOP_CONNECTION_AFTER_THIS = true;
         final boolean CONTINUE_CONNECTION_AFTER_THIS = false;
@@ -229,10 +226,9 @@ public class Client {
      *
      * get the valid command from the user
      *
-     * @param delimiter: regex to split
      * @return a valid command
      */
-    private String getCommand(String delimiter) {
+    private String getCommand() {
         Scanner input = new Scanner(System.in);
         String command = "";
         boolean isValid = false;
@@ -241,7 +237,7 @@ public class Client {
             System.out.print("[You]:    ");
             command = input.nextLine();
 
-            if (!isValidCommand(command, delimiter)) {
+            if (!isValidCommand(command)) {
                 System.out.println(">> Invalid command. " +
                         "Please enter a correct command or " +
                         "enter \"help\" for help.\n");
@@ -266,7 +262,7 @@ public class Client {
      */
     private void quit(String command) throws IOException {
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
-        printWriter.println(command);
+        printWriter.println(Message.appendMessageSequence(++sequenceNumber, command));
         printWriter.flush();
         printWriter.close();
     }
@@ -465,7 +461,6 @@ public class Client {
         FileOutputStream fileOutputStream = null;
         BufferedOutputStream bufferedOutputStream = null;
 
-//        printWriter.println("requestCertificate");
         printWriter.println(Message.appendMessageSequence(sequenceNumber, "requestCertificate"));
         printWriter.flush();
 
@@ -550,6 +545,7 @@ public class Client {
 
         if(!hasReceivedCertificate) {
             try {
+                deleteCertificate();
                 requestCertificate();
                 if (!verifyCertificate()) {
                     System.out.println("Error: certificate denied.");
@@ -565,17 +561,17 @@ public class Client {
                 totalInvalidMessagesReceived++;
                 return AUTHENTICATE_FAILURE;
             }
+            finally {
+                deleteCertificate();
+            }
         }
         else if(!hasSentKey) {
-//            printWriter.println(id);
-//            printWriter.println(masterKey);
             printWriter.println(Message.appendMessageSequence(++sequenceNumber, Long.toString(id)));
             printWriter.println(Message.appendMessageSequence(++sequenceNumber, Long.toString(masterKey)));
             hasSentKey = true;
         }
         // has received certificate and has sent key
         else {
-//            printWriter.println(id);
             printWriter.println(Message.appendMessageSequence(++sequenceNumber, Long.toString(id)));
             printWriter.flush();
 
@@ -590,7 +586,7 @@ public class Client {
                 return AUTHENTICATE_FAILURE;
             }
             else if(!Message.validateMessageSequenceNumber(++sequenceNumber, serverResponse)) {
-                totalInvalidMessagesReceived++;
+                handleInvalidMessages();
                 return AUTHENTICATE_FAILURE;
             }
             else if (!serverResponse.split(DELIMITER)[1].equalsIgnoreCase("ok")) {
@@ -741,6 +737,18 @@ public class Client {
         absolutePath = absolutePath.replace("\\", "/");
         absolutePath = absolutePath.replace("Client/src/Client/src", "Client/src");
         src = new File(absolutePath);
+    }
+
+
+    /***
+     * method: handleInvalidMessages
+     *
+     * increase the total invalid messages received count
+     * decrease the sequence number to rollback
+     */
+    private void handleInvalidMessages() {
+        totalInvalidMessagesReceived++;
+        sequenceNumber--;
     }
 
 }

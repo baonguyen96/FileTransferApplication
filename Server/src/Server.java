@@ -152,18 +152,17 @@ public class Server {
      * validate the command
      *
      * @param clientCommand: client's command
-     * @param delimiter: split signature
      *
      * @return true if valid command, false if not
      */
-    private boolean isValidCommand(String clientCommand, String delimiter) {
-        String[] commandTokens = clientCommand.split(delimiter);
-        boolean isQuit = commandTokens.length == 1 &&
-                commandTokens[0].equalsIgnoreCase("quit");
+    private boolean isValidCommand(String clientCommand) {
+        String[] commandTokens = clientCommand.split(DELIMITER);
+        boolean isQuit = commandTokens.length == 2 &&
+                commandTokens[1].equalsIgnoreCase("quit");
         boolean isList = commandTokens.length == 1 &&
                 commandTokens[0].equalsIgnoreCase("list");
-        boolean isStay = commandTokens.length == 1 &&
-                commandTokens[0].equalsIgnoreCase("stay");
+        boolean isStay = commandTokens.length == 2 &&
+                commandTokens[1].equalsIgnoreCase("stay");
         boolean isDownload = commandTokens.length == 2 &&
                 commandTokens[0].equalsIgnoreCase("download");
         boolean isUpload = commandTokens.length == 2 &&
@@ -184,6 +183,7 @@ public class Server {
      */
     private boolean communicate() throws IOException {
         String receivedCommand = "";
+        String[] commandTokens = null;
         final boolean STOP_CONNECTION_AFTER_THIS = true;
         final boolean CONTINUE_CONNECTION_AFTER_THIS = false;
         InputStream inputStream = clientSocket.getInputStream();
@@ -195,18 +195,22 @@ public class Server {
             return STOP_CONNECTION_AFTER_THIS;
         }
 
-        // invalid command or stay command
         receivedCommand = receivedInput.nextLine();
-        if(!isValidCommand(receivedCommand, DELIMITER) ||
-                receivedCommand.equalsIgnoreCase("stay")) {
+
+        if(!Message.validateMessageSequenceNumber(++sequenceNumber, receivedCommand)) {
+            handleInvalidMessages();
+            return CONTINUE_CONNECTION_AFTER_THIS;
+        }
+        else if(!isValidCommand(receivedCommand)) {
             return CONTINUE_CONNECTION_AFTER_THIS;
         }
 
         // valid command
-        System.out.println("[Client]: " + receivedCommand);
-        String[] commandTokens = receivedCommand.split(DELIMITER);
+        commandTokens = receivedCommand.split(DELIMITER);
+        displayClientCommand(commandTokens);
 
-        if(commandTokens[0].equalsIgnoreCase("quit")) {
+        // switch
+        if(commandTokens[1].equalsIgnoreCase("quit")) {
             return STOP_CONNECTION_AFTER_THIS;
         }
         else if(commandTokens[0].equalsIgnoreCase("list")) {
@@ -218,8 +222,31 @@ public class Server {
         else if(commandTokens[0].equalsIgnoreCase("upload")){
             clientUpload(commandTokens);
         }
+        else {
+            // stay -> don't do anything
+        }
 
         return CONTINUE_CONNECTION_AFTER_THIS;
+    }
+
+
+    /***
+     * method: displayClientCommand
+     *
+     * print the client's command to the screen
+     *
+     * @param commandTokens: components of the client's command
+     */
+    private void displayClientCommand(String[] commandTokens) {
+        System.out.print("[Client]: ");
+        for(int i = 1; i < commandTokens.length; i++) {
+            System.out.print(commandTokens[i]);
+
+            if(i != commandTokens.length - 1) {
+                System.out.print(DELIMITER);
+            }
+        }
+        System.out.println();
     }
 
 
@@ -453,7 +480,7 @@ public class Server {
 
             // id
             if(!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
-                totalInvalidMessagesReceived++;
+                handleInvalidMessages();
                 return AUTHENTICATE_FAILURE;
             }
             else {
@@ -464,7 +491,7 @@ public class Server {
             clientMessage = receivedInput.nextLine();
 
             if(!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
-                totalInvalidMessagesReceived++;
+                handleInvalidMessages();
                 return AUTHENTICATE_FAILURE;
             }
             else {
@@ -480,7 +507,7 @@ public class Server {
              * encrypted messages
              */
             if(!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
-                totalInvalidMessagesReceived++;
+                handleInvalidMessages();
                 return AUTHENTICATE_FAILURE;
             }
 
@@ -549,5 +576,15 @@ public class Server {
     }
 
 
+    /***
+     * method: handleInvalidMessages
+     *
+     * increase the total invalid messages received count
+     * decrease the sequence number to rollback
+     */
+    private void handleInvalidMessages() {
+        totalInvalidMessagesReceived++;
+        sequenceNumber--;
+    }
 }
 
