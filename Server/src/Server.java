@@ -156,8 +156,8 @@ public class Server {
         String[] commandTokens = clientCommand.split(DELIMITER);
         boolean isQuit = commandTokens.length == 2 &&
                 commandTokens[1].equalsIgnoreCase("quit");
-        boolean isList = commandTokens.length == 1 &&
-                commandTokens[0].equalsIgnoreCase("list");
+        boolean isList = commandTokens.length == 2 &&
+                commandTokens[1].equalsIgnoreCase("list");
         boolean isStay = commandTokens.length == 2 &&
                 commandTokens[1].equalsIgnoreCase("stay");
         boolean isDownload = commandTokens.length == 2 &&
@@ -210,7 +210,7 @@ public class Server {
         if(commandTokens[1].equalsIgnoreCase("quit")) {
             return STOP_CONNECTION_AFTER_THIS;
         }
-        else if(commandTokens[0].equalsIgnoreCase("list")) {
+        else if(commandTokens[1].equalsIgnoreCase("list")) {
             list();
         }
         else if(commandTokens[0].equalsIgnoreCase("download")) {
@@ -263,19 +263,11 @@ public class Server {
 
         if(files == null) {
             messageToSend.append("Error: cannot find files filesDirectory.");
-
             System.out.println(">> " + messageToSend.toString());
-            printWriter.println(messageToSend.toString());
-            printWriter.flush();
-            printWriter.close();
         }
         else if (files.length == 0) {
             messageToSend.append("Empty files filesDirectory.");
-
             System.out.println(">> " + messageToSend.toString());
-            printWriter.println(messageToSend.toString());
-            printWriter.flush();
-            printWriter.close();
         }
         else {
             System.out.println(">> Sending list of files...");
@@ -288,11 +280,13 @@ public class Server {
                 }
             }
 
-            printWriter.println(messageToSend.toString());
-            printWriter.flush();
-            printWriter.close();
             System.out.println(">> Complete sending list of files");
         }
+
+        // send to client
+        printWriter.println(Message.appendMessageSequence(++sequenceNumber, messageToSend.toString()));
+        printWriter.flush();
+        printWriter.close();
         System.out.println();
     }
 

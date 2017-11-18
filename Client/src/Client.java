@@ -284,12 +284,21 @@ public class Client {
         Scanner serverInput = new Scanner(new InputStreamReader(clientSocket.getInputStream()));
         String messageReceived = "";
 
-        printWriter.println(command);
+        printWriter.println(Message.appendMessageSequence(++sequenceNumber, command));
         printWriter.flush();
 
-        if (serverInput.hasNextLine()) {
-            messageReceived = serverInput.nextLine();
-            System.out.println("\n[Server]: " + messageReceived + "\n");
+        // lost message -> may have to do something about it
+        if(!serverInput.hasNextLine()) {
+            return;
+        }
+
+        messageReceived = serverInput.nextLine();
+
+        if(!Message.validateMessageSequenceNumber(++sequenceNumber, messageReceived)) {
+            handleInvalidMessages();
+        }
+        else {
+            displayServerMessage(messageReceived.split(DELIMITER));
         }
 
         printWriter.close();
@@ -329,7 +338,6 @@ public class Client {
         System.out.println();
 
         // keep connection alive
-//        printWriter.println("stay");
         printWriter.println(Message.appendMessageSequence(++sequenceNumber, "stay"));
         printWriter.flush();
         printWriter.close();
@@ -523,7 +531,6 @@ public class Client {
         System.out.println();
 
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
-//        printWriter.println("stay");
         printWriter.println(Message.appendMessageSequence(++sequenceNumber, "stay"));
         printWriter.flush();
         printWriter.close();
@@ -600,7 +607,6 @@ public class Client {
 
         return AUTHENTICATE_SUCCESS;
     }
-
 
 
     /***
@@ -756,4 +762,23 @@ public class Client {
         sequenceNumber--;
     }
 
+
+    /***
+     * method: displayServerMessage
+     *
+     * print the client's command to the screen
+     *
+     * @param messageTokens: components of the server's message
+     */
+    private void displayServerMessage(String[] messageTokens) {
+        System.out.print("\n[Server]: ");
+        for(int i = 1; i < messageTokens.length; i++) {
+            System.out.print(messageTokens[i]);
+
+            if(i != messageTokens.length - 1) {
+                System.out.print(DELIMITER);
+            }
+        }
+        System.out.println();
+    }
 }
