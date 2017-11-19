@@ -2,7 +2,6 @@ import sun.misc.BASE64Decoder;
 
 import java.io.*;
 import java.net.Socket;
-import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.security.KeyFactory;
@@ -17,7 +16,7 @@ import java.util.Date;
 import java.util.Scanner;
 
 
-public class Client {
+public class FakeClient {
     private Socket clientSocket = null;
     private File fileDirectory = null;
     private File src = null;
@@ -33,12 +32,12 @@ public class Client {
     private final String DELIMITER = "\\s+\\|\\s+";
 
 
-    private Client() {
+    private FakeClient() {
     }
 
 
     public static void main(String[] args) {
-        Client client = new Client();
+        FakeClient client = new FakeClient();
         client.exec();
     }
 
@@ -66,10 +65,10 @@ public class Client {
             System.out.println("Setting up the connection...");
 
             while (!stopCommunication) {
-
                 // end if detect intruder
                 if(isIntruderDetected()) {
                     System.out.println("\nWarning: Intruder detected. Abort connection.");
+                    quit("quit");
                     clientSocket.close();
                     break;
                 }
@@ -284,7 +283,7 @@ public class Client {
         Scanner serverInput = new Scanner(new InputStreamReader(clientSocket.getInputStream()));
         String messageReceived = "";
 
-        printWriter.println(Message.appendMessageSequence(++sequenceNumber, command));
+        printWriter.println(Message.appendMessageSequence(sequenceNumber, command));
         printWriter.flush();
 
         // lost message -> may have to do something about it
@@ -370,7 +369,7 @@ public class Client {
 
         // lost message
         if(!serverInput.hasNextLine()) {
-            return;
+            throw new IOException();
         }
 
         // confirmation message
@@ -463,6 +462,7 @@ public class Client {
             printWriter.flush();
             printWriter.close();
         }
+
     }
 
 
@@ -513,7 +513,13 @@ public class Client {
                 byteRead = inputStream.read(byteBlock);
             }
 
-            if(!Message.validateMessageSequenceNumber(++sequenceNumber, byteArrayOutputStream.toByteArray())) {
+            // empty -> lost
+            if(byteArrayOutputStream.toByteArray().length == 0) {
+                throw new InvalidMessageException();
+            }
+            // have additional 7 bytes sequence number and delimiter in front
+            else if(!Message.validateMessageSequenceNumber(++sequenceNumber, byteArrayOutputStream.toByteArray())) {
+                handleInvalidMessages();
                 printWriter.close();
                 throw new InvalidMessageException();
             }
@@ -584,7 +590,7 @@ public class Client {
                 return AUTHENTICATE_FAILURE;
             }
             catch (InvalidMessageException e) {
-                handleInvalidMessages();
+                totalInvalidMessagesReceived++;
                 return AUTHENTICATE_FAILURE;
             }
             finally {

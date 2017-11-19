@@ -5,7 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Scanner;
 
-public class Server {
+public class FakeServer {
     private Socket clientSocket = null;
     private File filesDirectory = null;
     private File src = null;
@@ -23,11 +23,11 @@ public class Server {
     private final String DELIMITER = "\\s+\\|\\s+";
 
 
-    private Server() {
+    private FakeServer() {
     }
 
     public static void main(String[] args) {
-        Server server = new Server();
+        FakeServer server = new FakeServer();
         server.exec();
     }
 
@@ -222,6 +222,7 @@ public class Server {
         }
         else if(commandTokens[1].equalsIgnoreCase("stay")){
             // stay -> don't do anything
+//            sequenceNumber--;
         }
 
         return CONTINUE_CONNECTION_AFTER_THIS;
