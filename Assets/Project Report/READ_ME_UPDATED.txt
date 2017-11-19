@@ -12,6 +12,8 @@ There are several ways to run the system: via IDE or via Command Line environmen
 	    	Then individually click "Run" to run each code in parallel.
 	    	(May have to configure classpath to successfully compile and run)
     2. To run program in the command line environment:
+            Using terminal (Linux, Mac) or CMD (Windows - do not use PowerShell)
+
 	    	Open terminal and navigate to Server/src folder
 	    	Type: javac -cp ..\..\Commons\src Server.java
 	    	Type: java -cp ..\..\Commons\src;. Server
@@ -87,6 +89,8 @@ where 	sn = sequence number
 		k = session key to encrypt
 
 But what to do when out-of-sync?
-    Don't have enough time, therefore just end the connection for client if out of sync
-    For server, can't because the fake client will of course be out of sync,
-    but the real client isn't -> end server will affect real client
+    Threshold for invalid messages allowed are 5 (can set to different value later)
+    Each time receive invalid message, ignore that message and increase the count
+    When the count exceed the threshold, terminate the connection.
+    After sometimes, the other side will terminate automatically due to timeout.
+    NOTE: if out-of-sync during the authentication, terminate right away.

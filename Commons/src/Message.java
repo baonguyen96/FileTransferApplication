@@ -145,7 +145,7 @@ public class Message {
         ByteBuffer byteBuffer = null;
         byte[] integer = new byte[4];
 
-        for(int i = 0; i < message.length; i++) {
+        for(int i = 0; i < 8; i++) {
             if(i < 4) {
                 integer[i] = message[i];
             }
@@ -157,7 +157,7 @@ public class Message {
             else if(i <= 6){
                 System.out.printf("%c", message[i]);
             }
-            else if(i == 7){
+            else {
                 System.out.print("...");
             }
         }

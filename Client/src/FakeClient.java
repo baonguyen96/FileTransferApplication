@@ -20,7 +20,7 @@ import java.util.Date;
 import java.util.Scanner;
 
 
-public class Client extends Peer {
+public class FakeClient extends Peer {
     private final long id = System.currentTimeMillis();
     private boolean connectSuccess = false;
     private boolean hasReceivedCertificate = false;
@@ -28,14 +28,14 @@ public class Client extends Peer {
     private final String CERTIFICATION = "CA-certificate.crt";
 
 
-    private Client() {
+    private FakeClient() {
         super(CLIENT);
         masterKey = (long) (Math.random() * Long.MAX_VALUE);
     }
 
 
     public static void main(String[] args) {
-        Client client = new Client();
+        FakeClient client = new FakeClient();
         client.exec();
     }
 
