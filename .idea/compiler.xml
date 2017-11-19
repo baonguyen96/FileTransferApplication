@@ -7,12 +7,14 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="Client" />
+        <module name="Commons" />
         <module name="Message" />
         <module name="Server" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="Client" target="1.5" />
+      <module name="Commons" target="1.5" />
       <module name="FileTransferApplication" target="1.5" />
       <module name="Message" target="1.5" />
       <module name="Server" target="1.5" />

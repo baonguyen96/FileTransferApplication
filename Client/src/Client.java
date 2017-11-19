@@ -1,8 +1,11 @@
+/*
+ * this is internal API and may be removed in the future java release which will break our codes
+ * use this instead: https://stackoverflow.com/questions/36578625/base64encoder-is-internal-api-and-may-be-removed-in-future-release
+ */
 import sun.misc.BASE64Decoder;
 
 import java.io.*;
 import java.net.Socket;
-import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.security.KeyFactory;
@@ -17,23 +20,17 @@ import java.util.Date;
 import java.util.Scanner;
 
 
-public class Client {
-    private Socket clientSocket = null;
-    private File fileDirectory = null;
-    private File src = null;
+public class Client extends Peer {
     private final long id = System.currentTimeMillis();
     private boolean connectSuccess = false;
     private boolean hasReceivedCertificate = false;
     private boolean hasSentKey = false;
-    private long masterKey = 99;
-    private int sequenceNumber = 0;
-    private int totalInvalidMessagesReceived = 0;
-    private static final int MAX_INVALID_MESSAGES_ALLOWED = 5;
     private final String CERTIFICATION = "CA-certificate.crt";
-    private final String DELIMITER = "\\s+\\|\\s+";
 
 
     private Client() {
+        super(CLIENT);
+        masterKey = (long) (Math.random() * Long.MAX_VALUE);
     }
 
 
@@ -56,7 +53,7 @@ public class Client {
         final String SMALL_DIV = "\n---------------------\n";
         Scanner scanner = new Scanner(System.in);
 
-        setDirectory();
+        setDirectories();
         System.out.println(BIG_DIV);
 
         try {
@@ -70,7 +67,6 @@ public class Client {
                 // end if detect intruder
                 if(isIntruderDetected()) {
                     System.out.println("\nWarning: Intruder detected. Abort connection.");
-                    clientSocket.close();
                     break;
                 }
 
@@ -80,7 +76,8 @@ public class Client {
                 // authentication
                 if (!authenticate()) {
                     if(!connectSuccess) {
-                        System.out.println("\nAccess denied.");
+                        System.out.println(SMALL_DIV);
+                        System.out.println("Access denied.");
                         clientSocket.close();
                         break;
                     }
@@ -107,21 +104,21 @@ public class Client {
 
         }
         catch (UnknownHostException e) {
-            System.out.println("\nError: Unknown IP address.");
+            System.out.println(SMALL_DIV);
+            System.out.println("Error: Unknown IP address.");
         }
         catch (SocketTimeoutException e) {
-            System.out.println("\nError: Server is busy.");
+            System.out.println(SMALL_DIV);
+            System.out.println("Error: Server is busy.");
         }
         catch (FileNotFoundException e) {
-            System.out.println("\nError: Cannot create or find file.");
+            System.out.println(SMALL_DIV);
+            System.out.println("Error: File not found.");
         }
         catch (IOException e) {
-            System.out.println("\nError: Sockets corrupted.");
-            e.printStackTrace();
+            System.out.println(SMALL_DIV);
+            System.out.println("Error: Sockets corrupted.");
         }
-//        catch (Exception e) {
-//            System.out.println("\nError: certificate.");
-//        }
         finally {
             System.out.println(SMALL_DIV);
             date = new Date();
@@ -130,19 +127,6 @@ public class Client {
                     dateFormat.format(date));
             System.out.println(BIG_DIV);
         }
-    }
-
-
-    /***
-     * method: isIntruderDetected
-     *
-     * intruder is detected if the total invalid messages received
-     * is more than the allowed threshold
-     *
-     * @return true if detect intruder, false otherwise
-     */
-    private boolean isIntruderDetected() {
-        return totalInvalidMessagesReceived > MAX_INVALID_MESSAGES_ALLOWED;
     }
 
 
@@ -298,7 +282,7 @@ public class Client {
             handleInvalidMessages();
         }
         else {
-            displayServerMessage(messageReceived);
+            displayPeerMessage(messageReceived);
         }
 
         printWriter.close();
@@ -313,7 +297,7 @@ public class Client {
      */
     private void listMe() throws IOException {
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
-        File[] files = fileDirectory.listFiles();
+        File[] files = filesDirectory.listFiles();
         StringBuilder listOfFiles = new StringBuilder();
 
         System.out.print(">> ");
@@ -381,11 +365,11 @@ public class Client {
             handleInvalidMessages();
         }
         else if (!messageReceived.contains(fileToDownloadName)) {
-            displayServerMessage(messageReceived);
+            displayPeerMessage(messageReceived);
         }
         // valid confirmation -> able to download
         else {
-            fileToDownloadName = fileDirectory.getAbsolutePath() + "/" + fileToDownloadName;
+            fileToDownloadName = filesDirectory.getAbsolutePath() + "/" + fileToDownloadName;
             File downloadedFile = new File(fileToDownloadName);
             fileOutputStream = new FileOutputStream(downloadedFile);
             bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
@@ -696,36 +680,6 @@ public class Client {
 
 
     /***
-     * method: getKey
-     *
-     * read the key from the local file and return as string
-     *
-     * @param keyFileName: local file that contains the key
-     * @return key as string
-     */
-    private String getKey(String keyFileName) {
-        File file = new File(keyFileName);
-        if(!file.exists()) {
-            file = new File("Client/src/" + keyFileName);
-        }
-        StringBuilder key = new StringBuilder();
-
-        try {
-            Scanner scanner = new Scanner(file);
-            while(scanner.hasNextLine()) {
-                key.append(scanner.nextLine());
-            }
-        }
-        catch (FileNotFoundException e) {
-            System.out.println("Error: Cannot find " + keyFileName);
-            key = null;
-        }
-
-        return key == null ? null : key.toString();
-    }
-
-
-    /***
      * method: deleteCertificate
      *
      * delete the CA certificate out of the system
@@ -738,60 +692,4 @@ public class Client {
         }
     }
 
-
-    /***
-     * method: setDirectory
-     *
-     * set the Files Directory to store all files
-     * remove the "\src" in the path when run from the command line environment
-     */
-    private void setDirectory() {
-        fileDirectory = new File("Client/FilesDirectory");
-        String absolutePath = fileDirectory.getAbsolutePath();
-        absolutePath = absolutePath.replace("\\", "/");
-        absolutePath = absolutePath.replace("/src", "");
-        absolutePath = absolutePath.replace("/Client/Client", "/Client");
-        fileDirectory = new File(absolutePath);
-
-        src = new File("Client/src");
-        absolutePath = src.getAbsolutePath();
-        absolutePath = absolutePath.replace("\\", "/");
-        absolutePath = absolutePath.replace("Client/src/Client/src", "Client/src");
-        src = new File(absolutePath);
-    }
-
-
-    /***
-     * method: handleInvalidMessages
-     *
-     * increase the total invalid messages received count
-     * decrease the sequence number to rollback
-     */
-    private void handleInvalidMessages() {
-        totalInvalidMessagesReceived++;
-        sequenceNumber--;
-    }
-
-
-    /***
-     * method: displayServerMessage
-     *
-     * print the client's command to the screen
-     *
-     * @param message: server's message
-     */
-    private void displayServerMessage(String message) {
-        String[] messageTokens = message.split(DELIMITER);
-
-        System.out.print("\n[Server]: ");
-
-        for(int i = 1; i < messageTokens.length; i++) {
-            System.out.print(messageTokens[i]);
-
-            if(i != messageTokens.length - 1) {
-                System.out.print(" | ");
-            }
-        }
-        System.out.println();
-    }
 }

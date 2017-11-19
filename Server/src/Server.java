@@ -5,26 +5,20 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Scanner;
 
-public class Server {
-    private Socket clientSocket = null;
-    private File filesDirectory = null;
-    private File src = null;
+public class Server extends Peer {
     private final String PRIVATE_KEY = getKey("PrivateKey.txt");
     private final String PUBLIC_KEY = getKey("PublicKey.txt");
     private boolean isBusy = false;
     private boolean hasSentCertificate = false;
     private boolean hasReceivedKeys = false;
-    private long masterKey = 0;
-    private int sequenceNumber = 0;
-    private int totalInvalidMessagesReceived = 0;
-    private static final int MAX_INVALID_MESSAGES_ALLOWED = 5;
     private String clientIpAddress = null;
     private String clientId = null;
-    private final String DELIMITER = "\\s+\\|\\s+";
 
 
     private Server() {
+        super(SERVER);
     }
+
 
     public static void main(String[] args) {
         Server server = new Server();
@@ -65,11 +59,10 @@ public class Server {
              * so that in the subsequent reconnection, does not accept any host that has different address
              */
             while (!stopCommunication) {
-
                 // end if detect intruder
                 if(isIntruderDetected()) {
-                    System.out.println("\nWarning: Intruder detected. Abort connection.");
-                    clientSocket.close();
+                    System.out.println(SMALL_DIV);
+                    System.out.println("Warning: Intruder detected. Abort connection.");
                     serverSocket.close();
                     break;
                 }
@@ -106,16 +99,20 @@ public class Server {
 
         }
         catch (UnknownHostException e) {
-            System.out.println("\nError: Unknown IP address.");
+            System.out.println(SMALL_DIV);
+            System.out.println("Error: Unknown IP address.");
         }
         catch (SocketTimeoutException e) {
-            System.out.println("\nError: Time out.");
+            System.out.println(SMALL_DIV);
+            System.out.println("Error: Time out.");
         }
         catch (FileNotFoundException e) {
-            System.out.println("\nError: Cannot create or find file.");
+            System.out.println(SMALL_DIV);
+            System.out.println("Error: File not found.");
         }
         catch (IOException e) {
-            System.out.println("\nError: Sockets corrupted.");
+            System.out.println(SMALL_DIV);
+            System.out.println("Error: Sockets corrupted.");
         }
         finally {
             System.out.println(SMALL_DIV);
@@ -125,20 +122,6 @@ public class Server {
                     dateFormat.format(date));
             System.out.println(BIG_DIV);
         }
-    }
-
-
-
-    /***
-     * method: isIntruderDetected
-     *
-     * intruder is detected if the total invalid messages received
-     * is more than the allowed threshold
-     *
-     * @return true if detect intruder, false otherwise
-     */
-    private boolean isIntruderDetected() {
-        return totalInvalidMessagesReceived > MAX_INVALID_MESSAGES_ALLOWED;
     }
 
 
@@ -205,7 +188,7 @@ public class Server {
 
         // valid command
         commandTokens = receivedCommand.split(DELIMITER);
-        displayClientCommand(commandTokens);
+        displayPeerMessage(receivedCommand);
 
         // switch
         if(commandTokens[1].equalsIgnoreCase("quit")) {
@@ -497,91 +480,6 @@ public class Server {
         }
 
         return authenticateSuccess;
-    }
-
-
-    /***
-     * method: getKey
-     *
-     * read the key from the local file and return as string
-     *
-     * @param keyFileName: local file that contains the key
-     * @return key as string
-     */
-    private String getKey(String keyFileName) {
-        File file = new File(keyFileName);
-        if(!file.exists()) {
-            file = new File("Server/src/" + keyFileName);
-        }
-        StringBuilder key = new StringBuilder();
-
-        try {
-            Scanner scanner = new Scanner(file);
-            while(scanner.hasNextLine()) {
-                key.append(scanner.nextLine());
-            }
-        }
-        catch (FileNotFoundException e) {
-            System.out.println("Error: Cannot find " + keyFileName);
-            key = null;
-        }
-
-        return key == null ? null : key.toString();
-    }
-
-
-    /***
-     * method: setDirectories
-     *
-     * set the Files Directory to store all files
-     * remove the "\src" in the path when run from the command line environment
-     */
-    private void setDirectories() {
-        filesDirectory = new File("Server/FilesDirectory");
-        String absolutePath = filesDirectory.getAbsolutePath();
-        absolutePath = absolutePath.replace("\\", "/");
-        absolutePath = absolutePath.replace("/src", "");
-        absolutePath = absolutePath.replace("/Server/Server", "/Server");
-        filesDirectory = new File(absolutePath);
-
-
-        src = new File("Server/src");
-        absolutePath = src.getAbsolutePath();
-        absolutePath = absolutePath.replace("\\", "/");
-        absolutePath = absolutePath.replace("Server/src/Server/src", "Server/src");
-        src = new File(absolutePath);
-    }
-
-
-    /***
-     * method: handleInvalidMessages
-     *
-     * increase the total invalid messages received count
-     * decrease the sequence number to rollback
-     */
-    private void handleInvalidMessages() {
-        totalInvalidMessagesReceived++;
-        sequenceNumber--;
-    }
-
-
-    /***
-     * method: displayClientCommand
-     *
-     * print the client's command to the screen
-     *
-     * @param commandTokens: components of the client's command
-     */
-    private void displayClientCommand(String[] commandTokens) {
-        System.out.print("[Client]: ");
-        for(int i = 1; i < commandTokens.length; i++) {
-            System.out.print(commandTokens[i]);
-
-            if(i != commandTokens.length - 1) {
-                System.out.print(" | ");
-            }
-        }
-        System.out.println();
     }
 
 }

@@ -13,11 +13,11 @@ There are several ways to run the system: via IDE or via Command Line environmen
 	    	(May have to configure classpath to successfully compile and run)
     2. To run program in the command line environment:
 	    	Open terminal and navigate to Server/src folder
-	    	Type: javac -cp ..\..\Message\src Server.java
-	    	Type: java -cp ..\..\Message\src;. Server
+	    	Type: javac -cp ..\..\Commons\src Server.java
+	    	Type: java -cp ..\..\Commons\src;. Server
 			Open another terminal and navigate to Client/src folder
-	    	Type: javac -cp ..\..\Message\src Client.java
-	    	Type: java -cp ..\..\Message\src;. Client
+	    	Type: javac -cp ..\..\Commons\src Client.java
+	    	Type: java -cp ..\..\Commons\src;. Client
     3. To run program as jar files: 
     		To be added later.
 
