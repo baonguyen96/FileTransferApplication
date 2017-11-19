@@ -20,7 +20,6 @@ public class Server {
     private static final int MAX_INVALID_MESSAGES_ALLOWED = 5;
     private String clientIpAddress = null;
     private String clientId = null;
-    private final String CERTIFICATION = "CA-certificate.crt";
     private final String DELIMITER = "\\s+\\|\\s+";
 
 
@@ -147,9 +146,9 @@ public class Server {
      * method: isValidCommand
      *
      * validate the command (in term of client's terminology)
+     * commands are appended with the sequence number in the front
      *
      * @param clientCommand: client's command
-     *
      * @return true if valid command, false if not
      */
     private boolean isValidCommand(String clientCommand) {
@@ -162,8 +161,8 @@ public class Server {
                 commandTokens[1].equalsIgnoreCase("stay");
         boolean isDownload = commandTokens.length == 3 &&
                 commandTokens[1].equalsIgnoreCase("download");
-        boolean isUpload = commandTokens.length == 2 &&
-                commandTokens[0].equalsIgnoreCase("upload");
+        boolean isUpload = commandTokens.length == 3 &&
+                commandTokens[1].equalsIgnoreCase("upload");
 
         return isQuit || isList || isStay || isDownload || isUpload;
     }
@@ -218,7 +217,7 @@ public class Server {
         else if(commandTokens[1].equalsIgnoreCase("download")) {
             clientDownload(commandTokens);
         }
-        else if(commandTokens[0].equalsIgnoreCase("upload")){
+        else if(commandTokens[1].equalsIgnoreCase("upload")){
             clientUpload(commandTokens);
         }
         else if(commandTokens[1].equalsIgnoreCase("stay")){
@@ -337,7 +336,7 @@ public class Server {
      * @throws IOException
      */
     private void clientUpload(String[] commandTokens) throws IOException {
-        String filePath = commandTokens[1].replace("\\", "/");
+        String filePath = commandTokens[2].replace("\\", "/");
         String[] uploadedFilePathComponents = filePath.split("/");
         String uploadedFileName = uploadedFilePathComponents[uploadedFilePathComponents.length - 1];
         File receivingFile = new File(filesDirectory.getAbsolutePath() +
@@ -346,23 +345,28 @@ public class Server {
         byte[] byteBlock = new byte[1];
         FileOutputStream fileOutputStream = new FileOutputStream(receivingFile);
         BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
-        int byteRead = inputStream.read(byteBlock, 0, byteBlock.length);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
         System.out.printf(">> Receiving \"%s\" ...\n", uploadedFileName);
 
+        int byteRead = inputStream.read(byteBlock, 0, byteBlock.length);
         while(byteRead >= 0) {
             byteArrayOutputStream.write(byteBlock);
             byteRead = inputStream.read(byteBlock);
         }
+        byte[] byteArray = byteArrayOutputStream.toByteArray();
 
-        bufferedOutputStream.write(byteArrayOutputStream.toByteArray());
-        bufferedOutputStream.flush();
-        bufferedOutputStream.close();
-        inputStream.close();
-
-        System.out.printf(">> Complete saving \"%s\"\n\n", uploadedFileName);
-
+        if(!Message.validateMessageSequenceNumber(++sequenceNumber, byteArray)) {
+            handleInvalidMessages();
+        }
+        else {
+            byteArray = Message.extractMessage(byteArray);
+            bufferedOutputStream.write(byteArray);
+            bufferedOutputStream.flush();
+            bufferedOutputStream.close();
+            inputStream.close();
+            System.out.printf(">> Complete saving \"%s\"\n\n", uploadedFileName);
+        }
     }
 
 
@@ -380,7 +384,7 @@ public class Server {
         BufferedInputStream bufferedInputStream = null;
 
         try {
-            String certificatePath = src.getAbsolutePath() + "/" + CERTIFICATION;
+            String certificatePath = src.getAbsolutePath() + "/CA-certificate.crt";
             File fileToSend = new File(certificatePath);
             byte[] byteArray = new byte[(int) fileToSend.length()];
             fileInputStream = new FileInputStream(fileToSend);

@@ -438,24 +438,21 @@ public class Client {
 
         try {
             fileInputStream = new FileInputStream(uploadedFile);
-
-            // send command to the server
-            printWriter.println(command);
-            printWriter.flush();
-
             BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
+
+            printWriter.println(Message.appendMessageSequence(++sequenceNumber, command));
+            printWriter.flush();
 
             System.out.printf(">> Uploading \"%s\" ...\n", fileName);
 
             bufferedInputStream.read(byteArray, 0, byteArray.length);
+            byteArray = Message.appendMessageSequence(++sequenceNumber, byteArray);
             bufferedOutputStream.write(byteArray, 0, byteArray.length);
             bufferedOutputStream.flush();
             bufferedOutputStream.close();
 
-            System.out.printf(">> Complete uploading \"%s\"\n", uploadedFile.getAbsolutePath());
-            System.out.println();
-
+            System.out.printf(">> Complete uploading \"%s\"\n\n", uploadedFile.getAbsolutePath());
         }
         catch (FileNotFoundException e) {
             System.out.println(">> Invalid file path.");
