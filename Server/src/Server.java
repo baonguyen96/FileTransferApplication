@@ -146,7 +146,7 @@ public class Server {
     /***
      * method: isValidCommand
      *
-     * validate the command
+     * validate the command (in term of client's terminology)
      *
      * @param clientCommand: client's command
      *
@@ -160,8 +160,8 @@ public class Server {
                 commandTokens[1].equalsIgnoreCase("list");
         boolean isStay = commandTokens.length == 2 &&
                 commandTokens[1].equalsIgnoreCase("stay");
-        boolean isDownload = commandTokens.length == 2 &&
-                commandTokens[0].equalsIgnoreCase("download");
+        boolean isDownload = commandTokens.length == 3 &&
+                commandTokens[1].equalsIgnoreCase("download");
         boolean isUpload = commandTokens.length == 2 &&
                 commandTokens[0].equalsIgnoreCase("upload");
 
@@ -173,6 +173,7 @@ public class Server {
      * method: communicate
      *
      * communication session between server and client
+     * run commands according to client's input
      *
      * @return true if stop communication, false if not
      * @throws FileNotFoundException
@@ -186,7 +187,7 @@ public class Server {
         InputStream inputStream = clientSocket.getInputStream();
         Scanner receivedInput = new Scanner(new InputStreamReader(inputStream));
 
-        // offline
+        // client is offline
         if(!receivedInput.hasNextLine()) {
             System.out.println(">> Client is offline.");
             return STOP_CONNECTION_AFTER_THIS;
@@ -194,6 +195,7 @@ public class Server {
 
         receivedCommand = receivedInput.nextLine();
 
+        // errors
         if(!Message.validateMessageSequenceNumber(++sequenceNumber, receivedCommand)) {
             handleInvalidMessages();
             return CONTINUE_CONNECTION_AFTER_THIS;
@@ -213,7 +215,7 @@ public class Server {
         else if(commandTokens[1].equalsIgnoreCase("list")) {
             list();
         }
-        else if(commandTokens[0].equalsIgnoreCase("download")) {
+        else if(commandTokens[1].equalsIgnoreCase("download")) {
             clientDownload(commandTokens);
         }
         else if(commandTokens[0].equalsIgnoreCase("upload")){
@@ -224,26 +226,6 @@ public class Server {
         }
 
         return CONTINUE_CONNECTION_AFTER_THIS;
-    }
-
-
-    /***
-     * method: displayClientCommand
-     *
-     * print the client's command to the screen
-     *
-     * @param commandTokens: components of the client's command
-     */
-    private void displayClientCommand(String[] commandTokens) {
-        System.out.print("[Client]: ");
-        for(int i = 1; i < commandTokens.length; i++) {
-            System.out.print(commandTokens[i]);
-
-            if(i != commandTokens.length - 1) {
-                System.out.print(DELIMITER);
-            }
-        }
-        System.out.println();
     }
 
 
@@ -295,7 +277,6 @@ public class Server {
      * method: clientDownload
      *
      * download | file
-     *
      * let client download files from the library
      *
      * @param commandTokens: parts of client's command
@@ -307,7 +288,7 @@ public class Server {
         BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
         FileInputStream fileInputStream = null;
         BufferedInputStream bufferedInputStream = null;
-        String fileToSendName = commandTokens[1];
+        String fileToSendName = commandTokens[2];
 
         try {
             File fileToSend = new File(filesDirectory.getAbsolutePath()
@@ -318,11 +299,13 @@ public class Server {
 
             // confirmation message
             String confirmationMessage = String.format("Sending \"%s\" ...", fileToSendName);
-            printWriter.println(confirmationMessage);
             System.out.println(">> " + confirmationMessage);
+            printWriter.println(Message.appendMessageSequence(++sequenceNumber, confirmationMessage));
+            printWriter.flush();
 
             // file transfer
             bufferedInputStream.read(byteArray, 0, byteArray.length);
+            byteArray = Message.appendMessageSequence(++sequenceNumber, byteArray);
             bufferedOutputStream.write(byteArray, 0, byteArray.length);
             bufferedOutputStream.flush();
             bufferedOutputStream.close();
@@ -332,7 +315,7 @@ public class Server {
         catch (FileNotFoundException e) {
             String error = "Error: requested file does not exist.";
             System.out.println("\n[You]:    " + error);
-            printWriter.println(error);
+            printWriter.println(Message.appendMessageSequence(++sequenceNumber, error));
             printWriter.flush();
             printWriter.close();
         }
@@ -404,19 +387,18 @@ public class Server {
             bufferedInputStream = new BufferedInputStream(fileInputStream);
 
             // confirm
-//            printWriter.println("sending certificate");
             printWriter.println(Message.appendMessageSequence(++sequenceNumber, "sending certificate"));
             printWriter.flush();
 
-            // file transfer (does not have sequence number yet)
+            // file transfer
             bufferedInputStream.read(byteArray, 0, byteArray.length);
+            byteArray = Message.appendMessageSequence(++sequenceNumber, byteArray);
             bufferedOutputStream.write(byteArray, 0, byteArray.length);
             bufferedOutputStream.flush();
             bufferedOutputStream.close();
 
         }
         catch (FileNotFoundException e) {
-//            printWriter.println("error");
             printWriter.println(Message.appendMessageSequence(++sequenceNumber, "error"));
             printWriter.flush();
             printWriter.close();
@@ -466,8 +448,6 @@ public class Server {
              */
             // ip
             clientIpAddress = clientSocket.getInetAddress().getHostAddress();
-//            clientId = clientMessage;
-//            masterKey = Long.parseLong(receivedInput.nextLine());
 
             // id
             if(!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
@@ -494,9 +474,7 @@ public class Server {
         }
         // already send certificate and receive keys
         else {
-            /*
-             * encrypted messages
-             */
+            // encrypted messages
             if(!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
                 handleInvalidMessages();
                 return AUTHENTICATE_FAILURE;
@@ -577,5 +555,26 @@ public class Server {
         totalInvalidMessagesReceived++;
         sequenceNumber--;
     }
+
+
+    /***
+     * method: displayClientCommand
+     *
+     * print the client's command to the screen
+     *
+     * @param commandTokens: components of the client's command
+     */
+    private void displayClientCommand(String[] commandTokens) {
+        System.out.print("[Client]: ");
+        for(int i = 1; i < commandTokens.length; i++) {
+            System.out.print(commandTokens[i]);
+
+            if(i != commandTokens.length - 1) {
+                System.out.print(" | ");
+            }
+        }
+        System.out.println();
+    }
+
 }
 

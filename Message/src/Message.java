@@ -41,6 +41,8 @@ public class Message {
         // original message
         System.arraycopy(message, 0, newMessage, 7, message.length);
 
+        displayMessage(newMessage);
+
         return newMessage;
     }
 
@@ -93,6 +95,11 @@ public class Message {
         byte[] sequenceNumberAsBytes = new byte[4];
         ByteBuffer byteBuffer = null;
 
+        // first 7 bytes are for sequence and delimiter -> length has to be at least 8
+        if(message.length <= 7) {
+            return false;
+        }
+
         // extract first 4 bytes as sequence number
         System.arraycopy(message, 0, sequenceNumberAsBytes, 0, 4);
         byteBuffer = ByteBuffer.wrap(sequenceNumberAsBytes);
@@ -109,5 +116,52 @@ public class Message {
         return isValidSequence;
     }
 
+
+    /***
+     * method: extractMessage
+     *
+     * remove the first 7 bytes (sequence number and delimiter) out of the message
+     *
+     * @param messageWithSequence: message with sequence number in front
+     * @return the actual message as byte array without the sequence number and delimiter
+     */
+    public static byte[] extractMessage(byte[] messageWithSequence) {
+        displayMessage(messageWithSequence);
+        byte[] extractedMessage = new byte[messageWithSequence.length - 7];
+        System.arraycopy(messageWithSequence, 7, extractedMessage, 0, extractedMessage.length);
+        return extractedMessage;
+    }
+
+
+    /***
+     * method: displayMessage
+     *
+     * print out the sequence number and the delimiter, following by ...
+     * from the message that is in its byte array form
+     *
+     * @param message: message as byte array
+     */
+    private static void displayMessage(byte[] message) {
+        ByteBuffer byteBuffer = null;
+        byte[] integer = new byte[4];
+
+        for(int i = 0; i < message.length; i++) {
+            if(i < 4) {
+                integer[i] = message[i];
+            }
+            else if(i == 4) {
+                byteBuffer = ByteBuffer.wrap(integer);
+                System.out.print(byteBuffer.getInt());
+                System.out.printf("%c", message[i]);
+            }
+            else if(i <= 6){
+                System.out.printf("%c", message[i]);
+            }
+            else if(i == 7){
+                System.out.print("...");
+            }
+        }
+        System.out.println();
+    }
 
 }

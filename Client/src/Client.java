@@ -298,7 +298,7 @@ public class Client {
             handleInvalidMessages();
         }
         else {
-            displayServerMessage(messageReceived.split(DELIMITER));
+            displayServerMessage(messageReceived);
         }
 
         printWriter.close();
@@ -365,37 +365,53 @@ public class Client {
         BufferedOutputStream bufferedOutputStream = null;
         String fileToDownloadName = commandComponents[1];
 
-        printWriter.println(command);
+        printWriter.println(Message.appendMessageSequence(++sequenceNumber, command));
         printWriter.flush();
+
+        // lost message
+        if(!serverInput.hasNextLine()) {
+            throw new IOException();
+        }
 
         // confirmation message
         messageReceived = serverInput.nextLine();
 
-        // error
-        if (!messageReceived.contains(fileToDownloadName)) {
-            System.out.println("\n[Server]: " + messageReceived);
+        // errors on confirmation
+        if(!Message.validateMessageSequenceNumber(++sequenceNumber, messageReceived)) {
+            handleInvalidMessages();
         }
-        // valid file to download
+        else if (!messageReceived.contains(fileToDownloadName)) {
+            displayServerMessage(messageReceived);
+        }
+        // valid confirmation -> able to download
         else {
             fileToDownloadName = fileDirectory.getAbsolutePath() + "/" + fileToDownloadName;
             File downloadedFile = new File(fileToDownloadName);
             fileOutputStream = new FileOutputStream(downloadedFile);
             bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
+
+            // read the byte stream of file, appending with the sequence number
             int byteRead = inputStream.read(byteBlock, 0, byteBlock.length);
-
-            System.out.println(">> Downloading...");
-
             while (byteRead >= 0) {
                 byteArrayOutputStream.write(byteBlock);
                 byteRead = inputStream.read(byteBlock);
             }
+            byte[] byteStream = byteArrayOutputStream.toByteArray();
 
-            bufferedOutputStream.write(byteArrayOutputStream.toByteArray());
-            bufferedOutputStream.flush();
-            bufferedOutputStream.close();
-            printWriter.close();
+            // validate sequence number
+            if(!Message.validateMessageSequenceNumber(++sequenceNumber, byteStream)) {
+                handleInvalidMessages();
+            }
+            else {
+                System.out.println(">> Downloading...");
+                byteStream = Message.extractMessage(byteStream);
+                bufferedOutputStream.write(byteStream);
+                bufferedOutputStream.flush();
+                bufferedOutputStream.close();
+                printWriter.close();
 
-            System.out.printf(">> New file saved at \"%s\"\n", downloadedFile.getAbsolutePath());
+                System.out.printf(">> New file saved at \"%s\"\n", downloadedFile.getAbsolutePath());
+            }
         }
         System.out.println();
     }
@@ -446,7 +462,6 @@ public class Client {
             System.out.println();
 
             // keep connection alive
-//            printWriter.println("stay");
             printWriter.println(Message.appendMessageSequence(++sequenceNumber, "stay"));
             printWriter.flush();
             printWriter.close();
@@ -498,14 +513,25 @@ public class Client {
             bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
             int byteRead = inputStream.read(byteBlock, 0, byteBlock.length);
 
-            // does not append sequence number yet
-
             while (byteRead >= 0) {
                 byteArrayOutputStream.write(byteBlock);
                 byteRead = inputStream.read(byteBlock);
             }
 
-            bufferedOutputStream.write(byteArrayOutputStream.toByteArray());
+            // empty -> lost
+            if(byteArrayOutputStream.toByteArray().length == 0) {
+                throw new InvalidMessageException();
+            }
+            // have additional 7 bytes sequence number and delimiter in front
+            else if(!Message.validateMessageSequenceNumber(++sequenceNumber, byteArrayOutputStream.toByteArray())) {
+                handleInvalidMessages();
+                printWriter.close();
+                throw new InvalidMessageException();
+            }
+
+            // extracted byte array that contains only the file
+            byte[] file = Message.extractMessage(byteArrayOutputStream.toByteArray());
+            bufferedOutputStream.write(file);
             bufferedOutputStream.flush();
             bufferedOutputStream.close();
             printWriter.close();
@@ -546,7 +572,6 @@ public class Client {
      * @throws IOException if socket error
      */
     private boolean authenticate() throws IOException {
-
         final boolean AUTHENTICATE_SUCCESS = true;
         final boolean AUTHENTICATE_FAILURE = false;
         OutputStream outputStream = clientSocket.getOutputStream();
@@ -768,15 +793,18 @@ public class Client {
      *
      * print the client's command to the screen
      *
-     * @param messageTokens: components of the server's message
+     * @param message: server's message
      */
-    private void displayServerMessage(String[] messageTokens) {
+    private void displayServerMessage(String message) {
+        String[] messageTokens = message.split(DELIMITER);
+
         System.out.print("\n[Server]: ");
+
         for(int i = 1; i < messageTokens.length; i++) {
             System.out.print(messageTokens[i]);
 
             if(i != messageTokens.length - 1) {
-                System.out.print(DELIMITER);
+                System.out.print(" | ");
             }
         }
         System.out.println();
