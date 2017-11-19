@@ -68,7 +68,7 @@ public class Server {
 
                 // end if detect intruder
                 if(isIntruderDetected()) {
-                    System.out.println("\nWarning: intruder detected. Abort connection.");
+                    System.out.println("\nWarning: Intruder detected. Abort connection.");
                     clientSocket.close();
                     serverSocket.close();
                     break;
@@ -106,16 +106,16 @@ public class Server {
 
         }
         catch (UnknownHostException e) {
-            System.out.println("\nError: unknown IP address.");
+            System.out.println("\nError: Unknown IP address.");
         }
         catch (SocketTimeoutException e) {
-            System.out.println("\nError: waited too long for connection.");
+            System.out.println("\nError: Waited too long for connection.");
         }
         catch (FileNotFoundException e) {
-            System.out.println("\nError: cannot create or find file.");
+            System.out.println("\nError: Cannot create or find file.");
         }
         catch (IOException e) {
-            System.out.println("\nError: sockets corrupted.");
+            System.out.println("\nError: Sockets corrupted.");
         }
         finally {
             System.out.println(SMALL_DIV);
@@ -243,7 +243,7 @@ public class Server {
         PrintWriter printWriter = new PrintWriter(outputStream, true);
 
         if(files == null) {
-            messageToSend.append("Error: cannot find files filesDirectory.");
+            messageToSend.append("Error: Cannot find files filesDirectory.");
             System.out.println(">> " + messageToSend.toString());
         }
         else if (files.length == 0) {
@@ -391,7 +391,7 @@ public class Server {
             bufferedInputStream = new BufferedInputStream(fileInputStream);
 
             // confirm
-            printWriter.println(Message.appendMessageSequence(++sequenceNumber, "sending certificate"));
+            printWriter.println(Message.appendMessageSequence(++sequenceNumber, "Sending certificate"));
             printWriter.flush();
 
             // file transfer
@@ -435,7 +435,7 @@ public class Server {
             if(!Message.validateMessageSequenceNumber(sequenceNumber, clientMessage)) {
                 return AUTHENTICATE_FAILURE;
             }
-            else if(clientMessage.equals("0 | requestCertificate")) {
+            else if(clientMessage.equals("0 | Request certificate")) {
                 sendCertificate();
                 hasSentCertificate = true;
                 return AUTHENTICATE_SUCCESS;

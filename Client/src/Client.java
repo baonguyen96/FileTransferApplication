@@ -68,7 +68,7 @@ public class Client {
             while (!stopCommunication) {
                 // end if detect intruder
                 if(isIntruderDetected()) {
-                    System.out.println("\nWarning: intruder detected. Abort connection.");
+                    System.out.println("\nWarning: Intruder detected. Abort connection.");
                     quit("quit");
                     clientSocket.close();
                     break;
@@ -107,16 +107,16 @@ public class Client {
 
         }
         catch (UnknownHostException e) {
-            System.out.println("\nError: unknown IP address.");
+            System.out.println("\nError: Unknown IP address.");
         }
         catch (SocketTimeoutException e) {
-            System.out.println("\nError: server is busy.");
+            System.out.println("\nError: Server is busy.");
         }
         catch (FileNotFoundException e) {
-            System.out.println("\nError: cannot create or find file.");
+            System.out.println("\nError: Cannot create or find file.");
         }
         catch (IOException e) {
-            System.out.println("\nError: sockets corrupted.");
+            System.out.println("\nError: Sockets corrupted.");
             e.printStackTrace();
         }
 //        catch (Exception e) {
@@ -319,7 +319,7 @@ public class Client {
         System.out.print(">> ");
 
         if (files == null) {
-            System.out.println("Error: cannot find files fileDirectory.");
+            System.out.println("Error: Cannot find files fileDirectory.");
         }
         else if (files.length == 0) {
             System.out.println("Empty files fileDirectory");
@@ -475,7 +475,6 @@ public class Client {
      * @throws IOException
      */
     private void requestCertificate() throws IOException, InvalidMessageException {
-
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
         InputStream inputStream = clientSocket.getInputStream();
         Scanner serverInput = new Scanner(new InputStreamReader(inputStream));
@@ -485,7 +484,7 @@ public class Client {
         FileOutputStream fileOutputStream = null;
         BufferedOutputStream bufferedOutputStream = null;
 
-        printWriter.println(Message.appendMessageSequence(sequenceNumber, "requestCertificate"));
+        printWriter.println(Message.appendMessageSequence(sequenceNumber, "Request certificate"));
         printWriter.flush();
 
         if (!serverInput.hasNextLine()) {
@@ -499,7 +498,7 @@ public class Client {
         if(!Message.validateMessageSequenceNumber(++sequenceNumber, messageReceived)) {
             throw new InvalidMessageException();
         }
-        else if(!messageReceived.split(DELIMITER)[1].equals("sending certificate")) {
+        else if(!messageReceived.split(DELIMITER)[1].equals("Sending certificate")) {
             throw new InvalidMessageException();
         }
         // valid certificate
@@ -581,7 +580,7 @@ public class Client {
                 deleteCertificate();
                 requestCertificate();
                 if (!verifyCertificate()) {
-                    System.out.println("Error: certificate denied.");
+                    System.out.println("Error: Certificate denied.");
                     return AUTHENTICATE_FAILURE;
                 }
                 hasReceivedCertificate = true;
@@ -673,33 +672,12 @@ public class Client {
             t.checkValidity(timeNow);
             String publicKey = getKey("CAPublicKey.txt");
             caPublicKey = getPublicKey(publicKey);
-            try {
-                cert.verify(caPublicKey);
-                System.out.println("The Ceritificate is verified.\n");
-            }
-            catch (Exception e) {
-                verifySuccess = false;
-                System.out.println("The verify is not pass.\n");
-                e.printStackTrace();
-            }
-
-        }
-        catch (CertificateExpiredException e1) {
-            e1.printStackTrace();
-        }
-        catch (CertificateNotYetValidException e1) {
-            e1.printStackTrace();
-        }
-        catch (CertificateException e1) {
-            e1.printStackTrace();
-        }
-        catch (FileNotFoundException e1) {
-            e1.printStackTrace();
-        }
-        catch (IOException e1) {
-            e1.printStackTrace();
+            cert.verify(caPublicKey);
+            System.out.println("The Certificate is successfully verified.\n");
         }
         catch (Exception e) {
+            verifySuccess = false;
+            System.out.println("The Certificate is not verified.\n");
             e.printStackTrace();
         }
         return verifySuccess;
@@ -743,7 +721,6 @@ public class Client {
      * to prevent break-in attack
      */
     private void deleteCertificate() {
-        System.out.println("deleteCertificate");
         File certificate = new File(src.getAbsolutePath() + "/" + CERTIFICATION);
         if(certificate.exists()) {
             certificate.delete();
