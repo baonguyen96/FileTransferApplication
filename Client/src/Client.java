@@ -274,6 +274,7 @@ public class Client extends Peer {
 
         // lost message -> may have to do something about it
         if(!serverInput.hasNextLine()) {
+            printWriter.close();
             return;
         }
 
@@ -286,6 +287,7 @@ public class Client extends Peer {
             displayPeerMessage(messageReceived);
         }
 
+        System.out.println();
         printWriter.close();
     }
 
@@ -669,11 +671,11 @@ public class Client extends Peer {
             String publicKey = getKey("CAPublicKey.txt");
             caPublicKey = getPublicKey(publicKey);
             cert.verify(caPublicKey);
-            System.out.println("The Certificate is successfully verified.\n");
+            System.out.println("The Certificate is successfully verified.");
         }
         catch (Exception e) {
             verifySuccess = false;
-            System.out.println("The Certificate is not verified.\n");
+            System.out.println("The Certificate is not verified.");
             e.printStackTrace();
         }
         return verifySuccess;

@@ -185,6 +185,9 @@ public class Server extends Peer {
         else if(!isValidCommand(receivedCommand)) {
             return CONTINUE_CONNECTION_AFTER_THIS;
         }
+        else if(receivedCommand.contains("stay")) {
+            return CONTINUE_CONNECTION_AFTER_THIS;
+        }
 
         // valid command
         commandTokens = receivedCommand.split(DELIMITER);
@@ -248,10 +251,10 @@ public class Server extends Peer {
         }
 
         // send to client
+        System.out.println();
         printWriter.println(Message.appendMessageSequence(++sequenceNumber, messageToSend.toString()));
         printWriter.flush();
         printWriter.close();
-        System.out.println();
     }
 
 
@@ -292,17 +295,14 @@ public class Server extends Peer {
             bufferedOutputStream.flush();
             bufferedOutputStream.close();
 
-            System.out.printf(">> Complete sending \"%s\"\n", fileToSendName);
+            System.out.printf(">> Complete sending \"%s\"\n\n", fileToSendName);
         }
         catch (FileNotFoundException e) {
             String error = "Error: requested file does not exist.";
-            System.out.println("\n[You]:    " + error);
+            System.out.printf("[You]:    %s\n\n", error);
             printWriter.println(Message.appendMessageSequence(++sequenceNumber, error));
             printWriter.flush();
             printWriter.close();
-        }
-        finally {
-            System.out.println();
         }
 
     }
@@ -341,6 +341,9 @@ public class Server extends Peer {
 
         if(!Message.validateMessageSequenceNumber(++sequenceNumber, byteArray)) {
             handleInvalidMessages();
+            bufferedOutputStream.close();
+            inputStream.close();
+            System.out.printf(">> Oops! Something went wrong. Cannot save \"%s\"\n", uploadedFileName);
         }
         else {
             byteArray = Message.extractMessage(byteArray);
@@ -383,7 +386,6 @@ public class Server extends Peer {
             bufferedOutputStream.write(byteArray, 0, byteArray.length);
             bufferedOutputStream.flush();
             bufferedOutputStream.close();
-
         }
         catch (FileNotFoundException e) {
             printWriter.println(Message.appendMessageSequence(++sequenceNumber, "error"));

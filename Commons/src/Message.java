@@ -3,6 +3,8 @@ import java.nio.ByteBuffer;
 
 public class Message {
 
+    private static final boolean IS_PRINTABLE = false;
+
     /***
      * method: appendMessageSequence
      *
@@ -14,7 +16,11 @@ public class Message {
      */
     public static String appendMessageSequence(int sequence, String message) {
         String newMessage = String.format("%d | %s", sequence, message);
-        System.out.println(newMessage);
+
+        if(IS_PRINTABLE) {
+            System.out.println(newMessage);
+        }
+
         return newMessage;
     }
 
@@ -41,7 +47,9 @@ public class Message {
         // original message
         System.arraycopy(message, 0, newMessage, 7, message.length);
 
-        displayMessage(newMessage);
+        if(IS_PRINTABLE) {
+            displayMessage(newMessage);
+        }
 
         return newMessage;
     }
@@ -61,7 +69,9 @@ public class Message {
         int actualSequenceNumber = 0;
         String seq = null;
 
-        System.out.println(message);
+        if(IS_PRINTABLE) {
+            System.out.println(message);
+        }
 
         if(!message.contains(" ")) {
             return false;
@@ -126,7 +136,10 @@ public class Message {
      * @return the actual message as byte array without the sequence number and delimiter
      */
     public static byte[] extractMessage(byte[] messageWithSequence) {
-        displayMessage(messageWithSequence);
+        if(IS_PRINTABLE) {
+            displayMessage(messageWithSequence);
+        }
+
         byte[] extractedMessage = new byte[messageWithSequence.length - 7];
         System.arraycopy(messageWithSequence, 7, extractedMessage, 0, extractedMessage.length);
         return extractedMessage;
