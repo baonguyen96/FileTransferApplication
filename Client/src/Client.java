@@ -49,8 +49,6 @@ public class Client extends Peer {
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         Date date = null;
         boolean stopCommunication = false;
-        final String BIG_DIV = "\n======================================================\n";
-        final String SMALL_DIV = "\n---------------------\n";
         Scanner scanner = new Scanner(System.in);
 
         setDirectories();
@@ -66,7 +64,7 @@ public class Client extends Peer {
 
                 // end if detect intruder
                 if(isIntruderDetected()) {
-                    System.out.println(SMALL_DIV);
+                    System.out.print(SMALL_DIV);
                     System.out.println("Warning: Intruder detected. Abort connection.");
                     break;
                 }

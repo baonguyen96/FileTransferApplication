@@ -40,8 +40,6 @@ public class Server extends Peer {
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         Date date = null;
         boolean stopCommunication = false;
-        final String BIG_DIV = "\n======================================================\n";
-        final String SMALL_DIV = "\n---------------------\n";
 
         setDirectories();
 

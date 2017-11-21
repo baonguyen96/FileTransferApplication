@@ -15,6 +15,8 @@ public abstract class Peer {
     protected final String DELIMITER = "\\s+\\|\\s+";
     protected static final String SERVER = "Server";
     protected static final String CLIENT = "Client";
+    protected final String BIG_DIV = "\n======================================================\n";
+    protected final String SMALL_DIV = "\n---------------------\n";
     private String module = null;
 
 

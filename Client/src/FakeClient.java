@@ -26,6 +26,8 @@ public class FakeClient extends Peer {
     private boolean hasReceivedCertificate = false;
     private boolean hasSentKey = false;
     private final String CERTIFICATION = "CA-certificate.crt";
+    private final boolean IS_RESYNCABLE = true;
+    private boolean isAbleToMessUpSynchronization = true;
 
 
     private FakeClient() {
@@ -49,8 +51,6 @@ public class FakeClient extends Peer {
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         Date date = null;
         boolean stopCommunication = false;
-        final String BIG_DIV = "\n======================================================\n";
-        final String SMALL_DIV = "\n---------------------\n";
         Scanner scanner = new Scanner(System.in);
 
         setDirectories();
@@ -66,7 +66,7 @@ public class FakeClient extends Peer {
 
                 // end if detect intruder
                 if(isIntruderDetected()) {
-                    System.out.println(SMALL_DIV);
+                    System.out.print(SMALL_DIV);
                     System.out.println("Warning: Intruder detected. Abort connection.");
                     break;
                 }
@@ -184,6 +184,12 @@ public class FakeClient extends Peer {
         final boolean STOP_CONNECTION_AFTER_THIS = true;
         final boolean CONTINUE_CONNECTION_AFTER_THIS = false;
 
+        // isAbleToMessUpSynchronization is opposite of IS_RESYNCABLE
+        if(isAbleToMessUpSynchronization) {
+            sequenceNumber--;
+            isAbleToMessUpSynchronization = !IS_RESYNCABLE;
+        }
+
         if (commandComponents[0].equalsIgnoreCase("quit")) {
             quit(commandComponents[0]);
             return STOP_CONNECTION_AFTER_THIS;
@@ -274,6 +280,7 @@ public class FakeClient extends Peer {
 
         // lost message -> may have to do something about it
         if(!serverInput.hasNextLine()) {
+            printWriter.close();
             return;
         }
 
@@ -286,6 +293,7 @@ public class FakeClient extends Peer {
             displayPeerMessage(messageReceived);
         }
 
+        System.out.println();
         printWriter.close();
     }
 
@@ -669,11 +677,11 @@ public class FakeClient extends Peer {
             String publicKey = getKey("CAPublicKey.txt");
             caPublicKey = getPublicKey(publicKey);
             cert.verify(caPublicKey);
-            System.out.println("The Certificate is successfully verified.\n");
+            System.out.println("The Certificate is successfully verified.");
         }
         catch (Exception e) {
             verifySuccess = false;
-            System.out.println("The Certificate is not verified.\n");
+            System.out.println("The Certificate is not verified.");
             e.printStackTrace();
         }
         return verifySuccess;

@@ -3,7 +3,7 @@ import java.nio.ByteBuffer;
 
 public class Message {
 
-    private static final boolean IS_PRINTABLE = false;
+    private static final boolean IS_PRINTABLE = true;
 
     /***
      * method: appendMessageSequence
