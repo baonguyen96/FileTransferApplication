@@ -26,7 +26,7 @@ public class FakeClient extends Peer {
     private boolean hasReceivedCertificate = false;
     private boolean hasSentKey = false;
     private final String CERTIFICATION = "CA-certificate.crt";
-    private final boolean IS_RESYNCABLE = true;
+    private final boolean IS_RESYNCABLE = false;
     private boolean isAbleToMessUpSynchronization = true;
 
 
@@ -66,7 +66,7 @@ public class FakeClient extends Peer {
 
                 // end if detect intruder
                 if(isIntruderDetected()) {
-                    System.out.print(SMALL_DIV);
+                    System.out.println(SMALL_DIV);
                     System.out.println("Warning: Intruder detected. Abort connection.");
                     break;
                 }

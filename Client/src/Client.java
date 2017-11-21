@@ -64,7 +64,7 @@ public class Client extends Peer {
 
                 // end if detect intruder
                 if(isIntruderDetected()) {
-                    System.out.print(SMALL_DIV);
+                    System.out.println(SMALL_DIV);
                     System.out.println("Warning: Intruder detected. Abort connection.");
                     break;
                 }
