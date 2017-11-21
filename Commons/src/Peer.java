@@ -49,7 +49,6 @@ public abstract class Peer {
         String absolutePath = filesDirectory.getAbsolutePath();
         absolutePath = absolutePath.replace("\\", "/");
         absolutePath = absolutePath.replace("/src", "");
-        absolutePath = absolutePath.replace("/Server/Server", "/Server");
         absolutePath = absolutePath.replace(
                 String.format("/%s/%s", module, module),
                 String.format("/%s", module)

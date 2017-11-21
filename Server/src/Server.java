@@ -440,6 +440,7 @@ public class Server extends Peer {
             // id
             if(!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
                 handleInvalidMessages();
+                sequenceNumber = 0;
                 return AUTHENTICATE_FAILURE;
             }
             else {
@@ -451,6 +452,7 @@ public class Server extends Peer {
 
             if(!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
                 handleInvalidMessages();
+                sequenceNumber = 0;
                 return AUTHENTICATE_FAILURE;
             }
             else {
