@@ -6,13 +6,13 @@ import java.util.Date;
 import java.util.Scanner;
 
 public class Server extends Peer {
-    protected final String PRIVATE_KEY = getKey("PrivateKey.txt");
-    protected final String PUBLIC_KEY = getKey("PublicKey.txt");
-    protected boolean isBusy = false;
-    protected boolean hasSentCertificate = false;
-    protected boolean hasReceivedKeys = false;
-    protected String clientIpAddress = null;
-    protected String clientId = null;
+    private final String PRIVATE_KEY = getKey("PrivateKey.txt");
+    private final String PUBLIC_KEY = getKey("PublicKey.txt");
+    private boolean isBusy = false;
+    private boolean hasSentCertificate = false;
+    private boolean hasReceivedKeys = false;
+    private String clientIpAddress = null;
+    private String clientId = null;
 
 
     protected Server() {
@@ -360,7 +360,7 @@ public class Server extends Peer {
      * send the CA certificate to client
      * @throws IOException
      */
-    protected void sendCertificate() throws IOException {
+    private void sendCertificate() throws IOException {
         OutputStream outputStream = clientSocket.getOutputStream();
         PrintWriter printWriter = new PrintWriter(outputStream, true);
         BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
@@ -402,7 +402,7 @@ public class Server extends Peer {
      *
      * @throws IOException
      */
-    protected boolean authenticate() throws IOException {
+    private boolean authenticate() throws IOException {
 
         final boolean AUTHENTICATE_SUCCESS = true;
         final boolean AUTHENTICATE_FAILURE = false;

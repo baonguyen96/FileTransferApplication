@@ -21,11 +21,11 @@ import java.util.Scanner;
 
 
 public class Client extends Peer {
-    protected final long id = System.currentTimeMillis();
-    protected boolean connectSuccess = false;
-    protected boolean hasReceivedCertificate = false;
-    protected boolean hasSentKey = false;
-    protected final String CERTIFICATION = "CA-certificate.crt";
+    private final long id = System.currentTimeMillis();
+    private boolean connectSuccess = false;
+    private boolean hasReceivedCertificate = false;
+    private boolean hasSentKey = false;
+    private final String CERTIFICATION = "CA-certificate.crt";
 
 
     protected Client() {
@@ -149,7 +149,7 @@ public class Client extends Peer {
      * @param clientCommand: command from client
      * @return true if valid command, false otherwise
      */
-    protected boolean isValidCommand(String clientCommand) {
+    private boolean isValidCommand(String clientCommand) {
         String[] commandTokens = clientCommand.split(DELIMITER);
         boolean isQuit = commandTokens.length == 1 &&
                 commandTokens[0].equalsIgnoreCase("quit");
@@ -458,7 +458,7 @@ public class Client extends Peer {
      *
      * @throws IOException
      */
-    protected void requestCertificate() throws IOException, InvalidMessageException {
+    private void requestCertificate() throws IOException, InvalidMessageException {
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
         InputStream inputStream = clientSocket.getInputStream();
         Scanner serverInput = new Scanner(new InputStreamReader(inputStream));
@@ -545,7 +545,7 @@ public class Client extends Peer {
      * @return true if success, false if not
      * @throws IOException if socket error
      */
-    protected boolean authenticate() throws IOException {
+    private boolean authenticate() throws IOException {
         final boolean AUTHENTICATE_SUCCESS = true;
         final boolean AUTHENTICATE_FAILURE = false;
         OutputStream outputStream = clientSocket.getOutputStream();
@@ -555,26 +555,32 @@ public class Client extends Peer {
         String serverResponse = null;
 
         if(!hasReceivedCertificate) {
+            boolean status = AUTHENTICATE_FAILURE;
+
             try {
                 deleteCertificate();
                 requestCertificate();
                 if (!verifyCertificate()) {
                     System.out.println("Error: Certificate denied.");
-                    return AUTHENTICATE_FAILURE;
+                    status = AUTHENTICATE_FAILURE;
                 }
-                hasReceivedCertificate = true;
-
+                else {
+                    hasReceivedCertificate = true;
+                    status = AUTHENTICATE_SUCCESS;
+                }
             }
             catch (IOException e) {
-                return AUTHENTICATE_FAILURE;
+                status = AUTHENTICATE_FAILURE;
             }
             catch (InvalidMessageException e) {
                 handleInvalidMessages();
-                return AUTHENTICATE_FAILURE;
+                status = AUTHENTICATE_FAILURE;
             }
             finally {
                 deleteCertificate();
             }
+
+            return status;
         }
         else if(!hasSentKey) {
             printWriter.println(Message.appendMessageSequence(++sequenceNumber, Long.toString(id)));
@@ -634,13 +640,12 @@ public class Client extends Peer {
      * @param key: key of format string
      * @return key as PublicKey
      */
-    protected PublicKey getPublicKey(String key) throws Exception {
+    private PublicKey getPublicKey(String key) throws Exception {
         byte[] keyBytes;
         keyBytes = (new BASE64Decoder()).decodeBuffer(key);
         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-        PublicKey publicKey = keyFactory.generatePublic(keySpec);
-        return publicKey;
+        return keyFactory.generatePublic(keySpec);
     }
 
 
@@ -652,15 +657,16 @@ public class Client extends Peer {
      //     * @param certPath: the path of certificate path
      * @return true if the verify succeeds, false if not
      */
-    protected boolean verifyCertificate() {
+    private boolean verifyCertificate() {
         Certificate cert;
         PublicKey caPublicKey;
         boolean verifySuccess = true;
+        FileInputStream in = null;
 
         try {
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
             File certificate = new File(src.getAbsolutePath() + "/" + CERTIFICATION);
-            FileInputStream in = new FileInputStream(certificate);
+            in = new FileInputStream(certificate);
             cert = cf.generateCertificate(in);
             in.close();
             X509Certificate t = (X509Certificate) cert;
@@ -676,6 +682,15 @@ public class Client extends Peer {
             System.out.println("The Certificate is not verified.");
             e.printStackTrace();
         }
+        finally {
+            try {
+                in.close();
+            }
+            catch (Exception e) {
+                System.out.println("Cannot close the Certificate.");
+            }
+        }
+
         return verifySuccess;
     }
 
@@ -686,10 +701,13 @@ public class Client extends Peer {
      * delete the CA certificate out of the system
      * to prevent break-in attack
      */
-    protected void deleteCertificate() {
+    private void deleteCertificate() {
         File certificate = new File(src.getAbsolutePath() + "/" + CERTIFICATION);
+
         if(certificate.exists()) {
-            certificate.delete();
+            if(!certificate.delete()) {
+                System.out.println("Cannot delete certificate");
+            }
         }
     }
 
