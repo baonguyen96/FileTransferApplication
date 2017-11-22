@@ -21,14 +21,14 @@ import java.util.Scanner;
 
 
 public class Client extends Peer {
-    private final long id = System.currentTimeMillis();
-    private boolean connectSuccess = false;
-    private boolean hasReceivedCertificate = false;
-    private boolean hasSentKey = false;
-    private final String CERTIFICATION = "CA-certificate.crt";
+    protected final long id = System.currentTimeMillis();
+    protected boolean connectSuccess = false;
+    protected boolean hasReceivedCertificate = false;
+    protected boolean hasSentKey = false;
+    protected final String CERTIFICATION = "CA-certificate.crt";
 
 
-    private Client() {
+    protected Client() {
         super(CLIENT);
         masterKey = (long) (Math.random() * Long.MAX_VALUE);
     }
@@ -45,7 +45,7 @@ public class Client extends Peer {
      *
      * execute the Client and control the flow of the program
      */
-    private void exec() {
+    protected void exec() {
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         Date date = null;
         boolean stopCommunication = false;
@@ -149,7 +149,7 @@ public class Client extends Peer {
      * @param clientCommand: command from client
      * @return true if valid command, false otherwise
      */
-    private boolean isValidCommand(String clientCommand) {
+    protected boolean isValidCommand(String clientCommand) {
         String[] commandTokens = clientCommand.split(DELIMITER);
         boolean isQuit = commandTokens.length == 1 &&
                 commandTokens[0].equalsIgnoreCase("quit");
@@ -176,7 +176,7 @@ public class Client extends Peer {
      * @return true if stop communication, false if not
      * @throws IOException
      */
-    private boolean communicate() throws IOException {
+    protected boolean communicate() throws IOException {
         String command = getCommand();
         String[] commandComponents = command.split(DELIMITER);
         final boolean STOP_CONNECTION_AFTER_THIS = true;
@@ -213,7 +213,7 @@ public class Client extends Peer {
      *
      * @return a valid command
      */
-    private String getCommand() {
+    protected String getCommand() {
         Scanner input = new Scanner(System.in);
         String command = "";
         boolean isValid = false;
@@ -245,7 +245,7 @@ public class Client extends Peer {
      * @param command: client's command
      * @throws IOException
      */
-    private void quit(String command) throws IOException {
+    protected void quit(String command) throws IOException {
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
         printWriter.println(Message.appendMessageSequence(++sequenceNumber, command));
         printWriter.flush();
@@ -262,7 +262,7 @@ public class Client extends Peer {
      * @param command: client's command
      * @throws IOException
      */
-    private void list(String command) throws IOException {
+    protected void list(String command) throws IOException {
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
         Scanner serverInput = new Scanner(new InputStreamReader(clientSocket.getInputStream()));
         String messageReceived = "";
@@ -296,7 +296,7 @@ public class Client extends Peer {
      * list-me command
      * show a list of files the client contains
      */
-    private void listMe() throws IOException {
+    protected void listMe() throws IOException {
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
         File[] files = filesDirectory.listFiles();
         StringBuilder listOfFiles = new StringBuilder();
@@ -339,7 +339,7 @@ public class Client extends Peer {
      * @param commandComponents: parts of command
      * @throws IOException
      */
-    private void download(String command, String[] commandComponents) throws IOException {
+    protected void download(String command, String[] commandComponents) throws IOException {
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
         InputStream inputStream = clientSocket.getInputStream();
         Scanner serverInput = new Scanner(new InputStreamReader(inputStream));
@@ -412,7 +412,7 @@ public class Client extends Peer {
      * @param commandComponents: parts of command
      * @throws IOException
      */
-    private void upload(String command, String[] commandComponents) throws IOException {
+    protected void upload(String command, String[] commandComponents) throws IOException {
         OutputStream outputStream = clientSocket.getOutputStream();
         String fileName = commandComponents[1];
         String fileNameFormattedPath = fileName.replace("\\", "\\\\");
@@ -458,7 +458,7 @@ public class Client extends Peer {
      *
      * @throws IOException
      */
-    private void requestCertificate() throws IOException, InvalidMessageException {
+    protected void requestCertificate() throws IOException, InvalidMessageException {
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
         InputStream inputStream = clientSocket.getInputStream();
         Scanner serverInput = new Scanner(new InputStreamReader(inputStream));
@@ -520,7 +520,7 @@ public class Client extends Peer {
      *
      * @throws IOException
      */
-    private void help() throws IOException {
+    protected void help() throws IOException {
         System.out.println(">> All commands: ");
         System.out.println("       quit:            end session");
         System.out.println("       list:            list all files of the server");
@@ -545,7 +545,7 @@ public class Client extends Peer {
      * @return true if success, false if not
      * @throws IOException if socket error
      */
-    private boolean authenticate() throws IOException {
+    protected boolean authenticate() throws IOException {
         final boolean AUTHENTICATE_SUCCESS = true;
         final boolean AUTHENTICATE_FAILURE = false;
         OutputStream outputStream = clientSocket.getOutputStream();
@@ -634,7 +634,7 @@ public class Client extends Peer {
      * @param key: key of format string
      * @return key as PublicKey
      */
-    private PublicKey getPublicKey(String key) throws Exception {
+    protected PublicKey getPublicKey(String key) throws Exception {
         byte[] keyBytes;
         keyBytes = (new BASE64Decoder()).decodeBuffer(key);
         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
@@ -652,7 +652,7 @@ public class Client extends Peer {
      //     * @param certPath: the path of certificate path
      * @return true if the verify succeeds, false if not
      */
-    private boolean verifyCertificate() {
+    protected boolean verifyCertificate() {
         Certificate cert;
         PublicKey caPublicKey;
         boolean verifySuccess = true;
@@ -686,7 +686,7 @@ public class Client extends Peer {
      * delete the CA certificate out of the system
      * to prevent break-in attack
      */
-    private void deleteCertificate() {
+    protected void deleteCertificate() {
         File certificate = new File(src.getAbsolutePath() + "/" + CERTIFICATION);
         if(certificate.exists()) {
             certificate.delete();

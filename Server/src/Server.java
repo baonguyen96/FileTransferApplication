@@ -6,16 +6,16 @@ import java.util.Date;
 import java.util.Scanner;
 
 public class Server extends Peer {
-    private final String PRIVATE_KEY = getKey("PrivateKey.txt");
-    private final String PUBLIC_KEY = getKey("PublicKey.txt");
-    private boolean isBusy = false;
-    private boolean hasSentCertificate = false;
-    private boolean hasReceivedKeys = false;
-    private String clientIpAddress = null;
-    private String clientId = null;
+    protected final String PRIVATE_KEY = getKey("PrivateKey.txt");
+    protected final String PUBLIC_KEY = getKey("PublicKey.txt");
+    protected boolean isBusy = false;
+    protected boolean hasSentCertificate = false;
+    protected boolean hasReceivedKeys = false;
+    protected String clientIpAddress = null;
+    protected String clientId = null;
 
 
-    private Server() {
+    protected Server() {
         super(SERVER);
     }
 
@@ -31,7 +31,7 @@ public class Server extends Peer {
      *
      * execute the Server and control the flow of the program
      */
-    private void exec() {
+    protected void exec() {
         // error with keys then stop
         if(PRIVATE_KEY == null || PUBLIC_KEY == null) {
             return;
@@ -132,7 +132,7 @@ public class Server extends Peer {
      * @param clientCommand: client's command
      * @return true if valid command, false if not
      */
-    private boolean isValidCommand(String clientCommand) {
+    protected boolean isValidCommand(String clientCommand) {
         String[] commandTokens = clientCommand.split(DELIMITER);
         boolean isQuit = commandTokens.length == 2 &&
                 commandTokens[1].equalsIgnoreCase("quit");
@@ -159,7 +159,7 @@ public class Server extends Peer {
      * @throws FileNotFoundException
      * @throws IOException
      */
-    private boolean communicate() throws IOException {
+    protected boolean communicate() throws IOException {
         String receivedCommand = "";
         String[] commandTokens = null;
         final boolean STOP_CONNECTION_AFTER_THIS = true;
@@ -220,7 +220,7 @@ public class Server extends Peer {
      *
      * @throws IOException
      */
-    private void list() throws IOException {
+    protected void list() throws IOException {
         File[] files = filesDirectory.listFiles();
         StringBuilder messageToSend = new StringBuilder();
         OutputStream outputStream = clientSocket.getOutputStream();
@@ -265,7 +265,7 @@ public class Server extends Peer {
      * @param commandTokens: parts of client's command
      * @throws IOException
      */
-    private void clientDownload(String[] commandTokens) throws IOException {
+    protected void clientDownload(String[] commandTokens) throws IOException {
         OutputStream outputStream = clientSocket.getOutputStream();
         PrintWriter printWriter = new PrintWriter(outputStream, true);
         BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
@@ -316,7 +316,7 @@ public class Server extends Peer {
      * @param commandTokens: parts of client's command
      * @throws IOException
      */
-    private void clientUpload(String[] commandTokens) throws IOException {
+    protected void clientUpload(String[] commandTokens) throws IOException {
         String filePath = commandTokens[2].replace("\\", "/");
         String[] uploadedFilePathComponents = filePath.split("/");
         String uploadedFileName = uploadedFilePathComponents[uploadedFilePathComponents.length - 1];
@@ -360,7 +360,7 @@ public class Server extends Peer {
      * send the CA certificate to client
      * @throws IOException
      */
-    private void sendCertificate() throws IOException {
+    protected void sendCertificate() throws IOException {
         OutputStream outputStream = clientSocket.getOutputStream();
         PrintWriter printWriter = new PrintWriter(outputStream, true);
         BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
@@ -402,7 +402,7 @@ public class Server extends Peer {
      *
      * @throws IOException
      */
-    private boolean authenticate() throws IOException {
+    protected boolean authenticate() throws IOException {
 
         final boolean AUTHENTICATE_SUCCESS = true;
         final boolean AUTHENTICATE_FAILURE = false;
