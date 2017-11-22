@@ -76,7 +76,7 @@ public class Client extends Peer {
                 if (!authenticate()) {
                     if(!connectSuccess) {
                         System.out.println(SMALL_DIV);
-                        System.out.println("Access denied.");
+                        System.out.println("Error: Access denied.");
                         clientSocket.close();
                         break;
                     }
@@ -561,7 +561,6 @@ public class Client extends Peer {
                 deleteCertificate();
                 requestCertificate();
                 if (!verifyCertificate()) {
-                    System.out.println("Error: Certificate denied.");
                     status = AUTHENTICATE_FAILURE;
                 }
                 else {

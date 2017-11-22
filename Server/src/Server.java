@@ -430,10 +430,7 @@ public class Server extends Peer {
         }
         // get keys
         else if(!hasReceivedKeys) {
-            /*
-             * note: encrypted client message
-             * -> have to decrypt and verify before save
-             */
+            // note: encrypted client message -> have to decrypt and verify before save
             // ip
             clientIpAddress = clientSocket.getInetAddress().getHostAddress();
 
