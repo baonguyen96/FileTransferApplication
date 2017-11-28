@@ -13,7 +13,8 @@ public class Server extends Peer {
     private boolean hasReceivedKeys = false;
     private String clientIpAddress = null;
     private String clientId = null;
-
+    AESf aes = new AESf();
+   
 
     protected Server() {
         super(SERVER);
@@ -21,6 +22,7 @@ public class Server extends Peer {
 
 
     public static void main(String[] args) {
+    	
         Server server = new Server();
         server.exec();
     }
@@ -317,6 +319,7 @@ public class Server extends Peer {
      * @throws IOException
      */
     protected void clientUpload(String[] commandTokens) throws IOException {
+    	
         String filePath = commandTokens[2].replace("\\", "/");
         String[] uploadedFilePathComponents = filePath.split("/");
         String uploadedFileName = uploadedFilePathComponents[uploadedFilePathComponents.length - 1];
@@ -335,8 +338,15 @@ public class Server extends Peer {
             byteArrayOutputStream.write(byteBlock);
             byteRead = inputStream.read(byteBlock);
         }
+        
         byte[] byteArray = byteArrayOutputStream.toByteArray();
-
+        //String messageTodecrypt= new String(byteArray);
+        try {
+        	 byteArray = aes.decrypt(byteArray, "1234567890123456");
+         } catch(Exception e) { 
+           throw new RuntimeException("Failed to create Pi Face Device", e); 
+         }
+       
         if(!Message.validateMessageSequenceNumber(++sequenceNumber, byteArray)) {
             handleInvalidMessages();
             bufferedOutputStream.close();

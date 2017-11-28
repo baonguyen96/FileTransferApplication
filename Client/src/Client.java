@@ -16,8 +16,11 @@ import java.security.cert.X509Certificate;
 import java.security.spec.X509EncodedKeySpec;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Base64;
 import java.util.Date;
 import java.util.Scanner;
+
+
 
 
 public class Client extends Peer {
@@ -26,7 +29,8 @@ public class Client extends Peer {
     private boolean hasReceivedCertificate = false;
     private boolean hasSentKey = false;
     private final String CERTIFICATION = "CA-certificate.crt";
-
+    AESf aes = new AESf();
+    
 
     protected Client() {
         super(CLIENT);
@@ -35,6 +39,7 @@ public class Client extends Peer {
 
 
     public static void main(String[] args) {
+    	
         Client client = new Client();
         client.exec();
     }
@@ -413,7 +418,8 @@ public class Client extends Peer {
      * @throws IOException
      */
     protected void upload(String command, String[] commandComponents) throws IOException {
-        OutputStream outputStream = clientSocket.getOutputStream();
+    	byte[] out = null;
+    	OutputStream outputStream = clientSocket.getOutputStream();
         String fileName = commandComponents[1];
         String fileNameFormattedPath = fileName.replace("\\", "\\\\");
         File uploadedFile = new File(fileNameFormattedPath);
@@ -431,8 +437,16 @@ public class Client extends Peer {
 
             System.out.printf(">> Uploading \"%s\" ...\n", fileName);
 
-            bufferedInputStream.read(byteArray, 0, byteArray.length);
+            bufferedInputStream.read(byteArray, 0, byteArray.length);            
             byteArray = Message.appendMessageSequence(++sequenceNumber, byteArray);
+            
+            try {
+            	byteArray = aes.encrypt(byteArray, "1234567890123456");
+              } catch(Exception e) { 
+                throw new RuntimeException("Failed to create Pi Face Device", e); 
+              }
+           
+           
             bufferedOutputStream.write(byteArray, 0, byteArray.length);
             bufferedOutputStream.flush();
             bufferedOutputStream.close();
