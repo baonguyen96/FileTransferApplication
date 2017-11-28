@@ -9,7 +9,7 @@ import java.util.Date;
 import java.util.Scanner;
 
 public class FakeServer extends Server {
-    private final boolean IS_RESYNCABLE = true;
+    private final boolean IS_RESYNCABLE = false;
     private boolean isAbleToMessUpSynchronization = true;
 
 

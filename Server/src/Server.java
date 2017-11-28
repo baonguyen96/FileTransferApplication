@@ -13,7 +13,6 @@ public class Server extends Peer {
     private boolean hasReceivedKeys = false;
     private String clientIpAddress = null;
     private String clientId = null;
-    AESf aes = new AESf();
    
 
     protected Server() {
@@ -340,9 +339,8 @@ public class Server extends Peer {
         }
         
         byte[] byteArray = byteArrayOutputStream.toByteArray();
-        //String messageTodecrypt= new String(byteArray);
         try {
-        	 byteArray = aes.decrypt(byteArray, "1234567890123456");
+        	 byteArray = AESf.decrypt(byteArray, "1234567890123456");
          } catch(Exception e) { 
            throw new RuntimeException("Failed to create Pi Face Device", e); 
          }

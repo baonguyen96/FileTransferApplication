@@ -1,43 +1,31 @@
-
-
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.charset.Charset;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.ShortBufferException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.ShortBufferException;
+
+import static java.util.Arrays.copyOfRange;
 
 
 public class AESf {
-	
-	
-	
-    
-    
-    
+
     /**
      * Encrypt message given
      *
      * @param message - Input text to be encrypted
      * @param key - Key for encryption
-     * @param mode - either CBC or CFB
      * @return cipher text in a byte array
      * @throws InvalidKeyException
      * @throws InvalidAlgorithmParameterException
      * @throws javax.crypto.NoSuchPaddingException
      * @throws java.security.NoSuchAlgorithmException
      */
-    public byte[] encrypt(byte[] message, String key) throws InvalidKeyException, InvalidAlgorithmParameterException, NoSuchPaddingException, NoSuchAlgorithmException {
+    public static byte[] encrypt(byte[] message, String key) throws InvalidKeyException, InvalidAlgorithmParameterException, NoSuchPaddingException, NoSuchAlgorithmException {
         
     	byte[] iv = new byte[16];//Initialization vector 
         byte[] originalKey =new byte[16];
@@ -73,8 +61,8 @@ public class AESf {
     
     
     
-    public byte[] decrypt(byte[] message, String key) throws InvalidKeyException, InvalidAlgorithmParameterException {
-		
+    public static byte[] decrypt(byte[] message, String key) throws InvalidKeyException,
+                                                                InvalidAlgorithmParameterException {
     	key = key.trim();
         byte[] f_decrypted = null;
         byte[][] ct, decrypted = null;
@@ -117,15 +105,14 @@ public class AESf {
      *
      * @param source
      * @param block_size
-     * @param mode
      * @return
      */
-    private byte[][] padBytes(byte[] source, int block_size) {
+    private static byte[][] padBytes(byte[] source, int block_size) {
         byte[][] ret = new byte[(int) Math.ceil(source.length / (double) block_size)][block_size];
         int len = source.length % block_size;
         int start = 0;
         for (int i = 0; i < ret.length; i++) {
-            ret[i] = Arrays.copyOfRange(source, start, start + block_size);
+            ret[i] = copyOfRange(source, start, start + block_size);
             start += block_size;
         }
 
@@ -148,7 +135,7 @@ public class AESf {
      * @param arr - the 2D input array
      * @return
      */
-    private byte[] flatten(byte[][] arr) {
+    private static byte[] flatten(byte[][] arr) {
         List<Byte> list = new ArrayList<Byte>();
         for (byte[] arr1 : arr) {
             for (int j = 0; j < arr1.length; j++) {
@@ -170,7 +157,7 @@ public class AESf {
      * @param array_2
      * @return
      */
-    public static byte[] xor(byte[] array_1, byte[] array_2) {
+    private static byte[] xor(byte[] array_1, byte[] array_2) {
         byte[] result = new byte[array_1.length];
 
         int i = 0;
@@ -193,7 +180,7 @@ public class AESf {
      * @exception ShortBufferException if <code>in</code> is too small to hold
      * the padding bytes
      */
-    public void padWithLen(byte[] in, int off, int len)
+    private static void padWithLen(byte[] in, int off, int len)
             throws ShortBufferException {
         if (in == null) {
             return;
@@ -216,7 +203,7 @@ public class AESf {
      * @param input- the byte array to be parsed
      * @return the resulting String
      */
-    public static String toHex(byte[] input) {
+    private static String toHex(byte[] input) {
         if (input == null || input.length == 0) {
             return "";
         }
@@ -224,8 +211,8 @@ public class AESf {
         int inputLength = input.length;
         StringBuilder output = new StringBuilder(inputLength * 2);
 
-        for (int i = 0; i < inputLength; i++) {
-            int next = input[i] & 0xff;
+        for (byte anInput : input) {
+            int next = anInput & 0xff;
             if (next < 0x10) {
                 output.append("0");
             }
@@ -243,8 +230,7 @@ public class AESf {
      * @param message- the message to be processed
      * @return the resulting message
      */
-    
-    public static byte[] sha1(String message) {
+    private static byte[] sha1(String message) {
     	byte[] sha1Encode = null;
     	try {
     		MessageDigest sha1Digest = MessageDigest.getInstance("SHA");

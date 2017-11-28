@@ -16,11 +16,8 @@ import java.security.cert.X509Certificate;
 import java.security.spec.X509EncodedKeySpec;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Base64;
 import java.util.Date;
 import java.util.Scanner;
-
-
 
 
 public class Client extends Peer {
@@ -418,8 +415,7 @@ public class Client extends Peer {
      * @throws IOException
      */
     protected void upload(String command, String[] commandComponents) throws IOException {
-    	byte[] out = null;
-    	OutputStream outputStream = clientSocket.getOutputStream();
+        OutputStream outputStream = clientSocket.getOutputStream();
         String fileName = commandComponents[1];
         String fileNameFormattedPath = fileName.replace("\\", "\\\\");
         File uploadedFile = new File(fileNameFormattedPath);
@@ -441,7 +437,7 @@ public class Client extends Peer {
             byteArray = Message.appendMessageSequence(++sequenceNumber, byteArray);
             
             try {
-            	byteArray = aes.encrypt(byteArray, "1234567890123456");
+            	byteArray = AESf.encrypt(byteArray, "1234567890123456");
               } catch(Exception e) { 
                 throw new RuntimeException("Failed to create Pi Face Device", e); 
               }
