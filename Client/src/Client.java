@@ -535,8 +535,8 @@ public class Client extends Peer {
         System.out.println("       list:            list all files of the server");
         System.out.println("       list-me:         list all files of the client");
         System.out.println("       help:            list all possible commands accessible by client");
-        System.out.println("       download | file: download the existing \"file\" from the server");
-        System.out.println("       upload | file:   upload the \"file\" (absolute path) to the server");
+        System.out.println("       download | file: download the existing \"file\" (name of file only) from the server");
+        System.out.println("       upload | file:   upload the \"file\" (absolute path to the file) to the server");
         System.out.println();
 
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);

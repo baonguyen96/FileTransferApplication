@@ -1,95 +1,59 @@
 Program coded using Java in IntelliJ and Eclipse.
 
-There are several ways to run the system: via IDE or via Command Line environment.
-    1. To run program via IDE:
-	    	Open Server and Client projects on separated windows.
-	    	Then individually click "Run" to run each code in parallel.
-	    	(May have to configure classpath to successfully compile and run)
-    2. To run program in the command line environment:
-            UNIX-like environment:
-                Open terminal and navigate to Server/src folder
-                Type: javac -cp ..\..\Commons\src Server.java
-                Type: java -cp ..\..\Commons\src:. Server
-                Open another terminal and navigate to Client/src folder
-                Type: javac -cp ..\..\Commons\src Client.java
-                Type: java -cp ..\..\Commons\src:. Client
-            Windows:
-                Open cmd (NOT PowerShell) and navigate to Server/src folder
-                Type: javac -cp ..\..\Commons\src Server.java
-                Type: java -cp ..\..\Commons\src;. Server
-                Open another cmd and navigate to Client/src folder
-                Type: javac -cp ..\..\Commons\src Client.java
-                Type: java -cp ..\..\Commons\src;. Client
-    3. To run program as jar files: 
-    		To be added later.
+1. Configurations:
+Before running the program, user has to make sure the client and server are on the same network. 
+If they are on different networks, the server machine has to setup port forwarding before it can 
+operate with a remote client. Also, if there is an error saying “Socket corrupted” when the Client 
+tries to connect to the Server (and the Server is running), then it is a Firewall configuration problem.
+Please check Firewall to enable communication on your current type of network.
+For the project to be successfully compiled and run, its structure must be preserved. 
+The core modules structure by default - and must not be changed - is ([] denotes directory):
 
+[] Client
+|----- [] FilesDirectory
+|----- [] src
+        |----- CAPublicKey.txt
+        |----- Client.java
+        |----- FakeClient.java
+[] Commons
+|----- [] src
+        |----- AESf.java
+        |----- InvalidMessageException.java
+        |----- Message.java
+        |----- Peer.java
+        |----- Printable.java
+        |----- Resynchronizable.java
+[] Server
+|----- [] FilesDirectory
+|----- [] src
+        |----- CA-Certificate.crt
+        |----- CAPublicKey.txt
+        |----- FakeServer.java
+        |----- PrivateKey.txt
+        |----- PublicKey.txt
+        |----- Server.java
 
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
+All the files that client uploads reside in Server/FilesDirectory folder.
+All the files that client downloads from the server reside in Client/FilesDirectory folder.
 
-
-NOTE 1: Encryption key is symmetric key and is changing over each session (1 time pad)
-NOTE 2: This implementation is only for authentication, which includes:
-            exchange encryption key E and
-            update E automatically throughout different sessions and
-            verify if same client throughout different sessions.
-        It does not include integrity checking yet (signature key S).
-            You can implement that part.
-
-Protocol requires synchronization between Client and Server to work.
-
-------------------------------------------------------------------------------------
-
-To validate same client over multiple sessions:
-
-Client:
-    When the client is created, its creation time is its ID.
-    Create random initial master key R
-    Create encryption key E = R + 1
-    Create signature S = R + 2
-    In each session from 1 -> n, update:
-        E = E + 2
-        S = S + 2
-
-    For authentication:
-        Session 0:
-            Encrypt R using Server's public key to get R'
-            Encrypt ID using E to get ID'
-            Send R' and ID'
-        Session 1 -> n:
-            Encrypt ID using new E to get ID'
-            Send ID'
-
-
-Server:
-    Create encryption key E, signature key S (for client)
-    In each session from 1 -> n, update:
-            E = E + 2
-            S = S + 2
-
-    For authentication:
-        Session 0:
-            Receive R' and ID'
-            Decrypt R' using its private key to get back R
-            E = R + 1
-            Decrypt ID' using E to get client's ID and store
-        Session 1 -> n:
-            Decrypt ID' using new E to get client's ID
-            Compare with stored ID
-            If same -> pass
-            Else -> fail
-
-------------------------------------------------------------------------------------
-
-To prevent replay attack, append sequence number in front of the message, encrypt, then send.
-Format: [sn | msg]k
-where 	sn = sequence number
-		msg = message in plaintext
-		k = session key to encrypt
-
-But what to do when out-of-sync?
-    Threshold for invalid messages allowed are 5 (can set to different value later)
-    Each time receive invalid message, ignore that message and increase the count
-    When the count exceed the threshold, terminate the connection.
-    After sometimes, the other side will terminate automatically due to timeout.
-    NOTE: if out-of-sync during the authentication, terminate right away.
+2. Execution:
+There are several ways to run the system.
+a. To run program via IDE:
+    Open Server and Client projects on separated windows.
+    Then individually click "Run" to run each code in parallel.
+    (May have to configure classpath to successfully compile and run)
+b. To run program in the command line environment:
+    UNIX-like environment:
+        Open terminal and navigate to Server/src folder
+        Type: javac -cp ..\..\Commons\src Server.java
+        Type: java -cp ..\..\Commons\src:. Server
+        Open another terminal and navigate to Client/src folder
+        Type: javac -cp ..\..\Commons\src Client.java
+        Type: java -cp ..\..\Commons\src:. Client
+    Windows:
+        Open cmd (NOT PowerShell) and navigate to Server/src folder
+        Type: javac -cp ..\..\Commons\src Server.java
+        Type: java -cp ..\..\Commons\src;. Server
+        Open another cmd and navigate to Client/src folder
+        Type: javac -cp ..\..\Commons\src Client.java
+        Type: java -cp ..\..\Commons\src;. Client

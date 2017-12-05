@@ -1,8 +1,7 @@
 import java.io.IOException;
 
 
-public class FakeClient extends Client {
-    private final boolean IS_RESYNCABLE = false;
+public class FakeClient extends Client implements Resynchronizable {
     private boolean isAbleToMessUpSynchronization = true;
 
 
@@ -32,10 +31,10 @@ public class FakeClient extends Client {
         final boolean STOP_CONNECTION_AFTER_THIS = true;
         final boolean CONTINUE_CONNECTION_AFTER_THIS = false;
 
-        // isAbleToMessUpSynchronization is opposite of IS_RESYNCABLE
+        // isAbleToMessUpSynchronization is opposite of IS_RESYNCHRONIZABLE
         if(isAbleToMessUpSynchronization) {
             sequenceNumber--;
-            isAbleToMessUpSynchronization = !IS_RESYNCABLE;
+            isAbleToMessUpSynchronization = !IS_RESYNCHRONIZABLE;
         }
 
         if (commandComponents[0].equalsIgnoreCase("quit")) {

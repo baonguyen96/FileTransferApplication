@@ -45,7 +45,6 @@ public class AESf implements Printable {
         encrypted[0] = xor(pt[0], sha1(stringForSha1));
 
         for (int i = 1; i < pt.length; i++) {
-
             System.arraycopy(originalKey, 0, second, 0, originalKey.length);
             System.arraycopy(encrypted[i - 1], 0, second, originalKey.length, encrypted[i - 1].length);
             String stringForSha12 = new String(second);
@@ -64,8 +63,8 @@ public class AESf implements Printable {
     }
 
 
-    public static byte[] decrypt(byte[] message, String key) throws InvalidKeyException,
-                                                                    InvalidAlgorithmParameterException {
+    public static byte[] decrypt(byte[] message, String key)
+            throws InvalidKeyException, InvalidAlgorithmParameterException {
         key = key.trim();
         byte[] f_decrypted = null;
         byte[][] ct, decrypted = null;
@@ -138,6 +137,7 @@ public class AESf implements Printable {
         return ret;
     }
 
+
     /**
      * *
      * Flatten 2D arrays in a 1D array
@@ -148,8 +148,8 @@ public class AESf implements Printable {
     private static byte[] flatten(byte[][] arr) {
         List<Byte> list = new ArrayList<Byte>();
         for (byte[] arr1 : arr) {
-            for (int j = 0; j < arr1.length; j++) {
-                list.add(arr1[j]);
+            for (byte anArr1 : arr1) {
+                list.add(anArr1);
             }
         }
 
@@ -159,6 +159,7 @@ public class AESf implements Printable {
         }
         return vector;
     }
+
 
     /**
      * Xor function for two arrays of bytes
@@ -176,6 +177,7 @@ public class AESf implements Printable {
         }
         return result;
     }
+
 
     /**
      * Adds the given number of padding bytes to the data input. The value of
@@ -205,6 +207,7 @@ public class AESf implements Printable {
         }
     }
 
+
     /**
      * *
      * Encode to hex a byte array
@@ -232,6 +235,7 @@ public class AESf implements Printable {
         return output.toString();
     }
 
+
     /**
      * *
      * Use sha1 to process message
@@ -241,6 +245,7 @@ public class AESf implements Printable {
      */
     private static byte[] sha1(String message) {
         byte[] sha1Encode = null;
+
         try {
             MessageDigest sha1Digest = MessageDigest.getInstance("SHA");
             sha1Encode = sha1Digest.digest(message.getBytes());
@@ -248,6 +253,7 @@ public class AESf implements Printable {
         catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
+
         return sha1Encode;
 
     }

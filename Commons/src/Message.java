@@ -16,7 +16,7 @@ public class Message implements Printable {
         String newMessage = String.format("%d | %s", sequence, message);
 
         if(IS_PRINTABLE) {
-            System.out.println(newMessage);
+            displayMessage(newMessage);
         }
 
         return newMessage;
@@ -68,7 +68,7 @@ public class Message implements Printable {
         String seq = null;
 
         if(IS_PRINTABLE) {
-            System.out.println(message);
+            displayMessage(message);
         }
 
         if(!message.contains(" ")) {
@@ -141,6 +141,18 @@ public class Message implements Printable {
         byte[] extractedMessage = new byte[messageWithSequence.length - 7];
         System.arraycopy(messageWithSequence, 7, extractedMessage, 0, extractedMessage.length);
         return extractedMessage;
+    }
+
+
+    /***
+     * method: displayMessage
+     *
+     * print out the string message
+     *
+     * @param message: message as string
+     */
+    private static void displayMessage(String message) {
+        System.out.println(message);
     }
 
 

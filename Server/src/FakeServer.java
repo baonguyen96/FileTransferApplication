@@ -1,15 +1,7 @@
 import java.io.*;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Scanner;
 
-public class FakeServer extends Server {
-    private final boolean IS_RESYNCABLE = false;
+public class FakeServer extends Server implements Resynchronizable {
     private boolean isAbleToMessUpSynchronization = true;
 
 
@@ -67,10 +59,10 @@ public class FakeServer extends Server {
         commandTokens = receivedCommand.split(DELIMITER);
         displayPeerMessage(receivedCommand);
 
-        // isAbleToMessUpSynchronization is opposite of IS_RESYNCABLE
+        // isAbleToMessUpSynchronization is opposite of IS_RESYNCHRONIZABLE
         if(isAbleToMessUpSynchronization) {
             sequenceNumber--;
-            isAbleToMessUpSynchronization = !IS_RESYNCABLE;
+            isAbleToMessUpSynchronization = !IS_RESYNCHRONIZABLE;
         }
 
         // switch
