@@ -1,9 +1,3 @@
-This version is for encapsulating encryption and decryption into a separated
-Message class (inside of its own module) for less repeated codes.
-
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
-
 Program coded using Java in IntelliJ and Eclipse.
 
 There are several ways to run the system: via IDE or via Command Line environment.
@@ -88,9 +82,8 @@ Server:
 ------------------------------------------------------------------------------------
 
 To prevent replay attack, append sequence number in front of the message, encrypt, then send.
-Format: [sn | id | msg]k
+Format: [sn | msg]k
 where 	sn = sequence number
-		id = client's id
 		msg = message in plaintext
 		k = session key to encrypt
 

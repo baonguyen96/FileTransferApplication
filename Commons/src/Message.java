@@ -1,9 +1,7 @@
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
-public class Message {
-
-    private static final boolean IS_PRINTABLE = true;
+public class Message implements Printable {
 
     /***
      * method: appendMessageSequence

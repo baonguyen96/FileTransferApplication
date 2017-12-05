@@ -26,8 +26,7 @@ public class Client extends Peer {
     private boolean hasReceivedCertificate = false;
     private boolean hasSentKey = false;
     private final String CERTIFICATION = "CA-certificate.crt";
-    AESf aes = new AESf();
-    
+
 
     protected Client() {
         super(CLIENT);
@@ -36,7 +35,6 @@ public class Client extends Peer {
 
 
     public static void main(String[] args) {
-    	
         Client client = new Client();
         client.exec();
     }
@@ -65,7 +63,7 @@ public class Client extends Peer {
             while (!stopCommunication) {
 
                 // end if detect intruder
-                if(isIntruderDetected()) {
+                if (isIntruderDetected()) {
                     System.out.println(SMALL_DIV);
                     System.out.println("Warning: Intruder detected. Abort connection.");
                     break;
@@ -76,7 +74,7 @@ public class Client extends Peer {
 
                 // authentication
                 if (!authenticate()) {
-                    if(!connectSuccess) {
+                    if (!connectSuccess) {
                         System.out.println(SMALL_DIV);
                         System.out.println("Error: Access denied.");
                         clientSocket.close();
@@ -84,7 +82,7 @@ public class Client extends Peer {
                     }
 
                 }
-                else if(hasReceivedCertificate && !hasSentKey) {
+                else if (hasReceivedCertificate && !hasSentKey) {
                     clientSocket.close();
                     continue;
                 }
@@ -273,14 +271,14 @@ public class Client extends Peer {
         printWriter.flush();
 
         // lost message -> may have to do something about it
-        if(!serverInput.hasNextLine()) {
+        if (!serverInput.hasNextLine()) {
             printWriter.close();
             return;
         }
 
         messageReceived = serverInput.nextLine();
 
-        if(!Message.validateMessageSequenceNumber(++sequenceNumber, messageReceived)) {
+        if (!Message.validateMessageSequenceNumber(++sequenceNumber, messageReceived)) {
             handleInvalidMessages();
         }
         else {
@@ -356,7 +354,7 @@ public class Client extends Peer {
         printWriter.flush();
 
         // lost message
-        if(!serverInput.hasNextLine()) {
+        if (!serverInput.hasNextLine()) {
             return;
         }
 
@@ -364,7 +362,7 @@ public class Client extends Peer {
         messageReceived = serverInput.nextLine();
 
         // errors on confirmation
-        if(!Message.validateMessageSequenceNumber(++sequenceNumber, messageReceived)) {
+        if (!Message.validateMessageSequenceNumber(++sequenceNumber, messageReceived)) {
             handleInvalidMessages();
         }
         else if (!messageReceived.contains(fileToDownloadName)) {
@@ -386,7 +384,7 @@ public class Client extends Peer {
             byte[] byteStream = byteArrayOutputStream.toByteArray();
 
             // validate sequence number
-            if(!Message.validateMessageSequenceNumber(++sequenceNumber, byteStream)) {
+            if (!Message.validateMessageSequenceNumber(++sequenceNumber, byteStream)) {
                 handleInvalidMessages();
             }
             else {
@@ -433,16 +431,17 @@ public class Client extends Peer {
 
             System.out.printf(">> Uploading \"%s\" ...\n", fileName);
 
-            bufferedInputStream.read(byteArray, 0, byteArray.length);            
+            bufferedInputStream.read(byteArray, 0, byteArray.length);
             byteArray = Message.appendMessageSequence(++sequenceNumber, byteArray);
-            
+
             try {
-            	byteArray = AESf.encrypt(byteArray, "1234567890123456");
-              } catch(Exception e) { 
-                throw new RuntimeException("Failed to create Pi Face Device", e); 
-              }
-           
-           
+                byteArray = AESf.encrypt(byteArray, "1234567890123456");
+            }
+            catch (Exception e) {
+                throw new RuntimeException("Failed to create Pi Face Device", e);
+            }
+
+
             bufferedOutputStream.write(byteArray, 0, byteArray.length);
             bufferedOutputStream.flush();
             bufferedOutputStream.close();
@@ -489,10 +488,10 @@ public class Client extends Peer {
         messageReceived = serverInput.nextLine();
 
         // error
-        if(!Message.validateMessageSequenceNumber(++sequenceNumber, messageReceived)) {
+        if (!Message.validateMessageSequenceNumber(++sequenceNumber, messageReceived)) {
             throw new InvalidMessageException();
         }
-        else if(!messageReceived.split(DELIMITER)[1].equals("Sending certificate")) {
+        else if (!messageReceived.split(DELIMITER)[1].equals("Sending certificate")) {
             throw new InvalidMessageException();
         }
         // valid certificate
@@ -508,7 +507,7 @@ public class Client extends Peer {
                 byteRead = inputStream.read(byteBlock);
             }
 
-            if(!Message.validateMessageSequenceNumber(++sequenceNumber, byteArrayOutputStream.toByteArray())) {
+            if (!Message.validateMessageSequenceNumber(++sequenceNumber, byteArrayOutputStream.toByteArray())) {
                 printWriter.close();
                 throw new InvalidMessageException();
             }
@@ -564,7 +563,7 @@ public class Client extends Peer {
         Scanner serverInput = new Scanner(new InputStreamReader(inputStream));
         String serverResponse = null;
 
-        if(!hasReceivedCertificate) {
+        if (!hasReceivedCertificate) {
             boolean status = AUTHENTICATE_FAILURE;
 
             try {
@@ -591,22 +590,22 @@ public class Client extends Peer {
 
             return status;
         }
-        else if(!hasSentKey) {
+        else if (!hasSentKey) {
             printWriter.println(Message.appendMessageSequence(++sequenceNumber, Long.toString(id)));
             printWriter.println(Message.appendMessageSequence(++sequenceNumber, Long.toString(masterKey)));
 
             // confirmation
-            if(!serverInput.hasNextLine()) {
+            if (!serverInput.hasNextLine()) {
                 return AUTHENTICATE_FAILURE;
             }
 
             serverResponse = serverInput.nextLine();
 
-            if(!Message.validateMessageSequenceNumber(++sequenceNumber, serverResponse)) {
+            if (!Message.validateMessageSequenceNumber(++sequenceNumber, serverResponse)) {
                 handleInvalidMessages();
                 return AUTHENTICATE_FAILURE;
             }
-            else if(!serverResponse.split(DELIMITER)[1].equalsIgnoreCase("ok")) {
+            else if (!serverResponse.split(DELIMITER)[1].equalsIgnoreCase("ok")) {
                 return AUTHENTICATE_FAILURE;
             }
             else {
@@ -625,10 +624,10 @@ public class Client extends Peer {
             serverResponse = serverInput.nextLine();
 
             // errors
-            if(serverResponse == null) {
+            if (serverResponse == null) {
                 return AUTHENTICATE_FAILURE;
             }
-            else if(!Message.validateMessageSequenceNumber(++sequenceNumber, serverResponse)) {
+            else if (!Message.validateMessageSequenceNumber(++sequenceNumber, serverResponse)) {
                 handleInvalidMessages();
                 return AUTHENTICATE_FAILURE;
             }
@@ -713,8 +712,8 @@ public class Client extends Peer {
     private void deleteCertificate() {
         File certificate = new File(src.getAbsolutePath() + "/" + CERTIFICATION);
 
-        if(certificate.exists()) {
-            if(!certificate.delete()) {
+        if (certificate.exists()) {
+            if (!certificate.delete()) {
                 System.out.println("Cannot delete certificate");
             }
         }

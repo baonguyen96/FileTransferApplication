@@ -13,7 +13,7 @@ public class Server extends Peer {
     private boolean hasReceivedKeys = false;
     private String clientIpAddress = null;
     private String clientId = null;
-   
+
 
     protected Server() {
         super(SERVER);
@@ -21,7 +21,6 @@ public class Server extends Peer {
 
 
     public static void main(String[] args) {
-    	
         Server server = new Server();
         server.exec();
     }
@@ -34,7 +33,7 @@ public class Server extends Peer {
      */
     protected void exec() {
         // error with keys then stop
-        if(PRIVATE_KEY == null || PUBLIC_KEY == null) {
+        if (PRIVATE_KEY == null || PUBLIC_KEY == null) {
             return;
         }
 
@@ -59,7 +58,7 @@ public class Server extends Peer {
              */
             while (!stopCommunication) {
                 // end if detect intruder
-                if(isIntruderDetected()) {
+                if (isIntruderDetected()) {
                     System.out.println(SMALL_DIV);
                     System.out.println("Warning: Intruder detected. Abort connection.");
                     serverSocket.close();
@@ -69,11 +68,11 @@ public class Server extends Peer {
                 clientSocket = serverSocket.accept();
 
                 // make sure to talk to the same client over several sessions
-                if(!authenticate()) {
+                if (!authenticate()) {
                     clientSocket.close();
                     continue;
                 }
-                else if(hasSentCertificate && !hasReceivedKeys) {
+                else if (hasSentCertificate && !hasReceivedKeys) {
                     continue;
                 }
 
@@ -169,7 +168,7 @@ public class Server extends Peer {
         Scanner receivedInput = new Scanner(new InputStreamReader(inputStream));
 
         // client is offline
-        if(!receivedInput.hasNextLine()) {
+        if (!receivedInput.hasNextLine()) {
             System.out.println(">> Client is offline.");
             return STOP_CONNECTION_AFTER_THIS;
         }
@@ -177,14 +176,14 @@ public class Server extends Peer {
         receivedCommand = receivedInput.nextLine();
 
         // errors
-        if(!Message.validateMessageSequenceNumber(++sequenceNumber, receivedCommand)) {
+        if (!Message.validateMessageSequenceNumber(++sequenceNumber, receivedCommand)) {
             handleInvalidMessages();
             return CONTINUE_CONNECTION_AFTER_THIS;
         }
-        else if(!isValidCommand(receivedCommand)) {
+        else if (!isValidCommand(receivedCommand)) {
             return CONTINUE_CONNECTION_AFTER_THIS;
         }
-        else if(receivedCommand.contains("stay")) {
+        else if (receivedCommand.contains("stay")) {
             return CONTINUE_CONNECTION_AFTER_THIS;
         }
 
@@ -193,19 +192,19 @@ public class Server extends Peer {
         displayPeerMessage(receivedCommand);
 
         // switch
-        if(commandTokens[1].equalsIgnoreCase("quit")) {
+        if (commandTokens[1].equalsIgnoreCase("quit")) {
             return STOP_CONNECTION_AFTER_THIS;
         }
-        else if(commandTokens[1].equalsIgnoreCase("list")) {
+        else if (commandTokens[1].equalsIgnoreCase("list")) {
             list();
         }
-        else if(commandTokens[1].equalsIgnoreCase("download")) {
+        else if (commandTokens[1].equalsIgnoreCase("download")) {
             clientDownload(commandTokens);
         }
-        else if(commandTokens[1].equalsIgnoreCase("upload")){
+        else if (commandTokens[1].equalsIgnoreCase("upload")) {
             clientUpload(commandTokens);
         }
-        else if(commandTokens[1].equalsIgnoreCase("stay")){
+        else if (commandTokens[1].equalsIgnoreCase("stay")) {
             // stay -> don't do anything
         }
 
@@ -227,7 +226,7 @@ public class Server extends Peer {
         OutputStream outputStream = clientSocket.getOutputStream();
         PrintWriter printWriter = new PrintWriter(outputStream, true);
 
-        if(files == null) {
+        if (files == null) {
             messageToSend.append("Error: Cannot find files filesDirectory.");
             System.out.println(">> " + messageToSend.toString());
         }
@@ -318,7 +317,7 @@ public class Server extends Peer {
      * @throws IOException
      */
     protected void clientUpload(String[] commandTokens) throws IOException {
-    	
+
         String filePath = commandTokens[2].replace("\\", "/");
         String[] uploadedFilePathComponents = filePath.split("/");
         String uploadedFileName = uploadedFilePathComponents[uploadedFilePathComponents.length - 1];
@@ -333,19 +332,20 @@ public class Server extends Peer {
         System.out.printf(">> Receiving \"%s\" ...\n", uploadedFileName);
 
         int byteRead = inputStream.read(byteBlock, 0, byteBlock.length);
-        while(byteRead >= 0) {
+        while (byteRead >= 0) {
             byteArrayOutputStream.write(byteBlock);
             byteRead = inputStream.read(byteBlock);
         }
-        
+
         byte[] byteArray = byteArrayOutputStream.toByteArray();
         try {
-        	 byteArray = AESf.decrypt(byteArray, "1234567890123456");
-         } catch(Exception e) { 
-           throw new RuntimeException("Failed to create Pi Face Device", e); 
-         }
-       
-        if(!Message.validateMessageSequenceNumber(++sequenceNumber, byteArray)) {
+            byteArray = AESf.decrypt(byteArray, "1234567890123456");
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Failed to create Pi Face Device", e);
+        }
+
+        if (!Message.validateMessageSequenceNumber(++sequenceNumber, byteArray)) {
             handleInvalidMessages();
             bufferedOutputStream.close();
             inputStream.close();
@@ -422,11 +422,11 @@ public class Server extends Peer {
         String clientMessage = receivedInput.nextLine();
 
         // first time connect (certificate)
-        if(!hasSentCertificate) {
-            if(!Message.validateMessageSequenceNumber(sequenceNumber, clientMessage)) {
+        if (!hasSentCertificate) {
+            if (!Message.validateMessageSequenceNumber(sequenceNumber, clientMessage)) {
                 return AUTHENTICATE_FAILURE;
             }
-            else if(clientMessage.equals("0 | Request certificate")) {
+            else if (clientMessage.equals("0 | Request certificate")) {
                 sendCertificate();
                 hasSentCertificate = true;
                 return AUTHENTICATE_SUCCESS;
@@ -437,13 +437,13 @@ public class Server extends Peer {
             }
         }
         // get keys
-        else if(!hasReceivedKeys) {
+        else if (!hasReceivedKeys) {
             // note: encrypted client message -> have to decrypt and verify before save
             // ip
             clientIpAddress = clientSocket.getInetAddress().getHostAddress();
 
             // id
-            if(!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
+            if (!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
                 handleInvalidMessages();
                 sequenceNumber = 0;
                 return AUTHENTICATE_FAILURE;
@@ -455,7 +455,7 @@ public class Server extends Peer {
             // master key
             clientMessage = receivedInput.nextLine();
 
-            if(!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
+            if (!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
                 handleInvalidMessages();
                 sequenceNumber = 0;
                 return AUTHENTICATE_FAILURE;
@@ -473,7 +473,7 @@ public class Server extends Peer {
         // already send certificate and receive keys
         else {
             // encrypted messages
-            if(!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
+            if (!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
                 handleInvalidMessages();
                 return AUTHENTICATE_FAILURE;
             }
