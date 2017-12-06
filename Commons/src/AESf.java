@@ -25,7 +25,9 @@ public class AESf implements Printable {
      * @throws javax.crypto.NoSuchPaddingException
      * @throws java.security.NoSuchAlgorithmException
      */
-    public static byte[] encrypt(byte[] message, String key) throws InvalidKeyException, InvalidAlgorithmParameterException, NoSuchPaddingException, NoSuchAlgorithmException {
+    public static byte[] encrypt(byte[] message, String key)
+            throws InvalidKeyException, InvalidAlgorithmParameterException,
+                   NoSuchPaddingException, NoSuchAlgorithmException {
 
         byte[] iv = new byte[16];           //Initialization vector
         byte[] originalKey = new byte[16];
@@ -55,7 +57,7 @@ public class AESf implements Printable {
         f_encrypted = new byte[message.length];
         System.arraycopy(temp, 0, f_encrypted, 0, f_encrypted.length);//Truncate to original length of plain text
 
-        if(IS_PRINTABLE) {
+        if (IS_PRINTABLE) {
             System.out.println("Cipher length: " + f_encrypted.length + " bytes");
         }
 
@@ -95,7 +97,7 @@ public class AESf implements Printable {
         f_decrypted = new byte[message.length];
         System.arraycopy(temp, 0, f_decrypted, 0, message.length);
 
-        if(IS_PRINTABLE) {
+        if (IS_PRINTABLE) {
             System.out.println("Message length: " + f_decrypted.length + " bytes");
         }
 
@@ -109,28 +111,28 @@ public class AESf implements Printable {
      * Pad cipher text in blocks
      *
      * @param source
-     * @param block_size
+     * @param blockSize
      * @return
      */
-    private static byte[][] padBytes(byte[] source, int block_size) {
-        byte[][] ret = new byte[(int) Math.ceil(source.length / (double) block_size)][block_size];
-        int len = source.length % block_size;
+    private static byte[][] padBytes(byte[] source, int blockSize) {
+        byte[][] ret = new byte[(int) Math.ceil(source.length / (double) blockSize)][blockSize];
+        int len = source.length % blockSize;
         int start = 0;
         for (int i = 0; i < ret.length; i++) {
-            ret[i] = copyOfRange(source, start, start + block_size);
-            start += block_size;
+            ret[i] = copyOfRange(source, start, start + blockSize);
+            start += blockSize;
         }
 
-        if (source.length % block_size != 0) {
+        if (source.length % blockSize != 0) {
             try {
-                padWithLen(ret[ret.length - 1], len, block_size - len);
+                padWithLen(ret[ret.length - 1], len, blockSize - len);
             }
             catch (ShortBufferException ex) {
                 Logger.getLogger(AESf.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
-        if(IS_PRINTABLE) {
+        if (IS_PRINTABLE) {
             System.out.println("Number of cipher blocks: " + ret.length);
         }
 
@@ -139,7 +141,6 @@ public class AESf implements Printable {
 
 
     /**
-     * *
      * Flatten 2D arrays in a 1D array
      *
      * @param arr - the 2D input array

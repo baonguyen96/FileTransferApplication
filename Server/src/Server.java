@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Scanner;
 
+
 public class Server extends Peer {
     private final String PRIVATE_KEY = getKey("PrivateKey.txt");
     private final String PUBLIC_KEY = getKey("PublicKey.txt");
@@ -317,7 +318,6 @@ public class Server extends Peer {
      * @throws IOException
      */
     protected void clientUpload(String[] commandTokens) throws IOException {
-
         String filePath = commandTokens[2].replace("\\", "/");
         String[] uploadedFilePathComponents = filePath.split("/");
         String uploadedFileName = uploadedFilePathComponents[uploadedFilePathComponents.length - 1];
@@ -411,15 +411,31 @@ public class Server extends Peer {
      * @throws IOException
      */
     private boolean authenticate() throws IOException {
-
         final boolean AUTHENTICATE_SUCCESS = true;
         final boolean AUTHENTICATE_FAILURE = false;
         boolean authenticateSuccess = false;
-        OutputStream outputStream = clientSocket.getOutputStream();
-        PrintWriter printWriter = new PrintWriter(outputStream, true);
-        InputStream inputStream = clientSocket.getInputStream();
-        Scanner receivedInput = new Scanner(new InputStreamReader(inputStream));
-        String clientMessage = receivedInput.nextLine();
+        OutputStream outputStream = null;
+        PrintWriter printWriter = null;
+        InputStream inputStream = null;
+        Scanner receivedInput = null;
+        String clientMessage = null;
+
+        try {
+            outputStream = clientSocket.getOutputStream();
+            printWriter = new PrintWriter(outputStream, true);
+            inputStream = clientSocket.getInputStream();
+            receivedInput = new Scanner(new InputStreamReader(inputStream));
+            clientMessage = receivedInput.nextLine();
+        }
+        catch (SocketTimeoutException e) {
+            if(hasSentCertificate && !hasReceivedKeys) {
+                hasSentCertificate = false;
+                return AUTHENTICATE_FAILURE;
+            }
+            else {
+                throw e;
+            }
+        }
 
         // first time connect (certificate)
         if (!hasSentCertificate) {
@@ -439,8 +455,6 @@ public class Server extends Peer {
         // get keys
         else if (!hasReceivedKeys) {
             // note: encrypted client message -> have to decrypt and verify before save
-            // ip
-            clientIpAddress = clientSocket.getInetAddress().getHostAddress();
 
             // id
             if (!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
@@ -464,9 +478,11 @@ public class Server extends Peer {
                 masterKey = Long.parseLong(clientMessage.split(DELIMITER)[1]);
             }
 
+            // ip
+            clientIpAddress = clientSocket.getInetAddress().getHostAddress();
+
             // send confirmation message
             printWriter.println(Message.appendMessageSequence(++sequenceNumber, "ok"));
-
             authenticateSuccess = AUTHENTICATE_SUCCESS;
             hasReceivedKeys = true;
         }

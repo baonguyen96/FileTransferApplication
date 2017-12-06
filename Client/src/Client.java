@@ -23,7 +23,7 @@ import java.util.Scanner;
 public class Client extends Peer {
     private final long id = System.currentTimeMillis();
     private boolean connectSuccess = false;
-    private boolean hasReceivedCertificate = false;
+    protected boolean hasReceivedCertificate = false;
     private boolean hasSentKey = false;
     private final String CERTIFICATION = "CA-certificate.crt";
 
@@ -467,7 +467,7 @@ public class Client extends Peer {
      *
      * @throws IOException
      */
-    private void requestCertificate() throws IOException, InvalidMessageException {
+    protected void requestCertificate() throws IOException, InvalidMessageException {
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
         InputStream inputStream = clientSocket.getInputStream();
         Scanner serverInput = new Scanner(new InputStreamReader(inputStream));
@@ -554,7 +554,7 @@ public class Client extends Peer {
      * @return true if success, false if not
      * @throws IOException if socket error
      */
-    private boolean authenticate() throws IOException {
+    protected boolean authenticate() throws IOException {
         final boolean AUTHENTICATE_SUCCESS = true;
         final boolean AUTHENTICATE_FAILURE = false;
         OutputStream outputStream = clientSocket.getOutputStream();
@@ -665,7 +665,7 @@ public class Client extends Peer {
      //     * @param certPath: the path of certificate path
      * @return true if the verify succeeds, false if not
      */
-    private boolean verifyCertificate() {
+    protected boolean verifyCertificate() {
         Certificate cert;
         PublicKey caPublicKey;
         boolean verifySuccess = true;
@@ -709,7 +709,7 @@ public class Client extends Peer {
      * delete the CA certificate out of the system
      * to prevent break-in attack
      */
-    private void deleteCertificate() {
+    protected void deleteCertificate() {
         File certificate = new File(src.getAbsolutePath() + "/" + CERTIFICATION);
 
         if (certificate.exists()) {

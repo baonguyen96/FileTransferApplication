@@ -1,8 +1,10 @@
-import java.io.IOException;
+import java.io.*;
+import java.util.Scanner;
 
 
 public class FakeClient extends Client implements Resynchronizable {
     private boolean isAbleToMessUpSynchronization = true;
+    private final boolean IS_ABLE_TO_MESS_UP_AUTHENTICATION = true;
 
 
     private FakeClient() {
@@ -59,5 +61,5 @@ public class FakeClient extends Client implements Resynchronizable {
 
         return CONTINUE_CONNECTION_AFTER_THIS;
     }
-
+    
 }
