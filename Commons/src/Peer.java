@@ -8,7 +8,8 @@ public abstract class Peer {
     protected Socket clientSocket = null;
     protected File filesDirectory = null;
     protected File src = null;
-    protected long masterKey = 0;
+    protected String masterKey;
+	protected String masterKey2;
     protected int sequenceNumber = 0;
     protected int totalInvalidMessagesReceived = 0;
     protected static final int MAX_INVALID_MESSAGES_ALLOWED = 5;
@@ -88,6 +89,7 @@ public abstract class Peer {
      * @return key as string
      */
     protected String getKey(String keyFileName) {
+		
         File file = new File(keyFileName);
         if(!file.exists()) {
             String path = String.format("%s/src/%s", module, keyFileName);
@@ -133,5 +135,7 @@ public abstract class Peer {
         }
         System.out.println();
     }
+	
+	
 
 }

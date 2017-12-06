@@ -14,6 +14,8 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.X509EncodedKeySpec;
+import javax.crypto.Cipher;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -26,11 +28,13 @@ public class Client extends Peer {
     protected boolean hasReceivedCertificate = false;
     private boolean hasSentKey = false;
     private final String CERTIFICATION = "CA-certificate.crt";
-
+	PublicKey ServerPublicKey;
+    String KeyforEncryption;
 
     protected Client() {
         super(CLIENT);
-        masterKey = (long) (Math.random() * Long.MAX_VALUE);
+       // masterKey = (long) (Math.random() * Long.MAX_VALUE);
+	   masterKey =AESf.getRandomString(16);
     }
 
 
@@ -591,8 +595,13 @@ public class Client extends Peer {
             return status;
         }
         else if (!hasSentKey) {
+			try {
+            	masterKey2= publicEncrypt(masterKey,ServerPublicKey);
+              } catch(Exception e) { 
+                throw new RuntimeException("Failed to encrypt the key", e); 
+              }	
             printWriter.println(Message.appendMessageSequence(++sequenceNumber, Long.toString(id)));
-            printWriter.println(Message.appendMessageSequence(++sequenceNumber, Long.toString(masterKey)));
+            printWriter.println(Message.appendMessageSequence(++sequenceNumber, masterKey2));
 
             // confirmation
             if (!serverInput.hasNextLine()) {
@@ -648,7 +657,7 @@ public class Client extends Peer {
      * @param key: key of format string
      * @return key as PublicKey
      */
-    private PublicKey getPublicKey(String key) throws Exception {
+    private PublicKey getPublicKey1(String key) throws Exception {
         byte[] keyBytes;
         keyBytes = (new BASE64Decoder()).decodeBuffer(key);
         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
@@ -681,8 +690,9 @@ public class Client extends Peer {
             Date timeNow = new Date();
             t.checkValidity(timeNow);
             String publicKey = getKey("CAPublicKey.txt");
-            caPublicKey = getPublicKey(publicKey);
+            caPublicKey = getPublicKey1(publicKey);
             cert.verify(caPublicKey);
+			ServerPublicKey=cert.getPublicKey();
             System.out.println("The Certificate is successfully verified.");
         }
         catch (Exception e) {
@@ -718,5 +728,35 @@ public class Client extends Peer {
             }
         }
     }
+	
+	/***
+     * method: publicEncrypt
+     *
+     * Encrypt the masterkey by server's publickey
+     * 
+     */
+	
+	 public static String publicEncrypt(String input,PublicKey publicKey) throws Exception{  	 
+		 Cipher cipher = Cipher.getInstance("RSA");
+         cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+         byte[] bt_encrypted = cipher.doFinal(input.getBytes());
+         String tmp1 = bytesToString(bt_encrypted);
+         return tmp1;
+	 }
+	 
+	 /***
+     * method: bytesToString
+     *
+     * One step used in sending key 
+     * 
+     */
+	 
+	 public static String bytesToString(byte[] encrytpByte) {
+		 String result = "";
+		 for (Byte bytes : encrytpByte) {
+			 result += bytes.toString() + " ";
+		 }
+		 	return result;
+		 }
 
 }

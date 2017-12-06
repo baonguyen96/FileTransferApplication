@@ -4,6 +4,11 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Scanner;
+import java.security.PrivateKey;
+import javax.crypto.Cipher;
+import sun.misc.BASE64Decoder;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.KeyFactory;
 
 
 public class Server extends Peer {
@@ -14,6 +19,7 @@ public class Server extends Peer {
     private boolean hasReceivedKeys = false;
     private String clientIpAddress = null;
     private String clientId = null;
+	PrivateKey ServerPrivateKey;
 
 
     protected Server() {
@@ -475,7 +481,13 @@ public class Server extends Peer {
                 return AUTHENTICATE_FAILURE;
             }
             else {
-                masterKey = Long.parseLong(clientMessage.split(DELIMITER)[1]);
+                //masterKey = Long.parseLong(clientMessage.split(DELIMITER)[1]);
+				try {
+					PrivateKey ServerPrivateKey=getPrivateKey(PRIVATE_KEY);
+					masterKey =privateDecrypt(clientMessage.split(DELIMITER)[1],ServerPrivateKey);
+              } catch(Exception e) { 
+                throw new RuntimeException("Failed to decrypt the key", e); 
+              }
             }
 
             // ip
@@ -504,6 +516,45 @@ public class Server extends Peer {
 
         return authenticateSuccess;
     }
+	/***
+     * method: getPrivateKey
+     *
+     * Get Server's private key
+     * 
+     *
+     * 
+     */
+	public static PrivateKey getPrivateKey(String key) throws Exception {
+		byte[] keyBytes;
+        keyBytes = (new BASE64Decoder()).decodeBuffer(key);
+        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        PrivateKey privateKey = keyFactory.generatePrivate(keySpec);
+        return privateKey;
+   }
+    /***
+     * method: privateDecrypt
+     *
+     * Use Server's private key to decrypt the master key.
+     * 
+     *
+     * 
+     */
+   
+   
+	private static String privateDecrypt(String cipherText,PrivateKey privateKey) throws Exception{  
+		 
+		String[] strArr = cipherText.split(" ");
+		int len = strArr.length;
+		byte[] clone = new byte[len];
+		for (int i = 0; i < len; i++) {
+			clone[i] = Byte.parseByte(strArr[i]);
+		}
+		Cipher cipher = Cipher.getInstance("RSA");
+	    cipher.init(Cipher.DECRYPT_MODE, privateKey);
+	    byte[] bt_original = cipher.doFinal(clone);  
+		return new String(bt_original);
+	 }
 
 }
 
