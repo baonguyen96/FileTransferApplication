@@ -6,7 +6,9 @@ import java.util.Date;
 import java.util.Scanner;
 import java.security.PrivateKey;
 import javax.crypto.Cipher;
+
 import sun.misc.BASE64Decoder;
+
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.KeyFactory;
 
@@ -19,7 +21,6 @@ public class Server extends Peer {
     private boolean hasReceivedKeys = false;
     private String clientIpAddress = null;
     private String clientId = null;
-	PrivateKey ServerPrivateKey;
 
 
     protected Server() {
@@ -56,7 +57,7 @@ public class Server extends Peer {
             System.out.println("Waiting for connection...");
 
             ServerSocket serverSocket = new ServerSocket(1111);
-            serverSocket.setSoTimeout(120000);
+            serverSocket.setSoTimeout(60000);
 
             /*
              * stay connected until the client disconnects
@@ -77,9 +78,11 @@ public class Server extends Peer {
                 // make sure to talk to the same client over several sessions
                 if (!authenticate()) {
                     clientSocket.close();
+                    System.out.println("Close the socket");
                     continue;
                 }
                 else if (hasSentCertificate && !hasReceivedKeys) {
+//                    clientSocket.close();
                     continue;
                 }
 
@@ -420,27 +423,23 @@ public class Server extends Peer {
         final boolean AUTHENTICATE_SUCCESS = true;
         final boolean AUTHENTICATE_FAILURE = false;
         boolean authenticateSuccess = false;
-        OutputStream outputStream = null;
-        PrintWriter printWriter = null;
-        InputStream inputStream = null;
-        Scanner receivedInput = null;
+        OutputStream outputStream = clientSocket.getOutputStream();;
+        PrintWriter printWriter = new PrintWriter(outputStream, true);
+        InputStream inputStream = clientSocket.getInputStream();
+        Scanner receivedInput = new Scanner(new InputStreamReader(inputStream));
         String clientMessage = null;
 
-        try {
-            outputStream = clientSocket.getOutputStream();
-            printWriter = new PrintWriter(outputStream, true);
-            inputStream = clientSocket.getInputStream();
-            receivedInput = new Scanner(new InputStreamReader(inputStream));
-            clientMessage = receivedInput.nextLine();
-        }
-        catch (SocketTimeoutException e) {
+        if(!receivedInput.hasNextLine()) {
+//            System.out.printf("1 | No line | %s | %s\n", hasSentCertificate, hasReceivedKeys);
             if(hasSentCertificate && !hasReceivedKeys) {
                 hasSentCertificate = false;
-                return AUTHENTICATE_FAILURE;
+                sequenceNumber = 0;
             }
-            else {
-                throw e;
-            }
+//            System.out.printf("2 | No line | %s | %s\n", hasSentCertificate, hasReceivedKeys);
+            return AUTHENTICATE_FAILURE;
+        }
+        else {
+            clientMessage = receivedInput.nextLine();
         }
 
         // first time connect (certificate)
@@ -460,8 +459,6 @@ public class Server extends Peer {
         }
         // get keys
         else if (!hasReceivedKeys) {
-            // note: encrypted client message -> have to decrypt and verify before save
-
             // id
             if (!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
                 handleInvalidMessages();
@@ -481,13 +478,13 @@ public class Server extends Peer {
                 return AUTHENTICATE_FAILURE;
             }
             else {
-                //masterKey = Long.parseLong(clientMessage.split(DELIMITER)[1]);
-				try {
-					PrivateKey ServerPrivateKey=getPrivateKey(PRIVATE_KEY);
-					masterKey =privateDecrypt(clientMessage.split(DELIMITER)[1],ServerPrivateKey);
-              } catch(Exception e) { 
-                throw new RuntimeException("Failed to decrypt the key", e); 
-              }
+                try {
+                    PrivateKey ServerPrivateKey = getPrivateKey(PRIVATE_KEY);
+                    masterKey = privateDecrypt(clientMessage.split(DELIMITER)[1], ServerPrivateKey);
+                }
+                catch (Exception e) {
+                    throw new RuntimeException("Failed to decrypt the key", e);
+                }
             }
 
             // ip
@@ -516,45 +513,38 @@ public class Server extends Peer {
 
         return authenticateSuccess;
     }
-	/***
+
+
+    /***
      * method: getPrivateKey
      *
      * Get Server's private key
-     * 
-     *
-     * 
      */
-	public static PrivateKey getPrivateKey(String key) throws Exception {
-		byte[] keyBytes;
-        keyBytes = (new BASE64Decoder()).decodeBuffer(key);
+    private static PrivateKey getPrivateKey(String key) throws Exception {
+        byte[] keyBytes = (new BASE64Decoder()).decodeBuffer(key);
         PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-        PrivateKey privateKey = keyFactory.generatePrivate(keySpec);
-        return privateKey;
-   }
+        return keyFactory.generatePrivate(keySpec);
+    }
+
+
     /***
      * method: privateDecrypt
      *
      * Use Server's private key to decrypt the master key.
-     * 
-     *
-     * 
      */
-   
-   
-	private static String privateDecrypt(String cipherText,PrivateKey privateKey) throws Exception{  
-		 
-		String[] strArr = cipherText.split(" ");
-		int len = strArr.length;
-		byte[] clone = new byte[len];
-		for (int i = 0; i < len; i++) {
-			clone[i] = Byte.parseByte(strArr[i]);
-		}
-		Cipher cipher = Cipher.getInstance("RSA");
-	    cipher.init(Cipher.DECRYPT_MODE, privateKey);
-	    byte[] bt_original = cipher.doFinal(clone);  
-		return new String(bt_original);
-	 }
+    private static String privateDecrypt(String cipherText, PrivateKey privateKey) throws Exception {
+        String[] strArr = cipherText.split(" ");
+        int len = strArr.length;
+        byte[] clone = new byte[len];
+        for (int i = 0; i < len; i++) {
+            clone[i] = Byte.parseByte(strArr[i]);
+        }
+        Cipher cipher = Cipher.getInstance("RSA");
+        cipher.init(Cipher.DECRYPT_MODE, privateKey);
+        byte[] bt_original = cipher.doFinal(clone);
+        return new String(bt_original);
+    }
 
 }
 

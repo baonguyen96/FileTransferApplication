@@ -1,5 +1,4 @@
-import java.io.*;
-import java.util.Scanner;
+import java.io.IOException;
 
 
 public class FakeClient extends Client implements Resynchronizable {
@@ -22,6 +21,7 @@ public class FakeClient extends Client implements Resynchronizable {
      * method: communicate
      *
      * communication session between server and client
+     * modify the message sequence to simulate intruder
      *
      * @return true if stop communication, false if not
      * @throws IOException
@@ -61,5 +61,58 @@ public class FakeClient extends Client implements Resynchronizable {
 
         return CONTINUE_CONNECTION_AFTER_THIS;
     }
-    
+
+
+    /***
+     * method: authenticate
+     *
+     * client authenticates server with keys
+     * can request certificate and does not send the keys to keep the server waiting
+     * -> simulate SYN flood - DDoS attack
+     *
+     * @return true if success, false if not
+     * @throws IOException if socket error
+     */
+    @Override
+    protected boolean authenticate() throws IOException {
+        if (!IS_ABLE_TO_MESS_UP_AUTHENTICATION) {
+            return super.authenticate();
+        }
+
+        final boolean AUTHENTICATE_SUCCESS = true;
+        final boolean AUTHENTICATE_FAILURE = false;
+
+        if (!hasReceivedCertificate) {
+            boolean status = AUTHENTICATE_FAILURE;
+
+            try {
+                deleteCertificate();
+                requestCertificate();
+                if (!verifyCertificate()) {
+                    status = AUTHENTICATE_FAILURE;
+                }
+                else {
+                    hasReceivedCertificate = true;
+                    status = AUTHENTICATE_SUCCESS;
+                }
+            }
+            catch (IOException e) {
+                status = AUTHENTICATE_FAILURE;
+            }
+            catch (InvalidMessageException e) {
+                handleInvalidMessages();
+                status = AUTHENTICATE_FAILURE;
+            }
+            finally {
+                deleteCertificate();
+            }
+
+            return status;
+        }
+        else {
+            // do not send anything -> keep the server waiting
+        }
+        return AUTHENTICATE_SUCCESS;
+    }
+
 }

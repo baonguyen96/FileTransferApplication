@@ -1,9 +1,6 @@
-/*
- * this is internal API and may be removed in the future java release which will break our codes
- * use this instead: https://stackoverflow.com/questions/36578625/base64encoder-is-internal-api-and-may-be-removed-in-future-release
- */
 import sun.misc.BASE64Decoder;
 
+import javax.crypto.Cipher;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -14,8 +11,6 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.X509EncodedKeySpec;
-import javax.crypto.Cipher;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -28,13 +23,12 @@ public class Client extends Peer {
     protected boolean hasReceivedCertificate = false;
     private boolean hasSentKey = false;
     private final String CERTIFICATION = "CA-certificate.crt";
-	PublicKey ServerPublicKey;
-    String KeyforEncryption;
+    private PublicKey ServerPublicKey;
+
 
     protected Client() {
         super(CLIENT);
-       // masterKey = (long) (Math.random() * Long.MAX_VALUE);
-	   masterKey =AESf.getRandomString(16);
+        masterKey = AESf.getRandomString(16);
     }
 
 
@@ -87,7 +81,7 @@ public class Client extends Peer {
 
                 }
                 else if (hasReceivedCertificate && !hasSentKey) {
-                    clientSocket.close();
+//                    clientSocket.close();
                     continue;
                 }
 
@@ -595,11 +589,12 @@ public class Client extends Peer {
             return status;
         }
         else if (!hasSentKey) {
-			try {
-            	masterKey2= publicEncrypt(masterKey,ServerPublicKey);
-              } catch(Exception e) { 
-                throw new RuntimeException("Failed to encrypt the key", e); 
-              }	
+            try {
+                masterKey2 = publicEncrypt(masterKey, ServerPublicKey);
+            }
+            catch (Exception e) {
+                throw new RuntimeException("Failed to encrypt the key", e);
+            }
             printWriter.println(Message.appendMessageSequence(++sequenceNumber, Long.toString(id)));
             printWriter.println(Message.appendMessageSequence(++sequenceNumber, masterKey2));
 
@@ -658,8 +653,7 @@ public class Client extends Peer {
      * @return key as PublicKey
      */
     private PublicKey getPublicKey1(String key) throws Exception {
-        byte[] keyBytes;
-        keyBytes = (new BASE64Decoder()).decodeBuffer(key);
+        byte[] keyBytes = (new BASE64Decoder()).decodeBuffer(key);
         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
         return keyFactory.generatePublic(keySpec);
@@ -692,7 +686,7 @@ public class Client extends Peer {
             String publicKey = getKey("CAPublicKey.txt");
             caPublicKey = getPublicKey1(publicKey);
             cert.verify(caPublicKey);
-			ServerPublicKey=cert.getPublicKey();
+            ServerPublicKey = cert.getPublicKey();
             System.out.println("The Certificate is successfully verified.");
         }
         catch (Exception e) {
@@ -728,35 +722,33 @@ public class Client extends Peer {
             }
         }
     }
-	
-	/***
+
+
+    /***
      * method: publicEncrypt
      *
      * Encrypt the masterkey by server's publickey
-     * 
      */
-	
-	 public static String publicEncrypt(String input,PublicKey publicKey) throws Exception{  	 
-		 Cipher cipher = Cipher.getInstance("RSA");
-         cipher.init(Cipher.ENCRYPT_MODE, publicKey);
-         byte[] bt_encrypted = cipher.doFinal(input.getBytes());
-         String tmp1 = bytesToString(bt_encrypted);
-         return tmp1;
-	 }
-	 
-	 /***
+    private static String publicEncrypt(String input, PublicKey publicKey) throws Exception {
+        Cipher cipher = Cipher.getInstance("RSA");
+        cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+        byte[] bt_encrypted = cipher.doFinal(input.getBytes());
+        return bytesToString(bt_encrypted);
+    }
+
+
+    /***
      * method: bytesToString
      *
      * One step used in sending key 
-     * 
+     *
      */
-	 
-	 public static String bytesToString(byte[] encrytpByte) {
-		 String result = "";
-		 for (Byte bytes : encrytpByte) {
-			 result += bytes.toString() + " ";
-		 }
-		 	return result;
-		 }
+    private static String bytesToString(byte[] encryptByte) {
+        StringBuilder result = new StringBuilder();
+        for (Byte bytes : encryptByte) {
+            result.append(bytes.toString()).append(" ");
+        }
+        return result.toString();
+    }
 
 }
