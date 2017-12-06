@@ -37,7 +37,3 @@ Server:
             Decrypt ID' using new E to get client's ID
             Compare with stored ID to authenticate
 
-
-May need to take a look at what happen if fake client send a certificate request, 
-but refuse to send the id and key? This will cause the server to wait then timeout,
-rejecting other legitimate connnection requests.

@@ -11,8 +11,6 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.X509EncodedKeySpec;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Scanner;
 
@@ -23,7 +21,7 @@ public class Client extends Peer {
     protected boolean hasReceivedCertificate = false;
     private boolean hasSentKey = false;
     private final String CERTIFICATION = "CA-certificate.crt";
-    private PublicKey ServerPublicKey;
+    private PublicKey serverPublicKey = null;
 
 
     protected Client() {
@@ -44,8 +42,6 @@ public class Client extends Peer {
      * execute the Client and control the flow of the program
      */
     protected void exec() {
-        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        Date date = null;
         boolean stopCommunication = false;
         Scanner scanner = new Scanner(System.in);
 
@@ -81,19 +77,10 @@ public class Client extends Peer {
 
                 }
                 else if (hasReceivedCertificate && !hasSentKey) {
-//                    clientSocket.close();
                     continue;
                 }
 
-
-                if (!connectSuccess) {
-                    date = new Date();
-                    System.out.println("Connection established at " +
-                            dateFormat.format(date));
-                    System.out.println(SMALL_DIV);
-                    connectSuccess = true;
-                }
-
+                connectSuccess = notifyConnectionSuccess(connectSuccess);
                 stopCommunication = communicate();
                 clientSocket.close();
 
@@ -116,13 +103,13 @@ public class Client extends Peer {
             System.out.println(SMALL_DIV);
             System.out.println("Error: Sockets corrupted.");
         }
-        finally {
+        catch (Exception e) {
             System.out.println(SMALL_DIV);
-            date = new Date();
-            System.out.printf("Connection %s at %s\n",
-                    connectSuccess ? "ended" : "failed",
-                    dateFormat.format(date));
-            System.out.println(BIG_DIV);
+            System.out.println("Error: Something went wrong.");
+            e.printStackTrace();
+        }
+        finally {
+           notifyConnectionEnd(connectSuccess);
         }
     }
 
@@ -268,7 +255,7 @@ public class Client extends Peer {
         printWriter.println(Message.appendMessageSequence(++sequenceNumber, command));
         printWriter.flush();
 
-        // lost message -> may have to do something about it
+        // lost message
         if (!serverInput.hasNextLine()) {
             printWriter.close();
             return;
@@ -590,13 +577,12 @@ public class Client extends Peer {
         }
         else if (!hasSentKey) {
             try {
-                masterKey2 = publicEncrypt(masterKey, ServerPublicKey);
+                String masterKey2 = publicEncrypt(masterKey, serverPublicKey); printWriter.println(Message.appendMessageSequence(++sequenceNumber, Long.toString(id)));
+                printWriter.println(Message.appendMessageSequence(++sequenceNumber, masterKey2));
             }
             catch (Exception e) {
-                throw new RuntimeException("Failed to encrypt the key", e);
+                throw new RuntimeException("Failed to decrypt the key", e);
             }
-            printWriter.println(Message.appendMessageSequence(++sequenceNumber, Long.toString(id)));
-            printWriter.println(Message.appendMessageSequence(++sequenceNumber, masterKey2));
 
             // confirmation
             if (!serverInput.hasNextLine()) {
@@ -669,8 +655,8 @@ public class Client extends Peer {
      * @return true if the verify succeeds, false if not
      */
     protected boolean verifyCertificate() {
-        Certificate cert;
-        PublicKey caPublicKey;
+        Certificate cert = null;
+        PublicKey caPublicKey = null;
         boolean verifySuccess = true;
         FileInputStream in = null;
 
@@ -686,7 +672,7 @@ public class Client extends Peer {
             String publicKey = getKey("CAPublicKey.txt");
             caPublicKey = getPublicKey1(publicKey);
             cert.verify(caPublicKey);
-            ServerPublicKey = cert.getPublicKey();
+            serverPublicKey = cert.getPublicKey();
             System.out.println("The Certificate is successfully verified.");
         }
         catch (Exception e) {
@@ -716,10 +702,8 @@ public class Client extends Peer {
     protected void deleteCertificate() {
         File certificate = new File(src.getAbsolutePath() + "/" + CERTIFICATION);
 
-        if (certificate.exists()) {
-            if (!certificate.delete()) {
-                System.out.println("Cannot delete certificate");
-            }
+        if (certificate.exists() && !certificate.delete()) {
+            System.out.println("Cannot delete certificate");
         }
     }
 
@@ -740,8 +724,7 @@ public class Client extends Peer {
     /***
      * method: bytesToString
      *
-     * One step used in sending key 
-     *
+     * One step used in sending key
      */
     private static String bytesToString(byte[] encryptByte) {
         StringBuilder result = new StringBuilder();

@@ -60,3 +60,9 @@ b. To run program in the command line environment:
 
 Preferences:
 https://stackoverflow.com/questions/18571223/how-to-convert-java-string-into-byte
+
+Todos:
+Rename AESf
+Rename Client.getPublicKey1
+Rename Peer.masterKey2
+Remove unnecessary files

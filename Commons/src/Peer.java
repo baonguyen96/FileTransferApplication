@@ -1,6 +1,9 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.Socket;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Scanner;
 
 public abstract class Peer {
@@ -8,22 +11,63 @@ public abstract class Peer {
     protected Socket clientSocket = null;
     protected File filesDirectory = null;
     protected File src = null;
-    protected String masterKey;
-	protected String masterKey2;
+    protected String masterKey = null;
+    private String module = null;
+    protected DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+    protected Date date = null;
+//	protected String masterKey2 = null;    // why is this?
     protected int sequenceNumber = 0;
     protected int totalInvalidMessagesReceived = 0;
     protected static final int MAX_INVALID_MESSAGES_ALLOWED = 5;
     protected final String DELIMITER = "\\s+\\|\\s+";
-    protected static final String SERVER = "Server";
-    protected static final String CLIENT = "Client";
     protected final String BIG_DIV = "\n======================================================\n";
     protected final String SMALL_DIV = "\n---------------------\n";
-    private String module = null;
+    protected static final String SERVER = "Server";
+    protected static final String CLIENT = "Client";
 
 
     public Peer(String module) {
         this.module = module;
     }
+
+
+    /***
+     * method: notifyConnectionSuccess
+     *
+     * if successfully connect for the first time:
+     *      set initial connection start time
+     *      from now is busy (not initial session anymore)
+     *
+     * @param initialSession: first successful connection
+     *
+     * @return not initial connection
+     */
+    protected boolean notifyConnectionSuccess(boolean initialSession) {
+        if(!initialSession) {
+            date = new Date();
+            System.out.println("Connection established at " + dateFormat.format(date));
+            System.out.println(SMALL_DIV);
+        }
+        return true;
+    }
+
+
+    /***
+     * method: notifyConnectionEnd
+     *
+     * display the conclusion of the connection
+     *
+     * @param isConnectionSuccess: is the connection actually established between Client and Server?
+     */
+    protected void notifyConnectionEnd(boolean isConnectionSuccess) {
+        System.out.println(SMALL_DIV);
+        date = new Date();
+        System.out.printf("Connection %s at %s\n",
+                isConnectionSuccess ? "ended" : "failed",
+                dateFormat.format(date));
+        System.out.println(BIG_DIV);
+    }
+
 
 
     /***
@@ -135,7 +179,5 @@ public abstract class Peer {
         }
         System.out.println();
     }
-	
-	
 
 }

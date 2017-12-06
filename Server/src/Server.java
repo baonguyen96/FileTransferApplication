@@ -1,16 +1,15 @@
-import java.io.*;
-import java.net.*;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Scanner;
-import java.security.PrivateKey;
-import javax.crypto.Cipher;
-
 import sun.misc.BASE64Decoder;
 
-import java.security.spec.PKCS8EncodedKeySpec;
+import javax.crypto.Cipher;
+import java.io.*;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.security.KeyFactory;
+import java.security.PrivateKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Scanner;
 
 
 public class Server extends Peer {
@@ -45,10 +44,7 @@ public class Server extends Peer {
             return;
         }
 
-        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        Date date = null;
         boolean stopCommunication = false;
-
         setDirectories();
 
         try {
@@ -78,27 +74,14 @@ public class Server extends Peer {
                 // make sure to talk to the same client over several sessions
                 if (!authenticate()) {
                     clientSocket.close();
-                    System.out.println("Close the socket");
                     continue;
                 }
                 else if (hasSentCertificate && !hasReceivedKeys) {
-//                    clientSocket.close();
                     continue;
                 }
 
 
-                /*
-                 * if successfully connect for the first time:
-                 *      set initial connection start time
-                 *      from now is busy
-                 */
-                if (!isBusy) {
-                    date = new Date();
-                    System.out.println("Connection established at " + dateFormat.format(date));
-                    System.out.println(SMALL_DIV);
-                    isBusy = true;
-                }
-
+                isBusy = notifyConnectionSuccess(isBusy);
                 stopCommunication = communicate();
                 clientSocket.close();
 
@@ -122,13 +105,13 @@ public class Server extends Peer {
             System.out.println(SMALL_DIV);
             System.out.println("Error: Sockets corrupted.");
         }
-        finally {
+        catch (Exception e) {
             System.out.println(SMALL_DIV);
-            date = new Date();
-            System.out.printf("Connection %s at %s\n",
-                    isBusy ? "ended" : "failed",
-                    dateFormat.format(date));
-            System.out.println(BIG_DIV);
+            System.out.println("Error: Something went wrong.");
+            e.printStackTrace();
+        }
+        finally {
+            notifyConnectionEnd(isBusy);
         }
     }
 
@@ -430,12 +413,10 @@ public class Server extends Peer {
         String clientMessage = null;
 
         if(!receivedInput.hasNextLine()) {
-//            System.out.printf("1 | No line | %s | %s\n", hasSentCertificate, hasReceivedKeys);
             if(hasSentCertificate && !hasReceivedKeys) {
                 hasSentCertificate = false;
                 sequenceNumber = 0;
             }
-//            System.out.printf("2 | No line | %s | %s\n", hasSentCertificate, hasReceivedKeys);
             return AUTHENTICATE_FAILURE;
         }
         else {
@@ -465,9 +446,7 @@ public class Server extends Peer {
                 sequenceNumber = 0;
                 return AUTHENTICATE_FAILURE;
             }
-            else {
-                clientId = clientMessage.split(DELIMITER)[1];
-            }
+            clientId = clientMessage.split(DELIMITER)[1];
 
             // master key
             clientMessage = receivedInput.nextLine();
@@ -477,14 +456,13 @@ public class Server extends Peer {
                 sequenceNumber = 0;
                 return AUTHENTICATE_FAILURE;
             }
-            else {
-                try {
-                    PrivateKey ServerPrivateKey = getPrivateKey(PRIVATE_KEY);
-                    masterKey = privateDecrypt(clientMessage.split(DELIMITER)[1], ServerPrivateKey);
-                }
-                catch (Exception e) {
-                    throw new RuntimeException("Failed to decrypt the key", e);
-                }
+
+            try {
+                PrivateKey serverPrivateKey = getPrivateKey(PRIVATE_KEY);
+                masterKey = privateDecrypt(clientMessage.split(DELIMITER)[1], serverPrivateKey);
+            }
+            catch (Exception e) {
+                throw new RuntimeException("Failed to decrypt the key", e);
             }
 
             // ip
