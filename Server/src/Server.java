@@ -1,5 +1,3 @@
-import sun.misc.BASE64Decoder;
-
 import javax.crypto.Cipher;
 import java.io.*;
 import java.net.InetAddress;
@@ -70,6 +68,8 @@ public class Server extends Peer {
                 }
 
                 clientSocket = serverSocket.accept();
+
+                System.out.println("Go to authenticate()");
 
                 // make sure to talk to the same client over several sessions
                 if (!authenticate()) {
@@ -412,6 +412,7 @@ public class Server extends Peer {
         Scanner receivedInput = new Scanner(new InputStreamReader(inputStream));
         String clientMessage = null;
 
+        // defense against SYN flood
         if(!receivedInput.hasNextLine()) {
             if(hasSentCertificate && !hasReceivedKeys) {
                 hasSentCertificate = false;
@@ -423,12 +424,10 @@ public class Server extends Peer {
             clientMessage = receivedInput.nextLine();
         }
 
-        // first time connect (certificate)
+        // first time connect -> certificate request + initial sequence number
         if (!hasSentCertificate) {
-            if (!Message.validateMessageSequenceNumber(sequenceNumber, clientMessage)) {
-                return AUTHENTICATE_FAILURE;
-            }
-            else if (clientMessage.equals("0 | Request certificate")) {
+            if (clientMessage.matches("\\d+ \\| Request certificate")) {
+                sequenceNumber = Integer.parseInt(clientMessage.split(DELIMITER)[0]);
                 sendCertificate();
                 hasSentCertificate = true;
                 return AUTHENTICATE_SUCCESS;
@@ -499,7 +498,7 @@ public class Server extends Peer {
      * Get Server's private key
      */
     private static PrivateKey getPrivateKey(String key) throws Exception {
-        byte[] keyBytes = (new BASE64Decoder()).decodeBuffer(key);
+        byte[] keyBytes = java.util.Base64.getDecoder().decode(key);
         PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
         return keyFactory.generatePrivate(keySpec);

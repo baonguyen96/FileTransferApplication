@@ -1,5 +1,3 @@
-import sun.misc.BASE64Decoder;
-
 import javax.crypto.Cipher;
 import java.io.*;
 import java.net.Socket;
@@ -27,6 +25,7 @@ public class Client extends Peer {
     protected Client() {
         super(CLIENT);
         masterKey = AESf.getRandomString(16);
+        sequenceNumber = (int)(Math.random() * 1000);
     }
 
 
@@ -639,7 +638,7 @@ public class Client extends Peer {
      * @return key as PublicKey
      */
     private PublicKey getPublicKey1(String key) throws Exception {
-        byte[] keyBytes = (new BASE64Decoder()).decodeBuffer(key);
+        byte[] keyBytes = java.util.Base64.getDecoder().decode(key);
         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
         return keyFactory.generatePublic(keySpec);

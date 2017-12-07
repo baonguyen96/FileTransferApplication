@@ -7,12 +7,11 @@ import java.util.Date;
 import java.util.Scanner;
 
 public abstract class Peer {
-
+    private String module = null;
     protected Socket clientSocket = null;
     protected File filesDirectory = null;
     protected File src = null;
     protected String masterKey = null;
-    private String module = null;
     protected DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
     protected Date date = null;
 //	protected String masterKey2 = null;    // why is this?

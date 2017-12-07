@@ -3,7 +3,7 @@ import java.io.IOException;
 
 public class FakeClient extends Client implements Resynchronizable {
     private boolean isAbleToMessUpSynchronization = true;
-    private final boolean IS_ABLE_TO_MESS_UP_AUTHENTICATION = false;
+    private final boolean IS_ABLE_TO_MESS_UP_AUTHENTICATION = true;
 
 
     private FakeClient() {
