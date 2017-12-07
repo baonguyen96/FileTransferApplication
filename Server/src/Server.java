@@ -18,6 +18,7 @@ public class Server extends Peer {
     private boolean hasReceivedKeys = false;
     private String clientIpAddress = null;
     private String clientId = null;
+    private boolean detectsAttackOnAuthentication = false;
 
 
     protected Server() {
@@ -53,11 +54,6 @@ public class Server extends Peer {
             ServerSocket serverSocket = new ServerSocket(1111);
             serverSocket.setSoTimeout(60000);
 
-            /*
-             * stay connected until the client disconnects
-             * after the first successful connection, remember the IP address of the client
-             * so that in the subsequent reconnection, does not accept any host that has different address
-             */
             while (!stopCommunication) {
                 // end if detect intruder
                 if (isIntruderDetected()) {
@@ -68,8 +64,6 @@ public class Server extends Peer {
                 }
 
                 clientSocket = serverSocket.accept();
-
-                System.out.println("Go to authenticate()");
 
                 // make sure to talk to the same client over several sessions
                 if (!authenticate()) {
@@ -331,7 +325,7 @@ public class Server extends Peer {
 
         byte[] byteArray = byteArrayOutputStream.toByteArray();
         try {
-            byteArray = AESf.decrypt(byteArray, "1234567890123456");
+            byteArray = AES.decrypt(byteArray, "1234567890123456");
         }
         catch (Exception e) {
             throw new RuntimeException("Failed to create Pi Face Device", e);
@@ -381,6 +375,20 @@ public class Server extends Peer {
             // file transfer
             bufferedInputStream.read(byteArray, 0, byteArray.length);
             byteArray = Message.appendMessageSequence(++sequenceNumber, byteArray);
+
+            /*
+             * Has to do a println here to flush the buffer if something is still left
+             * from the SYN flood attack. It is not perfect to track the program
+             * when displaying this message here, but for limited time that we have, this works.
+             * We will try to clean up this later.
+             */
+            if(detectsAttackOnAuthentication) {
+                System.out.println(SMALL_DIV);
+                System.out.println("Warning: authentication problem. Reset connection.");
+                System.out.println(SMALL_DIV);
+                detectsAttackOnAuthentication = false;
+            }
+
             bufferedOutputStream.write(byteArray, 0, byteArray.length);
             bufferedOutputStream.flush();
             bufferedOutputStream.close();
@@ -415,6 +423,7 @@ public class Server extends Peer {
         // defense against SYN flood
         if(!receivedInput.hasNextLine()) {
             if(hasSentCertificate && !hasReceivedKeys) {
+                detectsAttackOnAuthentication = true;
                 hasSentCertificate = false;
                 sequenceNumber = 0;
             }

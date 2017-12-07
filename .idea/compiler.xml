@@ -14,7 +14,7 @@
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="Client" target="1.8" />
-      <module name="Commons" target="1.6" />
+      <module name="Commons" target="1.7" />
       <module name="FileTransferApplication" target="1.5" />
       <module name="Message" target="1.5" />
       <module name="Server" target="1.8" />

@@ -1,6 +1,6 @@
 Program coded using Java in IntelliJ and Eclipse.
 
-1. Configurations:
+1. CONFIGURATION:
 Before running the program, user has to make sure the client and server are on the same network. 
 If they are on different networks, the server machine has to setup port forwarding before it can 
 operate with a remote client. Also, if there is an error saying “Socket corrupted” when the Client 
@@ -17,7 +17,7 @@ The core modules structure by default - and must not be changed - is ([] denotes
         |----- FakeClient.java
 [] Commons
 |----- [] src
-        |----- AESf.java
+        |----- AES.java
         |----- InvalidMessageException.java
         |----- Message.java
         |----- Peer.java
@@ -36,33 +36,34 @@ The core modules structure by default - and must not be changed - is ([] denotes
 All the files that client uploads reside in Server/FilesDirectory folder.
 All the files that client downloads from the server reside in Client/FilesDirectory folder.
 
-2. Execution:
+2. EXECUTION:
 There are several ways to run the system.
 a. To run program via IDE:
     Open Server and Client projects on separated windows.
     Then individually click "Run" to run each code in parallel.
     (May have to configure classpath to successfully compile and run)
 b. To run program in the command line environment:
-    UNIX-like environment:
+    For MAC and Linux:
         Open terminal and navigate to Server/src folder
         Type: javac -cp ..\..\Commons\src Server.java
         Type: java -cp ..\..\Commons\src:. Server
         Open another terminal and navigate to Client/src folder
         Type: javac -cp ..\..\Commons\src Client.java
         Type: java -cp ..\..\Commons\src:. Client
-    Windows:
-        Open cmd (NOT PowerShell) and navigate to Server/src folder
+    For Windows:
+        Open CMD (NOT PowerShell) and navigate to Server/src folder
         Type: javac -cp ..\..\Commons\src Server.java
         Type: java -cp ..\..\Commons\src;. Server
-        Open another cmd and navigate to Client/src folder
+        Open another CMD window and navigate to Client/src folder
         Type: javac -cp ..\..\Commons\src Client.java
         Type: java -cp ..\..\Commons\src;. Client
 
 Preferences:
 https://stackoverflow.com/questions/18571223/how-to-convert-java-string-into-byte
 
-Todos:
-Rename AESf
-Rename Client.getPublicKey1
-Rename Peer.masterKey2
-Remove unnecessary files
+Todo                            Status
+Rename AES
+Remove AES.toHex
+Rename stringToPublicKey        done
+Rename Peer.masterKey2          done (removed)
+Remove unnecessary files        done (*.key)

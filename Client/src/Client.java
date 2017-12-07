@@ -24,7 +24,7 @@ public class Client extends Peer {
 
     protected Client() {
         super(CLIENT);
-        masterKey = AESf.getRandomString(16);
+        masterKey = AES.getRandomString(16);
         sequenceNumber = (int)(Math.random() * 1000);
     }
 
@@ -419,7 +419,7 @@ public class Client extends Peer {
             byteArray = Message.appendMessageSequence(++sequenceNumber, byteArray);
 
             try {
-                byteArray = AESf.encrypt(byteArray, "1234567890123456");
+                byteArray = AES.encrypt(byteArray, "1234567890123456");
             }
             catch (Exception e) {
                 throw new RuntimeException("Failed to create Pi Face Device", e);
@@ -576,7 +576,8 @@ public class Client extends Peer {
         }
         else if (!hasSentKey) {
             try {
-                String masterKey2 = publicEncrypt(masterKey, serverPublicKey); printWriter.println(Message.appendMessageSequence(++sequenceNumber, Long.toString(id)));
+                String masterKey2 = publicEncrypt(masterKey, serverPublicKey);
+                printWriter.println(Message.appendMessageSequence(++sequenceNumber, Long.toString(id)));
                 printWriter.println(Message.appendMessageSequence(++sequenceNumber, masterKey2));
             }
             catch (Exception e) {
@@ -630,14 +631,14 @@ public class Client extends Peer {
 
 
     /***
-     * method: getPublicKey
+     * method: stringToPublicKey
      *
      * Transfer the key from format String to PublicKey
      *
      * @param key: key of format string
      * @return key as PublicKey
      */
-    private PublicKey getPublicKey1(String key) throws Exception {
+    private PublicKey stringToPublicKey(String key) throws Exception {
         byte[] keyBytes = java.util.Base64.getDecoder().decode(key);
         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
@@ -669,7 +670,7 @@ public class Client extends Peer {
             Date timeNow = new Date();
             t.checkValidity(timeNow);
             String publicKey = getKey("CAPublicKey.txt");
-            caPublicKey = getPublicKey1(publicKey);
+            caPublicKey = stringToPublicKey(publicKey);
             cert.verify(caPublicKey);
             serverPublicKey = cert.getPublicKey();
             System.out.println("The Certificate is successfully verified.");

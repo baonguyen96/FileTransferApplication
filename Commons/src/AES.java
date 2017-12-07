@@ -1,7 +1,4 @@
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.ShortBufferException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -12,7 +9,7 @@ import java.util.logging.Logger;
 import static java.util.Arrays.copyOfRange;
 
 
-public class AESf implements Printable {
+public class AES implements Printable {
 
     /**
      * Encrypt message given
@@ -20,14 +17,8 @@ public class AESf implements Printable {
      * @param message - Input text to be encrypted
      * @param key     - Key for encryption
      * @return cipher text in a byte array
-     * @throws InvalidKeyException
-     * @throws InvalidAlgorithmParameterException
-     * @throws javax.crypto.NoSuchPaddingException
-     * @throws java.security.NoSuchAlgorithmException
      */
-    public static byte[] encrypt(byte[] message, String key)
-            throws InvalidKeyException, InvalidAlgorithmParameterException,
-                   NoSuchPaddingException, NoSuchAlgorithmException {
+    public static byte[] encrypt(byte[] message, String key) {
 
         byte[] iv = new byte[16];           //Initialization vector
         byte[] originalKey = new byte[16];
@@ -65,8 +56,17 @@ public class AESf implements Printable {
     }
 
 
-    public static byte[] decrypt(byte[] message, String key)
-            throws InvalidKeyException, InvalidAlgorithmParameterException {
+    /***
+     * method: decrypt
+     *
+     * decrypt the message with the provided key
+     *
+     * @param message
+     * @param key
+     *
+     * @return the decrypted message in byte[]
+     */
+    public static byte[] decrypt(byte[] message, String key) {
         key = key.trim();
         byte[] f_decrypted = null;
         byte[][] ct, decrypted = null;
@@ -106,13 +106,13 @@ public class AESf implements Printable {
     }
 
 
-    /**
-     * *
+    /***
      * Pad cipher text in blocks
      *
      * @param source
      * @param blockSize
-     * @return
+     *
+     * @return a padded source byte[]
      */
     private static byte[][] padBytes(byte[] source, int blockSize) {
         byte[][] ret = new byte[(int) Math.ceil(source.length / (double) blockSize)][blockSize];
@@ -128,7 +128,7 @@ public class AESf implements Printable {
                 padWithLen(ret[ret.length - 1], len, blockSize - len);
             }
             catch (ShortBufferException ex) {
-                Logger.getLogger(AESf.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(AES.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
@@ -140,11 +140,12 @@ public class AESf implements Printable {
     }
 
 
-    /**
+    /***
      * Flatten 2D arrays in a 1D array
      *
      * @param arr - the 2D input array
-     * @return
+     *
+     * @return 1D representation of arr
      */
     private static byte[] flatten(byte[][] arr) {
         List<Byte> list = new ArrayList<Byte>();
@@ -237,8 +238,7 @@ public class AESf implements Printable {
     }
 
 
-    /**
-     * *
+    /***
      * Use sha1 to process message
      *
      * @param message- the message to be processed
@@ -258,14 +258,23 @@ public class AESf implements Printable {
         return sha1Encode;
 
     }
-	
-	
+
+
+    /***
+     * method: getRandomString
+     *
+     * build a random string with custom length from the character set
+     *
+     * @param length: length of the random string to build
+     *
+     * @return a random string
+     */
 	public static String getRandomString(int length) {
-	    String KeyString = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-	    StringBuffer sb = new StringBuffer();
-	    int len = KeyString.length();
+	    final String KEY_STRING = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	    StringBuilder sb = new StringBuilder();
+	    int len = KEY_STRING.length();
 	    for (int i = 0; i < length; i++) {
-	       sb.append(KeyString.charAt((int) Math.round(Math.random() * (len - 1))));
+	       sb.append(KEY_STRING.charAt((int) Math.round(Math.random() * (len - 1))));
 	    }
 	    return sb.toString();
 	}
