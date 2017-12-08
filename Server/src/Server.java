@@ -55,6 +55,9 @@ public class Server extends Peer {
             serverSocket.setSoTimeout(60000);
 
             while (!stopCommunication) {
+
+//                printKeys();
+
                 // end if detect intruder
                 if (isIntruderDetected()) {
                     System.out.println(SMALL_DIV);
@@ -421,11 +424,12 @@ public class Server extends Peer {
         Scanner receivedInput = new Scanner(new InputStreamReader(inputStream));
         String clientMessage = null;
 
-        // defense against SYN flood
+        // DDoS -> reset everything + set flag to detect attack
         if(!receivedInput.hasNextLine()) {
             if(hasSentCertificate && !hasReceivedKeys) {
                 detectsAttackOnAuthentication = true;
                 hasSentCertificate = false;
+                masterKey = encryptionKey = signatureKey = null;
                 sequenceNumber = 0;
             }
             return AUTHENTICATE_FAILURE;
@@ -469,6 +473,8 @@ public class Server extends Peer {
             try {
                 PrivateKey serverPrivateKey = getPrivateKey(PRIVATE_KEY);
                 masterKey = privateDecrypt(clientMessage.split(DELIMITER)[1], serverPrivateKey);
+                encryptionKey = AES.modifyKey(masterKey, 1);
+                signatureKey = AES.modifyKey(masterKey, 2);
             }
             catch (Exception e) {
                 throw new RuntimeException("Failed to decrypt the key", e);
@@ -484,7 +490,10 @@ public class Server extends Peer {
         }
         // already send certificate and receive keys
         else {
-            // encrypted messages
+            // update keys
+            encryptionKey = AES.modifyKey(encryptionKey, 2);
+            signatureKey = AES.modifyKey(signatureKey, 2);
+
             if (!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
                 handleInvalidMessages();
                 return AUTHENTICATE_FAILURE;

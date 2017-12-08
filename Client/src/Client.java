@@ -55,6 +55,8 @@ public class Client extends Peer {
 
             while (!stopCommunication) {
 
+//                printKeys();
+
                 // end if detect intruder
                 if (isIntruderDetected()) {
                     System.out.println(SMALL_DIV);
@@ -579,9 +581,12 @@ public class Client extends Peer {
                 String masterKey2 = publicEncrypt(masterKey, serverPublicKey);
                 printWriter.println(Message.appendMessageSequence(++sequenceNumber, Long.toString(id)));
                 printWriter.println(Message.appendMessageSequence(++sequenceNumber, masterKey2));
+
+                encryptionKey = AES.modifyKey(masterKey, 1);
+                signatureKey = AES.modifyKey(masterKey, 2);
             }
             catch (Exception e) {
-                throw new RuntimeException("Failed to decrypt the key", e);
+                throw new RuntimeException("Failed to encrypt the key", e);
             }
 
             // confirmation
@@ -604,6 +609,10 @@ public class Client extends Peer {
         }
         // has received certificate and has sent key
         else {
+            // update keys
+            encryptionKey = AES.modifyKey(encryptionKey, 2);
+            signatureKey = AES.modifyKey(signatureKey, 2);
+
             printWriter.println(Message.appendMessageSequence(++sequenceNumber, Long.toString(id)));
             printWriter.flush();
 

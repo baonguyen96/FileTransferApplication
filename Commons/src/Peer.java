@@ -12,9 +12,10 @@ public abstract class Peer {
     protected File filesDirectory = null;
     protected File src = null;
     protected String masterKey = null;
+    protected String encryptionKey = null;
+    protected String signatureKey = null;
     protected DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
     protected Date date = null;
-//	protected String masterKey2 = null;    // why is this?
     protected int sequenceNumber = 0;
     protected int totalInvalidMessagesReceived = 0;
     protected static final int MAX_INVALID_MESSAGES_ALLOWED = 5;
@@ -177,6 +178,15 @@ public abstract class Peer {
             }
         }
         System.out.println();
+    }
+
+
+    protected void printKeys() {
+        System.out.println("\n<!--");
+        System.out.println("   MasterKey : " + masterKey);
+        System.out.println("   Encryption: " + encryptionKey);
+        System.out.println("   Signature : " + signatureKey);
+        System.out.println("-->");
     }
 
 }
