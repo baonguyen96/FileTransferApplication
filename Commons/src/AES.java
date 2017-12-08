@@ -11,6 +11,9 @@ import static java.util.Arrays.copyOfRange;
 
 public class AES implements Printable {
 
+    // {a-z} + {A-Z} + {0-9}
+    private static final String CHARSET = "2xJIY84pWaZVt9ez0H3ncwEuGOhQP7CivAsdRDqBrlUgFjo6k1NM5XbfSLKyTm";
+
     /**
      * Encrypt message given
      *
@@ -19,18 +22,15 @@ public class AES implements Printable {
      * @return cipher text in a byte array
      */
     public static byte[] encrypt(byte[] message, String key) {
-
-        byte[] iv = new byte[16];           //Initialization vector
-        byte[] originalKey = new byte[16];
+        byte[] iv = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6};
+        byte[] originalKey = key.getBytes();
         byte[] f_encrypted = null;
-        byte[][] pt, encrypted = null;      //Store plain text in block of 16 bytes
+        byte[][] pt = null, encrypted = null;   //Store plain text in block of 16 bytes
         byte[] first = new byte[32];
         byte[] second = new byte[36];
-        originalKey = key.getBytes();
-        pt = padBytes(message, 20); //Store plain text in block of 20 bytes
-        encrypted = new byte[pt.length][20];
 
-        iv = new byte[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6};
+        pt = padBytes(message, 20);     //Store plain text in block of 20 bytes
+        encrypted = new byte[pt.length][20];
 
         System.arraycopy(originalKey, 0, first, 0, originalKey.length);
         System.arraycopy(iv, 0, first, originalKey.length, iv.length);
@@ -148,7 +148,7 @@ public class AES implements Printable {
      * @return 1D representation of arr
      */
     private static byte[] flatten(byte[][] arr) {
-        List<Byte> list = new ArrayList<Byte>();
+        List<Byte> list = new ArrayList<>();
         for (byte[] arr1 : arr) {
             for (byte anArr1 : arr1) {
                 list.add(anArr1);
@@ -166,16 +166,16 @@ public class AES implements Printable {
     /**
      * Xor function for two arrays of bytes
      *
-     * @param array_1
-     * @param array_2
-     * @return
+     * @param array1: first array to XOR
+     * @param array2: second array to XOR
+     * @return XOR of the 2 arrays
      */
-    private static byte[] xor(byte[] array_1, byte[] array_2) {
-        byte[] result = new byte[array_1.length];
+    private static byte[] xor(byte[] array1, byte[] array2) {
+        byte[] result = new byte[array1.length];
 
         int i = 0;
-        for (byte b : array_1) {
-            result[i] = (byte) (b ^ array_2[i++]);
+        for (byte b : array1) {
+            result[i] = (byte) (b ^ array2[i++]);
         }
         return result;
     }
@@ -210,38 +210,10 @@ public class AES implements Printable {
     }
 
 
-    /**
-     * *
-     * Encode to hex a byte array
-     *
-     * @param input- the byte array to be parsed
-     * @return the resulting String
-     */
-    private static String toHex(byte[] input) {
-        if (input == null || input.length == 0) {
-            return "";
-        }
-
-        int inputLength = input.length;
-        StringBuilder output = new StringBuilder(inputLength * 2);
-
-        for (byte anInput : input) {
-            int next = anInput & 0xff;
-            if (next < 0x10) {
-                output.append("0");
-            }
-
-            output.append(Integer.toHexString(next));
-        }
-
-        return output.toString();
-    }
-
-
     /***
      * Use sha1 to process message
      *
-     * @param message- the message to be processed
+     * @param message: the message to be processed
      * @return the resulting message
      */
     private static byte[] sha1(String message) {
@@ -265,19 +237,40 @@ public class AES implements Printable {
      *
      * build a random string with custom length from the character set
      *
-     * @param length: length of the random string to build
-     *
+     * @param length: length of the random string to build     *
      * @return a random string
      */
 	public static String getRandomString(int length) {
-	    final String KEY_STRING = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 	    StringBuilder sb = new StringBuilder();
-	    int len = KEY_STRING.length();
+	    int len = CHARSET.length();
 	    for (int i = 0; i < length; i++) {
-	       sb.append(KEY_STRING.charAt((int) Math.round(Math.random() * (len - 1))));
+	       sb.append(CHARSET.charAt((int) Math.round(Math.random() * (len - 1))));
 	    }
 	    return sb.toString();
 	}
 
 
+    /***
+     * method: modifyKey
+     *
+     * add offset to the original key to get the new key by
+     * moving each character in the original string by
+     * "offset" value and wrap around if needed
+     *
+     * @param original: original key
+     * @param offset: how far off the original key is the new key
+     * @return the new key
+     */
+    public static String modifyKey(String original, int offset) {
+        StringBuilder modified = new StringBuilder();
+        char c = 0;
+
+        for(int i = 0; i < original.length(); i++) {
+            c = original.charAt(i);
+            c = CHARSET.charAt((CHARSET.indexOf(c) + offset) % CHARSET.length());
+            modified.append(c);
+        }
+
+        return modified.toString();
+    }
 }

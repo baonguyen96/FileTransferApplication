@@ -408,6 +408,7 @@ public class Server extends Peer {
      * client authenticates server with keys
      * prevent multiple clients to connect simultaneously
      *
+     * @return true if authenticate success, false if not
      * @throws IOException
      */
     private boolean authenticate() throws IOException {
@@ -505,6 +506,9 @@ public class Server extends Peer {
      * method: getPrivateKey
      *
      * Get Server's private key
+     *
+     * @param key: private key as String
+     * @return private key object
      */
     private static PrivateKey getPrivateKey(String key) throws Exception {
         byte[] keyBytes = java.util.Base64.getDecoder().decode(key);
@@ -518,6 +522,10 @@ public class Server extends Peer {
      * method: privateDecrypt
      *
      * Use Server's private key to decrypt the master key.
+     *
+     * @param cipherText: encrypted message
+     * @param privateKey: server's private key
+     * @return the original text
      */
     private static String privateDecrypt(String cipherText, PrivateKey privateKey) throws Exception {
         String[] strArr = cipherText.split(" ");

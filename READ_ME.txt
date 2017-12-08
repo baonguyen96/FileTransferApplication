@@ -57,13 +57,3 @@ b. To run program in the command line environment:
         Open another CMD window and navigate to Client/src folder
         Type: javac -cp ..\..\Commons\src Client.java
         Type: java -cp ..\..\Commons\src;. Client
-
-Preferences:
-https://stackoverflow.com/questions/18571223/how-to-convert-java-string-into-byte
-
-Todo                            Status
-Rename AES
-Remove AES.toHex
-Rename stringToPublicKey        done
-Rename Peer.masterKey2          done (removed)
-Remove unnecessary files        done (*.key)
