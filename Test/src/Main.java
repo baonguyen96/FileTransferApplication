@@ -4,10 +4,14 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class Main {
     public static void main(String[] args) {
-        String org = AES.getRandomString(16);
-        System.out.println(org);
-        System.out.println(AES.modifyKey(org, 1));
-        System.out.println(AES.modifyKey(org, 2));
+        // can try with 44darxoD8UZqXtZ4 to see the poly-alphabetic cipher
+        String key = AES.getRandomString(16);
+        System.out.println(key);
+        System.out.println(AES.modifyKey(key, 1));
+        System.out.println(AES.modifyKey(key, 2));
+        System.out.println(AES.modifyKey(key, 1));
+        System.out.println(AES.modifyKey(key, 2));
+        System.out.printf("Length: %d byte(s)\n", key.length());
     }
 
 
@@ -26,5 +30,17 @@ public class Main {
             System.out.print(c);
         }
         System.out.println();
+    }
+
+    private static void printCharSet() {
+        for(char c = 'a'; c <= 'z'; c++) {
+            System.out.print(c);
+        }
+        for(char c = '0'; c <= '9'; c++) {
+            System.out.print(c);
+        }
+        for(char c = 'A'; c <= 'Z'; c++) {
+            System.out.print(c);
+        }
     }
 }

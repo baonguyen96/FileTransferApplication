@@ -11,7 +11,7 @@ import static java.util.Arrays.copyOfRange;
 
 public class AES implements Printable {
 
-    // {a-z} + {A-Z} + {0-9}
+    // customizable combination of: {a-z} + {A-Z} + {0-9}
     private static final String CHARSET = "2xJIY84pWaZVt9ez0H3ncwEuGOhQP7CivAsdRDqBrlUgFjo6k1NM5XbfSLKyTm";
 
     /**
@@ -46,7 +46,7 @@ public class AES implements Printable {
         }
         byte[] temp = flatten(encrypted);
         f_encrypted = new byte[message.length];
-        System.arraycopy(temp, 0, f_encrypted, 0, f_encrypted.length);//Truncate to original length of plain text
+        System.arraycopy(temp, 0, f_encrypted, 0, f_encrypted.length); //Truncate to original length of plain text
 
         if (IS_PRINTABLE) {
             System.out.println("Cipher length: " + f_encrypted.length + " bytes");
@@ -61,8 +61,8 @@ public class AES implements Printable {
      *
      * decrypt the message with the provided key
      *
-     * @param message
-     * @param key
+     * @param message: encrypted message
+     * @param key: key to decrypt
      *
      * @return the decrypted message in byte[]
      */
@@ -173,10 +173,15 @@ public class AES implements Printable {
     private static byte[] xor(byte[] array1, byte[] array2) {
         byte[] result = new byte[array1.length];
 
-        int i = 0;
-        for (byte b : array1) {
-            result[i] = (byte) (b ^ array2[i++]);
+        for(int i = 0; i < array1.length; i++) {
+            result[i] = (byte)(array1[i] ^ array2[i]);
         }
+
+//        int i = 0;
+//        for (byte b : array1) {
+//            result[i] = (byte) (b ^ array2[i++]);
+//        }
+
         return result;
     }
 
@@ -237,7 +242,7 @@ public class AES implements Printable {
      *
      * build a random string with custom length from the character set
      *
-     * @param length: length of the random string to build     *
+     * @param length: length of the random string to build
      * @return a random string
      */
 	public static String getRandomString(int length) {
@@ -253,9 +258,12 @@ public class AES implements Printable {
     /***
      * method: modifyKey
      *
-     * add offset to the original key to get the new key by
-     * moving each character in the original string by
-     * "offset" value and wrap around if needed
+     * implement a poly-alphabetic cipher to reduce the possibility of being hacked
+     * add offset to the original key to get the new key
+     * value of new key depends on:
+     *      the location of each character in the original key +
+     *      the value of the character in the CHARSET +
+     *      the offset
      *
      * @param original: original key
      * @param offset: how far off the original key is the new key
@@ -264,10 +272,12 @@ public class AES implements Printable {
     public static String modifyKey(String original, int offset) {
         StringBuilder modified = new StringBuilder();
         char c = 0;
+        int difference = 0;
 
         for(int i = 0; i < original.length(); i++) {
             c = original.charAt(i);
-            c = CHARSET.charAt((CHARSET.indexOf(c) + offset) % CHARSET.length());
+            difference = (int) Math.pow(i + CHARSET.length() / 5, offset + 1);
+            c = CHARSET.charAt((CHARSET.indexOf(c) + difference) % CHARSET.length());
             modified.append(c);
         }
 

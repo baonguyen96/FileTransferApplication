@@ -1,4 +1,5 @@
 /target/
-Client/Backup/
-Server/Backup/
+Client/backup/
+Server/backup/
+Commons/backup/
 Test/
