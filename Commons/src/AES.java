@@ -13,10 +13,11 @@ import static java.util.Arrays.copyOfRange;
 
 public class AES implements Printable {
 
-    public static final Charset CHAR_SET = StandardCharsets.ISO_8859_1;
-
     // customizable combination of: {a-z} + {A-Z} + {0-9}
     private static final String LANGUAGE = "2xJIY84pWaZVt9ez0H3ncwEuGOhQP7CivAsdRDqBrlUgFjo6k1NM5XbfSLKyTm";
+    private static final byte[] IV = new byte[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6};
+    public static final Charset CHAR_SET = StandardCharsets.ISO_8859_1;
+
 
     /**
      * Encrypt message given
@@ -26,7 +27,11 @@ public class AES implements Printable {
      * @return cipher text in a byte array
      */
     public static byte[] encrypt(byte[] message, String key) {
-        byte[] iv = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6};
+        System.out.printf("key = %s\n", key);
+        System.out.print("Before encrypt, message = ");
+        printByteArray(message);
+        System.out.println("Before encrypt, message has length = " + message.length);
+
         byte[] originalKey = key.getBytes();
         byte[] f_encrypted = null;
         byte[][] pt = null, encrypted = null;   //Store plain text in block of 16 bytes
@@ -37,7 +42,7 @@ public class AES implements Printable {
         encrypted = new byte[pt.length][20];
 
         System.arraycopy(originalKey, 0, first, 0, originalKey.length);
-        System.arraycopy(iv, 0, first, originalKey.length, iv.length);
+        System.arraycopy(IV, 0, first, originalKey.length, IV.length);
         String stringForSha1 = new String(first);
         encrypted[0] = xor(pt[0], sha1(stringForSha1));
 
@@ -46,8 +51,8 @@ public class AES implements Printable {
             System.arraycopy(encrypted[i - 1], 0, second, originalKey.length, encrypted[i - 1].length);
             String stringForSha12 = new String(second);
             encrypted[i] = xor(pt[i], sha1(stringForSha12));
-
         }
+
         byte[] temp = flatten(encrypted);
         f_encrypted = new byte[message.length];
         System.arraycopy(temp, 0, f_encrypted, 0, f_encrypted.length); //Truncate to original length of plain text
@@ -56,7 +61,52 @@ public class AES implements Printable {
 //            System.out.println("Cipher length: " + f_encrypted.length + " bytes");
 //        }
 
+        System.out.println("enc");
+        printByteArray(f_encrypted);
+//        System.out.println("AES encrypt: string contains newline: " + containsNewLine(f_encrypted));
+
+        filter(f_encrypted);
+
         return f_encrypted;
+    }
+
+
+    private static boolean containsNewLine(byte[] bytes) {
+        for(Byte b : bytes) {
+            if(b == 10) {
+                return true;
+            }
+            else if(b == 13) {
+                return true;
+            }
+            else if(b == -123) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    private static void printByteArray(byte[] bytes) {
+        for(Byte b : bytes) {
+            System.out.printf("%s ", b);
+        }
+        System.out.printf("\nlength = %d\n", bytes.length);
+    }
+
+
+    /***
+     * method: encrypt
+     *
+     * encrypt a string
+     *
+     * @param message: a string
+     * @param key: encryption key
+     * @return encrypted message as string
+     */
+    public static String encrypt(String message, String key) {
+        byte[] e = encrypt(message.getBytes(CHAR_SET), key);
+        return new String(e, 0, e.length, CHAR_SET);
     }
 
 
@@ -71,7 +121,15 @@ public class AES implements Printable {
      * @return the decrypted message in byte[]
      */
     public static byte[] decrypt(byte[] message, String key) {
-        key = key.trim();
+
+        filter(message);
+
+        System.out.printf("key = %s\n", key);
+        System.out.print("Before decrypt, message = ");
+        printByteArray(message);
+        System.out.println("Before decrypt, message has length " + message.length);
+
+//        key = key.trim();
         byte[] f_decrypted = null;
         byte[][] ct, decrypted = null;
         byte[] first = new byte[32];
@@ -79,12 +137,11 @@ public class AES implements Printable {
         byte[] decodedKey = new byte[16];
         decodedKey = key.getBytes();
 
-        ct = padBytes(message, 20); //Store cipher text in block of 20 bytes
+        ct = padBytes(message, 20);     //Store cipher text in block of 20 bytes
         decrypted = new byte[ct.length][20];
-        byte[] iv = new byte[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6};
 
         System.arraycopy(decodedKey, 0, first, 0, decodedKey.length);
-        System.arraycopy(iv, 0, first, decodedKey.length, iv.length);
+        System.arraycopy(IV, 0, first, decodedKey.length, IV.length);
         String stringForSha1 = new String(first);
         decrypted[0] = xor(ct[0], sha1(stringForSha1));
 
@@ -105,8 +162,26 @@ public class AES implements Printable {
 //            System.out.println("Message length: " + f_decrypted.length + " bytes");
 //        }
 
+        System.out.println("dec");
+        printByteArray(f_decrypted);
+
         return f_decrypted;
 
+    }
+
+
+    /***
+     * method: decrypt
+     *
+     * decrypt a string
+     *
+     * @param message: a string
+     * @param key: decryption key
+     * @return decrypted message as string
+     */
+    public static String decrypt(String message, String key) {
+        byte[] d = decrypt(message.getBytes(CHAR_SET), key);
+        return new String(d, 0, d.length, CHAR_SET);
     }
 
 
@@ -167,6 +242,44 @@ public class AES implements Printable {
     }
 
 
+    private static void filter(byte[] bytes) {
+        byte b = 0;
+
+        for(int i = 0; i < bytes.length; i++) {
+            b = bytes[i];
+
+            // cannot have 10, 13, -123
+            if(b == 10 || b == 13 || b == -123) {
+                if(b == 10) {
+                    b = (byte)130;
+                }
+                else if(b == 13) {
+                    b = (byte)131;
+                }
+                else {
+                    b = (byte)132;
+                }
+            }
+            else if(b == (byte)130 || b == (byte)131 || b == (byte)132) {
+                if(b == (byte)130) {
+                    b = 10;
+                }
+                else if(b == (byte)131) {
+                    b = 13;
+                }
+                else {
+                    b = -123;
+                }
+            }
+            else {
+                // normal
+            }
+
+            bytes[i] = b;
+        }
+    }
+
+
     /**
      * Xor function for two arrays of bytes
      *
@@ -180,11 +293,6 @@ public class AES implements Printable {
         for(int i = 0; i < array1.length; i++) {
             result[i] = (byte)(array1[i] ^ array2[i]);
         }
-
-//        int i = 0;
-//        for (byte b : array1) {
-//            result[i] = (byte) (b ^ array2[i++]);
-//        }
 
         return result;
     }

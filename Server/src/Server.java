@@ -51,12 +51,9 @@ public class Server extends Peer {
             System.out.println("Waiting for connection...");
 
             ServerSocket serverSocket = new ServerSocket(1111);
-            serverSocket.setSoTimeout(60000);
+            serverSocket.setSoTimeout(120000);
 
             while (!stopCommunication) {
-
-                printKeys();
-
                 // end if detect intruder
                 if (isIntruderDetected()) {
                     System.out.println(SMALL_DIV);
@@ -152,8 +149,9 @@ public class Server extends Peer {
         String[] commandTokens = null;
         final boolean STOP_CONNECTION_AFTER_THIS = true;
         final boolean CONTINUE_CONNECTION_AFTER_THIS = false;
-        InputStream inputStream = clientSocket.getInputStream();
-        Scanner receivedInput = new Scanner(new InputStreamReader(inputStream));
+//        InputStream inputStream = clientSocket.getInputStream();
+        InputStreamReader inputStreamReader = new InputStreamReader(clientSocket.getInputStream(), AES.CHAR_SET);
+        Scanner receivedInput = new Scanner(inputStreamReader);
 
         // client is offline
         if (!receivedInput.hasNextLine()) {
@@ -162,6 +160,7 @@ public class Server extends Peer {
         }
 
         receivedCommand = receivedInput.nextLine();
+        receivedCommand = AES.decrypt(receivedCommand, encryptionKey);
 
         // errors
         if (!Message.validateMessageSequenceNumber(++sequenceNumber, receivedCommand)) {
@@ -211,8 +210,9 @@ public class Server extends Peer {
     protected void list() throws IOException {
         File[] files = filesDirectory.listFiles();
         StringBuilder messageToSend = new StringBuilder();
-        OutputStream outputStream = clientSocket.getOutputStream();
-        PrintWriter printWriter = new PrintWriter(outputStream, true);
+//        OutputStream outputStream = clientSocket.getOutputStream();
+        OutputStreamWriter outputStreamWriter = new OutputStreamWriter(clientSocket.getOutputStream(), AES.CHAR_SET);
+        PrintWriter printWriter = new PrintWriter(outputStreamWriter);
 
         if (files == null) {
             messageToSend.append("Error: Cannot find files filesDirectory.");
@@ -238,7 +238,11 @@ public class Server extends Peer {
 
         // send to client
         System.out.println();
-        printWriter.println(Message.appendMessageSequence(++sequenceNumber, messageToSend.toString()));
+
+        String message = Message.appendMessageSequence(++sequenceNumber, messageToSend.toString());
+        message = AES.encrypt(message, encryptionKey);
+
+        printWriter.print(message);
         printWriter.flush();
         printWriter.close();
     }
@@ -481,6 +485,7 @@ public class Server extends Peer {
 
             // send confirmation message
             printWriter.println(Message.appendMessageSequence(++sequenceNumber, "ok"));
+            printWriter.flush();
             authenticateSuccess = AUTHENTICATE_SUCCESS;
             hasReceivedKeys = true;
         }

@@ -5,6 +5,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class Main {
     public static void main(String[] args) {
+//        testString();
         testString();
     }
 
@@ -19,24 +20,31 @@ public class Main {
         String decr = new String(d, StandardCharsets.ISO_8859_1);
 
         System.out.println("s     : " + s);
+        System.out.println(s.length());
         System.out.println();
 
         print(sBytes, "sBytes");
+        System.out.println(sBytes.length);
         System.out.println();
 
         System.out.println("newStr : " + newStr);
+        System.out.println(newStr.length());
         System.out.println();
 
         print(e, "e");
+        System.out.println(e.length);
         System.out.println();
 
         System.out.println("encr  :" + encr);
+        System.out.println(encr.length());
         System.out.println();
 
         print(d, "d");
+        System.out.println(d.length);
         System.out.println();
 
         System.out.println("decr  : " + decr);
+        System.out.println(decr.length());
         System.out.println();
     }
 
@@ -78,5 +86,7 @@ public class Main {
         return new String(ar);
 
     }
+
+
 
 }
