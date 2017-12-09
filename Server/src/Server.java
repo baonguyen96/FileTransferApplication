@@ -16,7 +16,6 @@ public class Server extends Peer {
     private boolean isBusy = false;
     private boolean hasSentCertificate = false;
     private boolean hasReceivedKeys = false;
-    private String clientIpAddress = null;
     private String clientId = null;
     private boolean detectsAttackOnAuthentication = false;
 
@@ -56,7 +55,7 @@ public class Server extends Peer {
 
             while (!stopCommunication) {
 
-//                printKeys();
+                printKeys();
 
                 // end if detect intruder
                 if (isIntruderDetected()) {
@@ -76,7 +75,6 @@ public class Server extends Peer {
                 else if (hasSentCertificate && !hasReceivedKeys) {
                     continue;
                 }
-
 
                 isBusy = notifyConnectionSuccess(isBusy);
                 stopCommunication = communicate();
@@ -279,6 +277,7 @@ public class Server extends Peer {
             // file transfer
             bufferedInputStream.read(byteArray, 0, byteArray.length);
             byteArray = Message.appendMessageSequence(++sequenceNumber, byteArray);
+            byteArray = AES.encrypt(byteArray, encryptionKey);
             bufferedOutputStream.write(byteArray, 0, byteArray.length);
             bufferedOutputStream.flush();
             bufferedOutputStream.close();
@@ -328,7 +327,7 @@ public class Server extends Peer {
 
         byte[] byteArray = byteArrayOutputStream.toByteArray();
         try {
-            byteArray = AES.decrypt(byteArray, "1234567890123456");
+            byteArray = AES.decrypt(byteArray, encryptionKey);
         }
         catch (Exception e) {
             throw new RuntimeException("Failed to create Pi Face Device", e);
@@ -430,7 +429,7 @@ public class Server extends Peer {
                 detectsAttackOnAuthentication = true;
                 hasSentCertificate = false;
                 masterKey = encryptionKey = signatureKey = null;
-                sequenceNumber = 0;
+//                sequenceNumber = 0;
             }
             return AUTHENTICATE_FAILURE;
         }
@@ -471,7 +470,7 @@ public class Server extends Peer {
             }
 
             try {
-                PrivateKey serverPrivateKey = getPrivateKey(PRIVATE_KEY);
+                PrivateKey serverPrivateKey = stringToPrivateKey(PRIVATE_KEY);
                 masterKey = privateDecrypt(clientMessage.split(DELIMITER)[1], serverPrivateKey);
                 encryptionKey = AES.modifyKey(masterKey, 1);
                 signatureKey = AES.modifyKey(masterKey, 2);
@@ -479,9 +478,6 @@ public class Server extends Peer {
             catch (Exception e) {
                 throw new RuntimeException("Failed to decrypt the key", e);
             }
-
-            // ip
-            clientIpAddress = clientSocket.getInetAddress().getHostAddress();
 
             // send confirmation message
             printWriter.println(Message.appendMessageSequence(++sequenceNumber, "ok"));
@@ -500,8 +496,7 @@ public class Server extends Peer {
             }
 
             String id = clientMessage.split(DELIMITER)[1];
-            authenticateSuccess = id.equals(clientId) &&
-                    clientSocket.getInetAddress().getHostAddress().equals(clientIpAddress);
+            authenticateSuccess = id.equals(clientId);
             String confirmMessage = authenticateSuccess ? "ok" : "busy";
             printWriter.println(Message.appendMessageSequence(++sequenceNumber, confirmMessage));
             printWriter.flush();
@@ -512,14 +507,14 @@ public class Server extends Peer {
 
 
     /***
-     * method: getPrivateKey
+     * method: stringToPrivateKey
      *
      * Get Server's private key
      *
      * @param key: private key as String
      * @return private key object
      */
-    private static PrivateKey getPrivateKey(String key) throws Exception {
+    private static PrivateKey stringToPrivateKey(String key) throws Exception {
         byte[] keyBytes = java.util.Base64.getDecoder().decode(key);
         PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");

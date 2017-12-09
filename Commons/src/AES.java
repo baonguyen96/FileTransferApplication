@@ -1,4 +1,6 @@
 import javax.crypto.ShortBufferException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -11,8 +13,10 @@ import static java.util.Arrays.copyOfRange;
 
 public class AES implements Printable {
 
+    public static final Charset CHAR_SET = StandardCharsets.ISO_8859_1;
+
     // customizable combination of: {a-z} + {A-Z} + {0-9}
-    private static final String CHARSET = "2xJIY84pWaZVt9ez0H3ncwEuGOhQP7CivAsdRDqBrlUgFjo6k1NM5XbfSLKyTm";
+    private static final String LANGUAGE = "2xJIY84pWaZVt9ez0H3ncwEuGOhQP7CivAsdRDqBrlUgFjo6k1NM5XbfSLKyTm";
 
     /**
      * Encrypt message given
@@ -48,9 +52,9 @@ public class AES implements Printable {
         f_encrypted = new byte[message.length];
         System.arraycopy(temp, 0, f_encrypted, 0, f_encrypted.length); //Truncate to original length of plain text
 
-        if (IS_PRINTABLE) {
-            System.out.println("Cipher length: " + f_encrypted.length + " bytes");
-        }
+//        if (IS_PRINTABLE) {
+//            System.out.println("Cipher length: " + f_encrypted.length + " bytes");
+//        }
 
         return f_encrypted;
     }
@@ -97,9 +101,9 @@ public class AES implements Printable {
         f_decrypted = new byte[message.length];
         System.arraycopy(temp, 0, f_decrypted, 0, message.length);
 
-        if (IS_PRINTABLE) {
-            System.out.println("Message length: " + f_decrypted.length + " bytes");
-        }
+//        if (IS_PRINTABLE) {
+//            System.out.println("Message length: " + f_decrypted.length + " bytes");
+//        }
 
         return f_decrypted;
 
@@ -132,9 +136,9 @@ public class AES implements Printable {
             }
         }
 
-        if (IS_PRINTABLE) {
-            System.out.println("Number of cipher blocks: " + ret.length);
-        }
+//        if (IS_PRINTABLE) {
+//            System.out.println("Number of cipher blocks: " + ret.length);
+//        }
 
         return ret;
     }
@@ -247,9 +251,9 @@ public class AES implements Printable {
      */
 	public static String getRandomString(int length) {
 	    StringBuilder sb = new StringBuilder();
-	    int len = CHARSET.length();
+	    int len = LANGUAGE.length();
 	    for (int i = 0; i < length; i++) {
-	       sb.append(CHARSET.charAt((int) Math.round(Math.random() * (len - 1))));
+	       sb.append(LANGUAGE.charAt((int) Math.round(Math.random() * (len - 1))));
 	    }
 	    return sb.toString();
 	}
@@ -262,7 +266,7 @@ public class AES implements Printable {
      * add offset to the original key to get the new key
      * value of new key depends on:
      *      the location of each character in the original key +
-     *      the value of the character in the CHARSET +
+     *      the value of the character in the LANGUAGE +
      *      the offset
      *
      * @param original: original key
@@ -276,11 +280,12 @@ public class AES implements Printable {
 
         for(int i = 0; i < original.length(); i++) {
             c = original.charAt(i);
-            difference = (int) Math.pow(i + CHARSET.length() / 5, offset + 1);
-            c = CHARSET.charAt((CHARSET.indexOf(c) + difference) % CHARSET.length());
+            difference = (int) Math.pow(i + LANGUAGE.length() / 5, offset + 1);
+            c = LANGUAGE.charAt((LANGUAGE.indexOf(c) + difference) % LANGUAGE.length());
             modified.append(c);
         }
 
         return modified.toString();
     }
+
 }

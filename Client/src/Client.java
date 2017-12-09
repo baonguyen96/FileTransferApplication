@@ -3,6 +3,7 @@ import java.io.*;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
@@ -55,7 +56,7 @@ public class Client extends Peer {
 
             while (!stopCommunication) {
 
-//                printKeys();
+                printKeys();
 
                 // end if detect intruder
                 if (isIntruderDetected()) {
@@ -369,6 +370,9 @@ public class Client extends Peer {
             }
             byte[] byteStream = byteArrayOutputStream.toByteArray();
 
+            // decrypt
+            byteStream = AES.decrypt(byteStream, encryptionKey);
+
             // validate sequence number
             if (!Message.validateMessageSequenceNumber(++sequenceNumber, byteStream)) {
                 handleInvalidMessages();
@@ -421,7 +425,7 @@ public class Client extends Peer {
             byteArray = Message.appendMessageSequence(++sequenceNumber, byteArray);
 
             try {
-                byteArray = AES.encrypt(byteArray, "1234567890123456");
+                byteArray = AES.encrypt(byteArray, encryptionKey);
             }
             catch (Exception e) {
                 throw new RuntimeException("Failed to create Pi Face Device", e);
@@ -578,9 +582,9 @@ public class Client extends Peer {
         }
         else if (!hasSentKey) {
             try {
-                String masterKey2 = publicEncrypt(masterKey, serverPublicKey);
+                String encryptedMasterKey = publicEncrypt(masterKey, serverPublicKey);
                 printWriter.println(Message.appendMessageSequence(++sequenceNumber, Long.toString(id)));
-                printWriter.println(Message.appendMessageSequence(++sequenceNumber, masterKey2));
+                printWriter.println(Message.appendMessageSequence(++sequenceNumber, encryptedMasterKey));
 
                 encryptionKey = AES.modifyKey(masterKey, 1);
                 signatureKey = AES.modifyKey(masterKey, 2);

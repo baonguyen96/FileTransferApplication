@@ -1,10 +1,56 @@
+import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 
 public class Main {
     public static void main(String[] args) {
-        // can try with 44darxoD8UZqXtZ4 to see the poly-alphabetic cipher
+        testString();
+    }
+
+
+    public static void testString() {
+        String s = "1 | this is something else | hello";
+        byte[] sBytes = s.getBytes(StandardCharsets.ISO_8859_1);
+        String newStr = new String(sBytes, StandardCharsets.ISO_8859_1);
+        byte[] e = AES.encrypt(newStr.getBytes(StandardCharsets.ISO_8859_1), "aaaaaaaaaaaaaaaa");
+        String encr = new String(e, StandardCharsets.ISO_8859_1);
+        byte[] d = AES.decrypt(encr.getBytes(StandardCharsets.ISO_8859_1), "aaaaaaaaaaaaaaaa");
+        String decr = new String(d, StandardCharsets.ISO_8859_1);
+
+        System.out.println("s     : " + s);
+        System.out.println();
+
+        print(sBytes, "sBytes");
+        System.out.println();
+
+        System.out.println("newStr : " + newStr);
+        System.out.println();
+
+        print(e, "e");
+        System.out.println();
+
+        System.out.println("encr  :" + encr);
+        System.out.println();
+
+        print(d, "d");
+        System.out.println();
+
+        System.out.println("decr  : " + decr);
+        System.out.println();
+    }
+
+
+    static void print(byte[] bytes, String name) {
+        System.out.printf("%-6s:", name);
+        for(byte b : bytes) {
+            System.out.printf(" %s(%c)", b, (char)b);
+        }
+        System.out.println();
+    }
+
+
+    public static void testAES() {
         String key = AES.getRandomString(16);
         System.out.println(key);
         System.out.println(AES.modifyKey(key, 1));
@@ -15,7 +61,10 @@ public class Main {
     }
 
 
-    private static void shuffleArray(char[] ar) {
+    private static String generateCharSet() {
+        final String LANGUAGE = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        char[] ar = LANGUAGE.toCharArray();
+
         // If running on Java 6 or older, use `new Random()` on RHS here
         Random rnd = ThreadLocalRandom.current();
         for (int i = ar.length - 1; i > 0; i--) {
@@ -26,21 +75,8 @@ public class Main {
             ar[i] = a;
         }
 
-        for(char c : ar) {
-            System.out.print(c);
-        }
-        System.out.println();
+        return new String(ar);
+
     }
 
-    private static void printCharSet() {
-        for(char c = 'a'; c <= 'z'; c++) {
-            System.out.print(c);
-        }
-        for(char c = '0'; c <= '9'; c++) {
-            System.out.print(c);
-        }
-        for(char c = 'A'; c <= 'Z'; c++) {
-            System.out.print(c);
-        }
-    }
 }
