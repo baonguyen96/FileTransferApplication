@@ -392,14 +392,10 @@ public class Server extends Peer {
             bufferedInputStream = new BufferedInputStream(fileInputStream);
 
             // confirm
-            String command = Message.appendMessageSequence(++sequenceNumber, "Sending certificate");
-            command = AES.encrypt(command);
-            printWriter.println(command);
+            printWriter.println("Sending certificate");
             printWriter.flush();
 
-            // send unencrypted certificate, how to change it?
             bufferedInputStream.read(byteArray, 0, byteArray.length);
-            byteArray = Message.appendMessageSequence(++sequenceNumber, byteArray);
 
             /*
              * Has to do a println here to flush the buffer if something is still left
@@ -419,9 +415,7 @@ public class Server extends Peer {
             bufferedOutputStream.close();
         }
         catch (FileNotFoundException e) {
-            String message = Message.appendMessageSequence(++sequenceNumber, "error");
-            message = AES.encrypt(message);
-            printWriter.println(message);
+            printWriter.println("error");
             printWriter.flush();
             printWriter.close();
         }
@@ -460,14 +454,12 @@ public class Server extends Peer {
         }
         else {
             clientMessage = receivedInput.nextLine();
-            clientMessage = AES.decrypt(clientMessage);
         }
 
         // first time connect -> certificate request + initial sequence number
         if (!hasSentCertificate) {
 
-            if (clientMessage.matches("\\d+ \\| Request certificate")) {
-                sequenceNumber = Integer.parseInt(clientMessage.split(DELIMITER)[0]);
+            if (clientMessage.equals("Request certificate")) {
                 sendCertificate();
                 hasSentCertificate = true;
                 return AUTHENTICATE_SUCCESS;
@@ -479,7 +471,31 @@ public class Server extends Peer {
         }
         // get keys
         else if (!hasReceivedKeys) {
+            PrivateKey serverPrivateKey = null;
+
+            // language
+            try {
+                serverPrivateKey = getPrivateKey(PRIVATE_KEY);
+                clientMessage = privateDecrypt(clientMessage, serverPrivateKey);
+            }
+            catch (Exception e) {
+                throw new RuntimeException("Failed to decrypt the key", e);
+            }
+
+            // sequence number
+            sequenceNumber = Integer.parseInt(clientMessage.split(DELIMITER)[0]);
+
+            // language
+            String language = clientMessage.split(DELIMITER)[1];
+            AES.setLanguage(language);
+
             // id
+            if(!receivedInput.hasNextLine()) {
+                return AUTHENTICATE_FAILURE;
+            }
+            clientMessage = receivedInput.nextLine();
+            clientMessage = AES.decrypt(clientMessage);
+
             if (!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
                 handleInvalidMessages();
                 sequenceNumber = 0;
@@ -488,23 +504,22 @@ public class Server extends Peer {
             clientId = clientMessage.split(DELIMITER)[1];
 
             // master key
+            if(!receivedInput.hasNextLine()) {
+                return AUTHENTICATE_FAILURE;
+            }
             clientMessage = receivedInput.nextLine();
-
-            try {
-                PrivateKey serverPrivateKey = getPrivateKey(PRIVATE_KEY);
-                masterKey = privateDecrypt(clientMessage.split(DELIMITER)[1], serverPrivateKey);
-                encryptionKey = AES.increaseKey(masterKey, 1);
-                signatureKey = AES.increaseKey(masterKey, 2);
-            }
-            catch (Exception e) {
-                throw new RuntimeException("Failed to decrypt the key", e);
-            }
+            clientMessage = AES.decrypt(clientMessage);
 
             if (!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
                 handleInvalidMessages();
                 sequenceNumber = 0;
                 return AUTHENTICATE_FAILURE;
             }
+            masterKey = clientMessage.split(DELIMITER)[1];
+
+            // set encryption and signature key
+            encryptionKey = AES.increaseKey(masterKey, 1);
+            signatureKey = AES.increaseKey(masterKey, 2);
 
             // send confirmation message
             String confirmation = Message.appendMessageSequence(++sequenceNumber, "ok");

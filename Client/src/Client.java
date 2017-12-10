@@ -24,7 +24,6 @@ public class Client extends Peer {
 
     protected Client() {
         super(CLIENT);
-        masterKey = AES.getRandomString(16);
         sequenceNumber = (int) (Math.random() * 1000);
     }
 
@@ -486,9 +485,7 @@ public class Client extends Peer {
         FileOutputStream fileOutputStream = null;
         BufferedOutputStream bufferedOutputStream = null;
 
-        String message = Message.appendMessageSequence(sequenceNumber, "Request certificate");
-        message = AES.encrypt(message);
-        printWriter.println(message);
+        printWriter.println("Request certificate");
         printWriter.flush();
 
         if (!serverInput.hasNextLine()) {
@@ -497,16 +494,10 @@ public class Client extends Peer {
 
         // confirmation message
         messageReceived = serverInput.nextLine();
-        messageReceived = AES.decrypt(messageReceived);
 
-        // error
-        if (!Message.validateMessageSequenceNumber(++sequenceNumber, messageReceived)) {
+        if(!messageReceived.equals("Sending certificate")) {
             throw new InvalidMessageException();
         }
-        else if (!messageReceived.split(DELIMITER)[1].equals("Sending certificate")) {
-            throw new InvalidMessageException();
-        }
-        // valid certificate
         else {
             String certificatePath = src.getAbsolutePath() + "/" + CERTIFICATION;
             File certificate = new File(certificatePath);
@@ -519,14 +510,7 @@ public class Client extends Peer {
                 byteRead = inputStream.read(byteBlock);
             }
 
-            if (!Message.validateMessageSequenceNumber(++sequenceNumber, byteArrayOutputStream.toByteArray())) {
-                printWriter.close();
-                throw new InvalidMessageException();
-            }
-
-            // extracted byte array that contains only the file
-            byte[] file = Message.extractMessage(byteArrayOutputStream.toByteArray());
-            bufferedOutputStream.write(file);
+            bufferedOutputStream.write(byteArrayOutputStream.toByteArray());
             bufferedOutputStream.flush();
             bufferedOutputStream.close();
             printWriter.close();
@@ -606,9 +590,23 @@ public class Client extends Peer {
         }
         else if (!hasSentKey) {
             try {
-                String masterKey2 = publicEncrypt(masterKey, serverPublicKey);
-                printWriter.println(Message.appendMessageSequence(++sequenceNumber, Long.toString(id)));
-                printWriter.println(Message.appendMessageSequence(++sequenceNumber, masterKey2));
+                /* encrypt language using server's public key
+                 * then encrypt master key and ID using newly set AES
+                 */
+                // can try with "2xJ|IY84pWaZVt9.ez0H3ncw,EuGOhQP7CivA\"sdRDq:BrlUgFjo 6k1NM5XbfSLK\\yTm"
+                String language = AES.generateLanguage();
+                AES.setLanguage(language);
+                String encryptedLanguage = Message.appendMessageSequence(sequenceNumber, language);
+                encryptedLanguage = publicEncrypt(encryptedLanguage, serverPublicKey);
+                String eId = Message.appendMessageSequence(++sequenceNumber, Long.toString(id));
+                eId = AES.encrypt(eId);
+                masterKey = AES.getRandomString(16);
+                String encryptedMasterKey = Message.appendMessageSequence(++sequenceNumber, masterKey);
+                encryptedMasterKey = AES.encrypt(encryptedMasterKey);
+
+                printWriter.println(encryptedLanguage);
+                printWriter.println(eId);
+                printWriter.println(encryptedMasterKey);
 
                 encryptionKey = AES.increaseKey(masterKey, 1);
                 signatureKey = AES.increaseKey(masterKey, 2);
@@ -621,7 +619,6 @@ public class Client extends Peer {
             if (!serverInput.hasNextLine()) {
                 return AUTHENTICATE_FAILURE;
             }
-
             serverResponse = serverInput.nextLine();
             serverResponse = AES.decrypt(serverResponse);
 
@@ -718,11 +715,11 @@ public class Client extends Peer {
             caPublicKey = stringToPublicKey(publicKey);
             cert.verify(caPublicKey);
             serverPublicKey = cert.getPublicKey();
-            System.out.println("The Certificate is successfully verified.");
+//            System.out.println("The Certificate is successfully verified.");
         }
         catch (Exception e) {
             verifySuccess = false;
-            System.out.println("The Certificate is not verified.");
+//            System.out.println("The Certificate is not verified.");
             e.printStackTrace();
         }
         finally {

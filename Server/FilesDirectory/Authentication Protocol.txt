@@ -1,0 +1,39 @@
+To validate same client over multiple sessions:
+
+Client:
+    When the client is created, its creation time is its ID.
+    Create random initial master key R
+    Create encryption key E = R + 1
+    Create signature S = R + 2
+    In each session from 1 -> n, update:
+        E = E + 2
+        S = S + 2
+
+    For authentication:
+        Session 0:
+            Request CA Certificate to verify if valid Server
+            Encrypt R using Server's public key to get R'
+            Encrypt ID using E to get ID'
+            Send R' and ID'
+        Session 1 -> n:
+            Encrypt ID using new E to get ID'
+            Send ID'
+
+
+Server:
+    Create encryption key E, signature key S (for client)
+    In each session from 1 -> n, update:
+            E = E + 2
+            S = S + 2
+
+    For authentication:
+        Session 0:
+            Send CA Certificate
+            Receive R' and ID'
+            Decrypt R' using its private key to get back R
+            E = R + 1
+            Decrypt ID' using E to get client's ID and store
+        Session 1 -> n:
+            Decrypt ID' using new E to get client's ID
+            Compare with stored ID to authenticate
+

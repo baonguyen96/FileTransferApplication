@@ -3,6 +3,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -10,10 +12,81 @@ import static java.util.Arrays.copyOfRange;
 
 
 public class AES implements Printable {
-
-    // customizable combination of: {a-z} + {A-Z} + {0-9} + { |,.":\}
-    private static final String LANGUAGE = "2xJ|IY84pWaZVt9.ez0H3ncw,EuGOhQP7CivA\"sdRDq:BrlUgFjo 6k1NM5XbfSLK\\yTm";
+    private static String language = null;
     private static final byte[] IV = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6};
+
+
+    /***
+     * method: generatelanguage
+     *
+     * customizable combination of: {a-z} + {A-Z} + {0-9} + { |,.":\}
+     *
+     * @return a randomly generated language string
+     */
+    public static String generateLanguage() {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        // {a-z}
+        for(char c = 'a'; c <= 'z'; c++) {
+            stringBuilder.append(c);
+        }
+
+        // {A - Z}
+        for(char c = 'A'; c <= 'Z'; c++) {
+            stringBuilder.append(c);
+        }
+
+        // {0 - 9}
+        for(char c = '0'; c <= '9'; c++) {
+            stringBuilder.append(c);
+        }
+
+        // { |,.":\}
+        stringBuilder.append(' ');
+        stringBuilder.append('|');
+        stringBuilder.append(',');
+        stringBuilder.append('.');
+        stringBuilder.append('"');
+        stringBuilder.append(':');
+        stringBuilder.append('\\');
+
+        // randomize
+        char[] chars = stringBuilder.toString().toCharArray();
+        shuffleArray(chars);
+
+        return new String(chars);
+    }
+
+
+    /***
+     * method: shuffleArray
+     *
+     * randomly shuffle the elements of the array using Fisher–Yates shuffle
+     * if running on Java 6 or older, use `new Random()` on RHS here
+     *
+     * @param ar: character array to be shuffled
+     */
+    private static void shuffleArray(char[] ar) {
+        Random rnd = ThreadLocalRandom.current();
+        for (int i = ar.length - 1; i > 0; i--) {
+            int index = rnd.nextInt(i + 1);
+            char a = ar[index];
+            ar[index] = ar[i];
+            ar[i] = a;
+        }
+    }
+
+
+    /***
+     * method: setLanguage
+     *
+     * set the secrete language for poly-alphabetic AES cipher
+     *
+     * @param language: secret set of characters
+     */
+    public static void setLanguage(String language) {
+        AES.language = language;
+    }
 
 
     /**
@@ -199,8 +272,8 @@ public class AES implements Printable {
     private static byte[] xor(byte[] array1, byte[] array2) {
         byte[] result = new byte[array1.length];
 
-        for(int i = 0; i < array1.length; i++) {
-            result[i] = (byte)(array1[i] ^ array2[i]);
+        for (int i = 0; i < array1.length; i++) {
+            result[i] = (byte) (array1[i] ^ array2[i]);
         }
 
         return result;
@@ -266,14 +339,18 @@ public class AES implements Printable {
      * @param length: length of the random string to build
      * @return a random string
      */
-	public static String getRandomString(int length) {
-	    StringBuilder sb = new StringBuilder();
-	    int len = LANGUAGE.length();
-	    for (int i = 0; i < length; i++) {
-	       sb.append(LANGUAGE.charAt((int) Math.round(Math.random() * (len - 1))));
-	    }
-	    return sb.toString();
-	}
+    public static String getRandomString(int length) {
+        if(language == null) {
+            throw new IllegalStateException("Language is not specified");
+        }
+
+        StringBuilder sb = new StringBuilder();
+        int len = language.length();
+        for (int i = 0; i < length; i++) {
+            sb.append(language.charAt((int) Math.round(Math.random() * (len - 1))));
+        }
+        return sb.toString();
+    }
 
 
     /***
@@ -283,7 +360,7 @@ public class AES implements Printable {
      * add offset to the original key to get the new key
      * value of new key depends on:
      *      the location of each character in the original key +
-     *      the value of the character in the LANGUAGE +
+     *      the value of the character in the language +
      *      the offset
      *
      * @param original: original key
@@ -291,15 +368,19 @@ public class AES implements Printable {
      * @return the new key
      */
     public static String increaseKey(String original, int offset) {
+        if(language == null) {
+            throw new IllegalStateException("Language is not specified");
+        }
+
         StringBuilder modified = new StringBuilder();
         char c = 0;
-        int difference = 0, newPosition = 0, buffer = LANGUAGE.length() / 5;
+        int difference = 0, newPosition = 0, buffer = language.length() / 5;
 
-        for(int i = 0; i < original.length(); i++) {
+        for (int i = 0; i < original.length(); i++) {
             c = original.charAt(i);
             difference = i + (offset + 1) * buffer;
-            newPosition = (LANGUAGE.indexOf(c) + difference) % LANGUAGE.length();
-            c = LANGUAGE.charAt(newPosition);
+            newPosition = (language.indexOf(c) + difference) % language.length();
+            c = language.charAt(newPosition);
             modified.append(c);
         }
 
@@ -314,7 +395,7 @@ public class AES implements Printable {
      * add offset to the original key to get the new key
      * value of new key depends on:
      *      the location of each character in the original key +
-     *      the value of the character in the LANGUAGE +
+     *      the value of the character in the language +
      *      the offset
      *
      * @param modified: modified key
@@ -322,33 +403,46 @@ public class AES implements Printable {
      * @return the original key
      */
     public static String decreaseKey(String modified, int offset) {
+        if(language == null) {
+            throw new IllegalStateException("Language is not specified");
+        }
+
         StringBuilder original = new StringBuilder();
         char c = 0;
-        int difference = 0, newPosition = 0, buffer = LANGUAGE.length() / 5, temp = 0;
+        int difference = 0, newPosition = 0, buffer = language.length() / 5, temp = 0;
 
-        for(int i = 0; i < modified.length(); i++) {
+        for (int i = 0; i < modified.length(); i++) {
             c = modified.charAt(i);
             difference = i + (offset + 1) * buffer;
-            temp = LANGUAGE.indexOf(c) - difference;
+            temp = language.indexOf(c) - difference;
 
-            if(temp >= LANGUAGE.length()) {
-                // what to do here? but so far have not encounter yet
+            if (temp >= language.length()) {
+                /*
+                 * what to do here?
+                 * but so far have not encounter yet
+                 * so maybe this is not possible to happen? but why?
+                 */
             }
-            else if(temp >= 0) {
+            else if (temp >= 0) {
                 newPosition = temp;
             }
             else {
-                difference -= LANGUAGE.indexOf(c);  // break here after "ion"
-                if(LANGUAGE.length() - difference >= 0) {
-                    newPosition = LANGUAGE.length() - difference;
+                difference -= language.indexOf(c);  // break here after "ion"
+                if (language.length() - difference >= 0) {
+                    newPosition = language.length() - difference;
                 }
                 else {
-                    difference -= LANGUAGE.length();
-                    newPosition = LANGUAGE.length() - difference;
+                    difference -= language.length();
+                    newPosition = language.length() - difference;
+
+                    // wrap around
+                    if(newPosition < 0) {
+                        newPosition += language.length();
+                    }
                 }
             }
 
-            c = LANGUAGE.charAt(newPosition);
+            c = language.charAt(newPosition);
             original.append(c);
         }
 
