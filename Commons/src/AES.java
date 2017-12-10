@@ -14,6 +14,10 @@ public class AES implements Printable {
     // customizable combination of: {a-z} + {A-Z} + {0-9}
     private static final String LANGUAGE = "2xJIY84pWaZVt9ez0H3ncwEuGOhQP7CivAsdRDqBrlUgFjo6k1NM5XbfSLKyTm";
 
+//    private static final String LANGUAGE = "ABCDEFGHIJ";
+    private static final byte[] IV = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6};
+
+
     /**
      * Encrypt message given
      *
@@ -22,7 +26,6 @@ public class AES implements Printable {
      * @return cipher text in a byte array
      */
     public static byte[] encrypt(byte[] message, String key) {
-        byte[] iv = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6};
         byte[] originalKey = key.getBytes();
         byte[] f_encrypted = null;
         byte[][] pt = null, encrypted = null;   //Store plain text in block of 16 bytes
@@ -33,7 +36,7 @@ public class AES implements Printable {
         encrypted = new byte[pt.length][20];
 
         System.arraycopy(originalKey, 0, first, 0, originalKey.length);
-        System.arraycopy(iv, 0, first, originalKey.length, iv.length);
+        System.arraycopy(IV, 0, first, originalKey.length, IV.length);
         String stringForSha1 = new String(first);
         encrypted[0] = xor(pt[0], sha1(stringForSha1));
 
@@ -75,12 +78,11 @@ public class AES implements Printable {
         byte[] decodedKey = new byte[16];
         decodedKey = key.getBytes();
 
-        ct = padBytes(message, 20); //Store cipher text in block of 20 bytes
+        ct = padBytes(message, 20);     //Store cipher text in block of 20 bytes
         decrypted = new byte[ct.length][20];
-        byte[] iv = new byte[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6};
 
         System.arraycopy(decodedKey, 0, first, 0, decodedKey.length);
-        System.arraycopy(iv, 0, first, decodedKey.length, iv.length);
+        System.arraycopy(IV, 0, first, decodedKey.length, IV.length);
         String stringForSha1 = new String(first);
         decrypted[0] = xor(ct[0], sha1(stringForSha1));
 
@@ -298,12 +300,21 @@ public class AES implements Printable {
     public static String decreaseKey(String modified, int offset) {
         StringBuilder original = new StringBuilder();
         char c = 0;
-        int difference = 0, newPosition = 0, buffer = LANGUAGE.length() / 5;
+        int difference = 0, newPosition = 0, buffer = LANGUAGE.length() / 5, temp = 0;
 
         for(int i = 0; i < modified.length(); i++) {
             c = modified.charAt(i);
             difference = i + (offset + 1) * buffer;
-            newPosition = (LANGUAGE.indexOf(c) + difference) % LANGUAGE.length();
+            temp = LANGUAGE.indexOf(c) - difference;
+
+            if(temp >= 0) {
+                newPosition = temp;
+            }
+            else {
+                difference -= LANGUAGE.indexOf(c);
+                newPosition = LANGUAGE.length() - difference;
+            }
+
             c = LANGUAGE.charAt(newPosition);
             original.append(c);
         }
