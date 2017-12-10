@@ -8,6 +8,7 @@ import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Scanner;
+import java.util.Arrays;
 
 
 public class Server extends Peer {
@@ -18,6 +19,7 @@ public class Server extends Peer {
     private boolean hasReceivedKeys = false;
     private String clientId = null;
     private boolean detectsAttackOnAuthentication = false;
+	private byte[] Mac = new byte[20];
 
 
     protected Server() {
@@ -160,7 +162,8 @@ public class Server extends Peer {
         }
 
         receivedCommand = receivedInput.nextLine();
-        receivedCommand = AES.decrypt(receivedCommand, encryptionKey);
+		System.out.println("success,hahaha");
+       // receivedCommand = AES.decrypt(receivedCommand, encryptionKey);
 
         // errors
         if (!Message.validateMessageSequenceNumber(++sequenceNumber, receivedCommand)) {
@@ -330,22 +333,33 @@ public class Server extends Peer {
         }
 
         byte[] byteArray = byteArrayOutputStream.toByteArray();
+		byte[] byteArray2=new byte[byteArray.length-20+signatureKey.length()];
+		byte[] byteArray3=new byte[byteArray.length-20];
         try {
-            byteArray = AES.decrypt(byteArray, encryptionKey);
+			System.arraycopy(byteArray,0,Mac,0,20);
+			System.arraycopy(signatureKey.getBytes(),0,byteArray2,0,signatureKey.length());
+			System.arraycopy(byteArray,20,byteArray2,signatureKey.length(),byteArray.length-20);
+			System.arraycopy(byteArray,20,byteArray3,0,byteArray.length-20);
+			if(Arrays.equals(Mac, AES.sha1(new String(byteArray2)))){
+				byteArray3 = AES.decrypt(byteArray3, encryptionKey);
+				System.out.println("The MAC value is true");
+			}else{
+				System.out.println("The MAC value is not true");
+			}
         }
         catch (Exception e) {
             throw new RuntimeException("Failed to create Pi Face Device", e);
         }
 
-        if (!Message.validateMessageSequenceNumber(++sequenceNumber, byteArray)) {
+        if (!Message.validateMessageSequenceNumber(++sequenceNumber, byteArray3)) {
             handleInvalidMessages();
             bufferedOutputStream.close();
             inputStream.close();
             System.out.printf(">> Oops! Something went wrong. Cannot save \"%s\"\n", uploadedFileName);
         }
         else {
-            byteArray = Message.extractMessage(byteArray);
-            bufferedOutputStream.write(byteArray);
+            byteArray3 = Message.extractMessage(byteArray3);
+            bufferedOutputStream.write(byteArray3);
             bufferedOutputStream.flush();
             bufferedOutputStream.close();
             inputStream.close();

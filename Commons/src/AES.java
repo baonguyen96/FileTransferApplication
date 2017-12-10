@@ -65,7 +65,7 @@ public class AES implements Printable {
         printByteArray(f_encrypted);
 //        System.out.println("AES encrypt: string contains newline: " + containsNewLine(f_encrypted));
 
-        filter(f_encrypted);
+       // filter(f_encrypted);
 
         return f_encrypted;
     }
@@ -87,7 +87,7 @@ public class AES implements Printable {
     }
 
 
-    private static void printByteArray(byte[] bytes) {
+    public static void printByteArray(byte[] bytes) {
         for(Byte b : bytes) {
             System.out.printf("%s ", b);
         }
@@ -122,7 +122,7 @@ public class AES implements Printable {
      */
     public static byte[] decrypt(byte[] message, String key) {
 
-        filter(message);
+        //filter(message);
 
         System.out.printf("key = %s\n", key);
         System.out.print("Before decrypt, message = ");
@@ -333,7 +333,7 @@ public class AES implements Printable {
      * @param message: the message to be processed
      * @return the resulting message
      */
-    private static byte[] sha1(String message) {
+    public static byte[] sha1(String message) {
         byte[] sha1Encode = null;
 
         try {
