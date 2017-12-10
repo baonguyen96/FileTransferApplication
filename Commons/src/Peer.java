@@ -6,7 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Scanner;
 
-public abstract class Peer {
+public abstract class Peer implements Printable {
     private String module = null;
     protected Socket clientSocket = null;
     protected File filesDirectory = null;
@@ -188,11 +188,13 @@ public abstract class Peer {
      * display all keys to the screen
      */
     protected void printKeys() {
-        System.out.println("\n<!--");
-        System.out.println("   MasterKey : " + masterKey);
-        System.out.println("   Encryption: " + encryptionKey);
-        System.out.println("   Signature : " + signatureKey);
-        System.out.println("-->");
+        if(IS_PRINTABLE) {
+            System.out.println("\n<!--");
+            System.out.println("   MasterKey : " + masterKey);
+            System.out.println("   Encryption: " + encryptionKey);
+            System.out.println("   Signature : " + signatureKey);
+            System.out.println("-->\n");
+        }
     }
 
 }

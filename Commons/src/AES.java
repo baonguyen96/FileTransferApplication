@@ -11,13 +11,24 @@ import java.util.logging.Logger;
 import static java.util.Arrays.copyOfRange;
 
 
-public class AES implements Printable {
+public class AES {
     private static String language = null;
     private static final byte[] IV = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6};
+    private static final boolean IS_PRINTABLE = false;
+    /*
+     * different from Printable interface
+     * IS_PRINTABLE == true:
+     *      Display the encryption/decryption from/to and vice versa
+     *      To show the effect of AES
+     * IS_PRINTABLE == false:
+     *      Do not display how the message is encrypted/decrypted
+     *      This is what user should see, as viewing these technical details
+     *      is only meant for demonstration and debugging
+     */
 
 
     /***
-     * method: generatelanguage
+     * method: generateLanguage
      *
      * customizable combination of: {a-z} + {A-Z} + {0-9} + { |,.":\}
      *
@@ -97,6 +108,10 @@ public class AES implements Printable {
      * @return cipher text in a byte array
      */
     public static byte[] encrypt(byte[] message, String key) {
+        if(IS_PRINTABLE) {
+            display(message, "Encrypt from");
+        }
+
         byte[] originalKey = key.getBytes();
         byte[] f_encrypted = null;
         byte[][] pt = null, encrypted = null;   //Store plain text in block of 16 bytes
@@ -122,9 +137,9 @@ public class AES implements Printable {
         f_encrypted = new byte[message.length];
         System.arraycopy(temp, 0, f_encrypted, 0, f_encrypted.length); //Truncate to original length of plain text
 
-//        if (IS_PRINTABLE) {
-//            System.out.println("Cipher length: " + f_encrypted.length + " bytes");
-//        }
+        if(IS_PRINTABLE) {
+            display(f_encrypted, "Encrypt to");
+        }
 
         return f_encrypted;
     }
@@ -154,6 +169,10 @@ public class AES implements Printable {
      * @return the decrypted message in byte[]
      */
     public static byte[] decrypt(byte[] message, String key) {
+        if(IS_PRINTABLE) {
+            display(message, "Decrypt from");
+        }
+
         key = key.trim();
         byte[] f_decrypted = null;
         byte[][] ct, decrypted = null;
@@ -178,14 +197,13 @@ public class AES implements Printable {
             decrypted[i] = xor(ct[i], sha1(stringForSha12));
         }
 
-
         byte[] temp = flatten(decrypted);
         f_decrypted = new byte[message.length];
         System.arraycopy(temp, 0, f_decrypted, 0, message.length);
 
-//        if (IS_PRINTABLE) {
-//            System.out.println("Message length: " + f_decrypted.length + " bytes");
-//        }
+        if(IS_PRINTABLE) {
+            display(f_decrypted, "Decrypt to");
+        }
 
         return f_decrypted;
 
@@ -230,10 +248,6 @@ public class AES implements Printable {
                 Logger.getLogger(AES.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-
-//        if (IS_PRINTABLE) {
-//            System.out.println("Number of cipher blocks: " + ret.length);
-//        }
 
         return ret;
     }
@@ -362,6 +376,7 @@ public class AES implements Printable {
      *      the location of each character in the original key +
      *      the value of the character in the language +
      *      the offset
+     * use for encryption
      *
      * @param original: original key
      * @param offset: how far off the original key is the new key
@@ -384,6 +399,11 @@ public class AES implements Printable {
             modified.append(c);
         }
 
+        if(IS_PRINTABLE) {
+            display(original, "Encrypt from");
+            display(modified.toString(), "Encrypt to");
+        }
+
         return modified.toString();
     }
 
@@ -397,6 +417,7 @@ public class AES implements Printable {
      *      the location of each character in the original key +
      *      the value of the character in the language +
      *      the offset
+     *  use for decryption
      *
      * @param modified: modified key
      * @param offset: how far off the original key is the new key
@@ -427,7 +448,7 @@ public class AES implements Printable {
                 newPosition = temp;
             }
             else {
-                difference -= language.indexOf(c);  // break here after "ion"
+                difference -= language.indexOf(c);
                 if (language.length() - difference >= 0) {
                     newPosition = language.length() - difference;
                 }
@@ -446,6 +467,41 @@ public class AES implements Printable {
             original.append(c);
         }
 
+        if(IS_PRINTABLE) {
+            display(modified, "Decrypt from");
+            display(original.toString(), "Decrypt to");
+        }
+
         return original.toString();
+    }
+
+
+    /***
+     * method: display
+     *
+     * display the values of byte array
+     *
+     * @param bytes: byte array
+     * @param mode: encryption or decryption
+     */
+    private static void display(byte[] bytes, String mode) {
+        System.out.printf("AES: %s: ", mode);
+        for(Byte b : bytes) {
+            System.out.printf("%s ", b);
+        }
+        System.out.println();
+    }
+
+
+    /***
+     * method: display
+     *
+     * display the values of the string
+     *
+     * @param str: a string
+     * @param mode: encryption or decryption
+     */
+    private static void display(String str, String mode) {
+        System.out.printf("AES: %s: %s\n", mode, str);
     }
 }
