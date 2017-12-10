@@ -11,10 +11,8 @@ import static java.util.Arrays.copyOfRange;
 
 public class AES implements Printable {
 
-    // customizable combination of: {a-z} + {A-Z} + {0-9}
-    private static final String LANGUAGE = "2xJIY84pWaZVt9ez0H3ncwEuGOhQP7CivAsdRDqBrlUgFjo6k1NM5XbfSLKyTm";
-
-//    private static final String LANGUAGE = "ABCDEFGHIJ";
+    // customizable combination of: {a-z} + {A-Z} + {0-9} + { |,.":\}
+    private static final String LANGUAGE = "2xJ|IY84pWaZVt9.ez0H3ncw,E\\\\uGOhQP7CivA\"sdRDq:BrlUgFjo 6k1NM5XbfSLK\\yTm";
     private static final byte[] IV = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6};
 
 
@@ -56,6 +54,19 @@ public class AES implements Printable {
         }
 
         return f_encrypted;
+    }
+
+
+    /***
+     * method: encrypt
+     *
+     * overloaded encrypt method to encrypt a string
+     *
+     * @param message: string
+     * @return encrypted string
+     */
+    public static String encrypt(String message) {
+        return increaseKey(message, 1);
     }
 
 
@@ -105,6 +116,19 @@ public class AES implements Printable {
 
         return f_decrypted;
 
+    }
+
+
+    /***
+     * method: decrypt
+     *
+     * overloaded decrypt method to encrypt a string
+     *
+     * @param message: string
+     * @return decrypted string
+     */
+    public static String decrypt(String message) {
+        return decreaseKey(message, 1);
     }
 
 

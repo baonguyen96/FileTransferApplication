@@ -5,7 +5,7 @@ public class Main {
 
 
     private static void testAES() {
-        String key = AES.getRandomString(16);
+        String key = "337 | quit";
         String keyMod1 = AES.increaseKey(key, 1);
         String keyMod2 = AES.increaseKey(key, 2);
         String keyOrg1 = AES.decreaseKey(keyMod1, 1);
