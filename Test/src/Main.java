@@ -5,16 +5,16 @@ public class Main {
 
 
     private static void testAES() {
-        String key = "337 | quit";
-        String keyMod1 = AES.increaseKey(key, 1);
-        String keyMod2 = AES.increaseKey(key, 2);
-        String keyOrg1 = AES.decreaseKey(keyMod1, 1);
-        String keyOrg2 = AES.decreaseKey(keyMod2, 2);
+        String key = "C:\\Users\\Bao\\Desktop\\Codes\\Java\\CS6349\\FileTransferApplication\\Assets\\Test Upload\\powerpoint presentation.pptx";
+        String keyMod1 = AES.encrypt(key);
+//        String keyMod2 = AES.increaseKey(key, 2);
+        String keyOrg1 = AES.decrypt(keyMod1);
+//        String keyOrg2 = AES.decreaseKey(keyMod2, 2);
         System.out.println(key);
         System.out.println(keyMod1);
-        System.out.println(keyMod2);
+//        System.out.println(keyMod2);
         System.out.println(keyOrg1);
-        System.out.println(keyOrg2);
+//        System.out.println(keyOrg2);
     }
 
 }

@@ -12,7 +12,7 @@ import static java.util.Arrays.copyOfRange;
 public class AES implements Printable {
 
     // customizable combination of: {a-z} + {A-Z} + {0-9} + { |,.":\}
-    private static final String LANGUAGE = "2xJ|IY84pWaZVt9.ez0H3ncw,E\\\\uGOhQP7CivA\"sdRDq:BrlUgFjo 6k1NM5XbfSLK\\yTm";
+    private static final String LANGUAGE = "2xJ|IY84pWaZVt9.ez0H3ncw,EuGOhQP7CivA\"sdRDq:BrlUgFjo 6k1NM5XbfSLK\\yTm";
     private static final byte[] IV = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6};
 
 
@@ -330,13 +330,20 @@ public class AES implements Printable {
             c = modified.charAt(i);
             difference = i + (offset + 1) * buffer;
             temp = LANGUAGE.indexOf(c) - difference;
-
+            
             if(temp >= 0) {
                 newPosition = temp;
             }
+            // temp < 0
             else {
-                difference -= LANGUAGE.indexOf(c);
-                newPosition = LANGUAGE.length() - difference;
+                difference -= LANGUAGE.indexOf(c);  // break here after "ion"
+                if(LANGUAGE.length() - difference >= 0) {
+                    newPosition = LANGUAGE.length() - difference;
+                }
+                else {
+                    difference -= LANGUAGE.length();
+                    newPosition = LANGUAGE.length() - difference;
+                }
             }
 
             c = LANGUAGE.charAt(newPosition);
