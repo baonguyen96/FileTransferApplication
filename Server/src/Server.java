@@ -16,6 +16,7 @@ public class Server extends Peer {
     private boolean isBusy = false;
     private boolean hasSentCertificate = false;
     private boolean hasReceivedKeys = false;
+    private String clientIpAddress = null;
     private String clientId = null;
     private boolean detectsAttackOnAuthentication = false;
 
@@ -51,9 +52,12 @@ public class Server extends Peer {
             System.out.println("Waiting for connection...");
 
             ServerSocket serverSocket = new ServerSocket(1111);
-            serverSocket.setSoTimeout(120000);
+            serverSocket.setSoTimeout(60000);
 
             while (!stopCommunication) {
+
+//                printKeys();
+
                 // end if detect intruder
                 if (isIntruderDetected()) {
                     System.out.println(SMALL_DIV);
@@ -72,6 +76,7 @@ public class Server extends Peer {
                 else if (hasSentCertificate && !hasReceivedKeys) {
                     continue;
                 }
+
 
                 isBusy = notifyConnectionSuccess(isBusy);
                 stopCommunication = communicate();
@@ -149,9 +154,8 @@ public class Server extends Peer {
         String[] commandTokens = null;
         final boolean STOP_CONNECTION_AFTER_THIS = true;
         final boolean CONTINUE_CONNECTION_AFTER_THIS = false;
-//        InputStream inputStream = clientSocket.getInputStream();
-        InputStreamReader inputStreamReader = new InputStreamReader(clientSocket.getInputStream(), AES.CHAR_SET);
-        Scanner receivedInput = new Scanner(inputStreamReader);
+        InputStream inputStream = clientSocket.getInputStream();
+        Scanner receivedInput = new Scanner(new InputStreamReader(inputStream));
 
         // client is offline
         if (!receivedInput.hasNextLine()) {
@@ -160,7 +164,6 @@ public class Server extends Peer {
         }
 
         receivedCommand = receivedInput.nextLine();
-        receivedCommand = AES.decrypt(receivedCommand, encryptionKey);
 
         // errors
         if (!Message.validateMessageSequenceNumber(++sequenceNumber, receivedCommand)) {
@@ -210,9 +213,8 @@ public class Server extends Peer {
     protected void list() throws IOException {
         File[] files = filesDirectory.listFiles();
         StringBuilder messageToSend = new StringBuilder();
-//        OutputStream outputStream = clientSocket.getOutputStream();
-        OutputStreamWriter outputStreamWriter = new OutputStreamWriter(clientSocket.getOutputStream(), AES.CHAR_SET);
-        PrintWriter printWriter = new PrintWriter(outputStreamWriter);
+        OutputStream outputStream = clientSocket.getOutputStream();
+        PrintWriter printWriter = new PrintWriter(outputStream, true);
 
         if (files == null) {
             messageToSend.append("Error: Cannot find files filesDirectory.");
@@ -238,11 +240,7 @@ public class Server extends Peer {
 
         // send to client
         System.out.println();
-
-        String message = Message.appendMessageSequence(++sequenceNumber, messageToSend.toString());
-        message = AES.encrypt(message, encryptionKey);
-
-        printWriter.print(message);
+        printWriter.println(Message.appendMessageSequence(++sequenceNumber, messageToSend.toString()));
         printWriter.flush();
         printWriter.close();
     }
@@ -281,7 +279,6 @@ public class Server extends Peer {
             // file transfer
             bufferedInputStream.read(byteArray, 0, byteArray.length);
             byteArray = Message.appendMessageSequence(++sequenceNumber, byteArray);
-            byteArray = AES.encrypt(byteArray, encryptionKey);
             bufferedOutputStream.write(byteArray, 0, byteArray.length);
             bufferedOutputStream.flush();
             bufferedOutputStream.close();
@@ -331,7 +328,7 @@ public class Server extends Peer {
 
         byte[] byteArray = byteArrayOutputStream.toByteArray();
         try {
-            byteArray = AES.decrypt(byteArray, encryptionKey);
+            byteArray = AES.decrypt(byteArray, "1234567890123456");
         }
         catch (Exception e) {
             throw new RuntimeException("Failed to create Pi Face Device", e);
@@ -433,7 +430,7 @@ public class Server extends Peer {
                 detectsAttackOnAuthentication = true;
                 hasSentCertificate = false;
                 masterKey = encryptionKey = signatureKey = null;
-//                sequenceNumber = 0;
+                sequenceNumber = 0;
             }
             return AUTHENTICATE_FAILURE;
         }
@@ -474,26 +471,28 @@ public class Server extends Peer {
             }
 
             try {
-                PrivateKey serverPrivateKey = stringToPrivateKey(PRIVATE_KEY);
+                PrivateKey serverPrivateKey = getPrivateKey(PRIVATE_KEY);
                 masterKey = privateDecrypt(clientMessage.split(DELIMITER)[1], serverPrivateKey);
-                encryptionKey = AES.modifyKey(masterKey, 1);
-                signatureKey = AES.modifyKey(masterKey, 2);
+                encryptionKey = AES.increaseKey(masterKey, 1);
+                signatureKey = AES.increaseKey(masterKey, 2);
             }
             catch (Exception e) {
                 throw new RuntimeException("Failed to decrypt the key", e);
             }
 
+            // ip
+            clientIpAddress = clientSocket.getInetAddress().getHostAddress();
+
             // send confirmation message
             printWriter.println(Message.appendMessageSequence(++sequenceNumber, "ok"));
-            printWriter.flush();
             authenticateSuccess = AUTHENTICATE_SUCCESS;
             hasReceivedKeys = true;
         }
         // already send certificate and receive keys
         else {
             // update keys
-            encryptionKey = AES.modifyKey(encryptionKey, 2);
-            signatureKey = AES.modifyKey(signatureKey, 2);
+            encryptionKey = AES.increaseKey(encryptionKey, 2);
+            signatureKey = AES.increaseKey(signatureKey, 2);
 
             if (!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
                 handleInvalidMessages();
@@ -501,7 +500,8 @@ public class Server extends Peer {
             }
 
             String id = clientMessage.split(DELIMITER)[1];
-            authenticateSuccess = id.equals(clientId);
+            authenticateSuccess = id.equals(clientId) &&
+                    clientSocket.getInetAddress().getHostAddress().equals(clientIpAddress);
             String confirmMessage = authenticateSuccess ? "ok" : "busy";
             printWriter.println(Message.appendMessageSequence(++sequenceNumber, confirmMessage));
             printWriter.flush();
@@ -512,14 +512,14 @@ public class Server extends Peer {
 
 
     /***
-     * method: stringToPrivateKey
+     * method: getPrivateKey
      *
      * Get Server's private key
      *
      * @param key: private key as String
      * @return private key object
      */
-    private static PrivateKey stringToPrivateKey(String key) throws Exception {
+    private static PrivateKey getPrivateKey(String key) throws Exception {
         byte[] keyBytes = java.util.Base64.getDecoder().decode(key);
         PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");

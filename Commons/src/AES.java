@@ -1,6 +1,4 @@
 import javax.crypto.ShortBufferException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -15,9 +13,6 @@ public class AES implements Printable {
 
     // customizable combination of: {a-z} + {A-Z} + {0-9}
     private static final String LANGUAGE = "2xJIY84pWaZVt9ez0H3ncwEuGOhQP7CivAsdRDqBrlUgFjo6k1NM5XbfSLKyTm";
-    private static final byte[] IV = new byte[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6};
-    public static final Charset CHAR_SET = StandardCharsets.ISO_8859_1;
-
 
     /**
      * Encrypt message given
@@ -27,11 +22,7 @@ public class AES implements Printable {
      * @return cipher text in a byte array
      */
     public static byte[] encrypt(byte[] message, String key) {
-        System.out.printf("key = %s\n", key);
-        System.out.print("Before encrypt, message = ");
-        printByteArray(message);
-        System.out.println("Before encrypt, message has length = " + message.length);
-
+        byte[] iv = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6};
         byte[] originalKey = key.getBytes();
         byte[] f_encrypted = null;
         byte[][] pt = null, encrypted = null;   //Store plain text in block of 16 bytes
@@ -42,7 +33,7 @@ public class AES implements Printable {
         encrypted = new byte[pt.length][20];
 
         System.arraycopy(originalKey, 0, first, 0, originalKey.length);
-        System.arraycopy(IV, 0, first, originalKey.length, IV.length);
+        System.arraycopy(iv, 0, first, originalKey.length, iv.length);
         String stringForSha1 = new String(first);
         encrypted[0] = xor(pt[0], sha1(stringForSha1));
 
@@ -51,62 +42,17 @@ public class AES implements Printable {
             System.arraycopy(encrypted[i - 1], 0, second, originalKey.length, encrypted[i - 1].length);
             String stringForSha12 = new String(second);
             encrypted[i] = xor(pt[i], sha1(stringForSha12));
-        }
 
+        }
         byte[] temp = flatten(encrypted);
         f_encrypted = new byte[message.length];
         System.arraycopy(temp, 0, f_encrypted, 0, f_encrypted.length); //Truncate to original length of plain text
 
-//        if (IS_PRINTABLE) {
-//            System.out.println("Cipher length: " + f_encrypted.length + " bytes");
-//        }
-
-        System.out.println("enc");
-        printByteArray(f_encrypted);
-//        System.out.println("AES encrypt: string contains newline: " + containsNewLine(f_encrypted));
-
-        filter(f_encrypted);
+        if (IS_PRINTABLE) {
+            System.out.println("Cipher length: " + f_encrypted.length + " bytes");
+        }
 
         return f_encrypted;
-    }
-
-
-    private static boolean containsNewLine(byte[] bytes) {
-        for(Byte b : bytes) {
-            if(b == 10) {
-                return true;
-            }
-            else if(b == 13) {
-                return true;
-            }
-            else if(b == -123) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-
-    private static void printByteArray(byte[] bytes) {
-        for(Byte b : bytes) {
-            System.out.printf("%s ", b);
-        }
-        System.out.printf("\nlength = %d\n", bytes.length);
-    }
-
-
-    /***
-     * method: encrypt
-     *
-     * encrypt a string
-     *
-     * @param message: a string
-     * @param key: encryption key
-     * @return encrypted message as string
-     */
-    public static String encrypt(String message, String key) {
-        byte[] e = encrypt(message.getBytes(CHAR_SET), key);
-        return new String(e, 0, e.length, CHAR_SET);
     }
 
 
@@ -121,15 +67,7 @@ public class AES implements Printable {
      * @return the decrypted message in byte[]
      */
     public static byte[] decrypt(byte[] message, String key) {
-
-        filter(message);
-
-        System.out.printf("key = %s\n", key);
-        System.out.print("Before decrypt, message = ");
-        printByteArray(message);
-        System.out.println("Before decrypt, message has length " + message.length);
-
-//        key = key.trim();
+        key = key.trim();
         byte[] f_decrypted = null;
         byte[][] ct, decrypted = null;
         byte[] first = new byte[32];
@@ -137,11 +75,12 @@ public class AES implements Printable {
         byte[] decodedKey = new byte[16];
         decodedKey = key.getBytes();
 
-        ct = padBytes(message, 20);     //Store cipher text in block of 20 bytes
+        ct = padBytes(message, 20); //Store cipher text in block of 20 bytes
         decrypted = new byte[ct.length][20];
+        byte[] iv = new byte[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6};
 
         System.arraycopy(decodedKey, 0, first, 0, decodedKey.length);
-        System.arraycopy(IV, 0, first, decodedKey.length, IV.length);
+        System.arraycopy(iv, 0, first, decodedKey.length, iv.length);
         String stringForSha1 = new String(first);
         decrypted[0] = xor(ct[0], sha1(stringForSha1));
 
@@ -158,30 +97,12 @@ public class AES implements Printable {
         f_decrypted = new byte[message.length];
         System.arraycopy(temp, 0, f_decrypted, 0, message.length);
 
-//        if (IS_PRINTABLE) {
-//            System.out.println("Message length: " + f_decrypted.length + " bytes");
-//        }
-
-        System.out.println("dec");
-        printByteArray(f_decrypted);
+        if (IS_PRINTABLE) {
+            System.out.println("Message length: " + f_decrypted.length + " bytes");
+        }
 
         return f_decrypted;
 
-    }
-
-
-    /***
-     * method: decrypt
-     *
-     * decrypt a string
-     *
-     * @param message: a string
-     * @param key: decryption key
-     * @return decrypted message as string
-     */
-    public static String decrypt(String message, String key) {
-        byte[] d = decrypt(message.getBytes(CHAR_SET), key);
-        return new String(d, 0, d.length, CHAR_SET);
     }
 
 
@@ -211,9 +132,9 @@ public class AES implements Printable {
             }
         }
 
-//        if (IS_PRINTABLE) {
-//            System.out.println("Number of cipher blocks: " + ret.length);
-//        }
+        if (IS_PRINTABLE) {
+            System.out.println("Number of cipher blocks: " + ret.length);
+        }
 
         return ret;
     }
@@ -239,44 +160,6 @@ public class AES implements Printable {
             vector[i] = list.get(i);
         }
         return vector;
-    }
-
-
-    private static void filter(byte[] bytes) {
-        byte b = 0;
-
-        for(int i = 0; i < bytes.length; i++) {
-            b = bytes[i];
-
-            // cannot have 10, 13, -123
-            if(b == 10 || b == 13 || b == -123) {
-                if(b == 10) {
-                    b = (byte)130;
-                }
-                else if(b == 13) {
-                    b = (byte)131;
-                }
-                else {
-                    b = (byte)132;
-                }
-            }
-            else if(b == (byte)130 || b == (byte)131 || b == (byte)132) {
-                if(b == (byte)130) {
-                    b = 10;
-                }
-                else if(b == (byte)131) {
-                    b = 13;
-                }
-                else {
-                    b = -123;
-                }
-            }
-            else {
-                // normal
-            }
-
-            bytes[i] = b;
-        }
     }
 
 
@@ -368,7 +251,7 @@ public class AES implements Printable {
 
 
     /***
-     * method: modifyKey
+     * method: increaseKey
      *
      * implement a poly-alphabetic cipher to reduce the possibility of being hacked
      * add offset to the original key to get the new key
@@ -381,19 +264,50 @@ public class AES implements Printable {
      * @param offset: how far off the original key is the new key
      * @return the new key
      */
-    public static String modifyKey(String original, int offset) {
+    public static String increaseKey(String original, int offset) {
         StringBuilder modified = new StringBuilder();
         char c = 0;
-        int difference = 0;
+        int difference = 0, newPosition = 0, buffer = LANGUAGE.length() / 5;
 
         for(int i = 0; i < original.length(); i++) {
             c = original.charAt(i);
-            difference = (int) Math.pow(i + LANGUAGE.length() / 5, offset + 1);
-            c = LANGUAGE.charAt((LANGUAGE.indexOf(c) + difference) % LANGUAGE.length());
+            difference = i + (offset + 1) * buffer;
+            newPosition = (LANGUAGE.indexOf(c) + difference) % LANGUAGE.length();
+            c = LANGUAGE.charAt(newPosition);
             modified.append(c);
         }
 
         return modified.toString();
     }
 
+
+    /***
+     * method: decreaseKey
+     *
+     * implement a poly-alphabetic cipher to reduce the possibility of being hacked
+     * add offset to the original key to get the new key
+     * value of new key depends on:
+     *      the location of each character in the original key +
+     *      the value of the character in the LANGUAGE +
+     *      the offset
+     *
+     * @param modified: modified key
+     * @param offset: how far off the original key is the new key
+     * @return the original key
+     */
+    public static String decreaseKey(String modified, int offset) {
+        StringBuilder original = new StringBuilder();
+        char c = 0;
+        int difference = 0, newPosition = 0, buffer = LANGUAGE.length() / 5;
+
+        for(int i = 0; i < modified.length(); i++) {
+            c = modified.charAt(i);
+            difference = i + (offset + 1) * buffer;
+            newPosition = (LANGUAGE.indexOf(c) + difference) % LANGUAGE.length();
+            c = LANGUAGE.charAt(newPosition);
+            original.append(c);
+        }
+
+        return original.toString();
+    }
 }

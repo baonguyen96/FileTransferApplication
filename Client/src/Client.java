@@ -3,7 +3,6 @@ import java.io.*;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
@@ -55,6 +54,9 @@ public class Client extends Peer {
             System.out.println("Setting up the connection...");
 
             while (!stopCommunication) {
+
+//                printKeys();
+
                 // end if detect intruder
                 if (isIntruderDetected()) {
                     System.out.println(SMALL_DIV);
@@ -230,13 +232,8 @@ public class Client extends Peer {
      * @throws IOException
      */
     protected void quit(String command) throws IOException {
-        OutputStreamWriter outputStreamWriter = new OutputStreamWriter(clientSocket.getOutputStream(), AES.CHAR_SET);
-        PrintWriter printWriter = new PrintWriter(outputStreamWriter, true);
-
-        command = Message.appendMessageSequence(++sequenceNumber, command);
-        command = AES.encrypt(command, encryptionKey);
-
-        printWriter.println(command);
+        PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
+        printWriter.println(Message.appendMessageSequence(++sequenceNumber, command));
         printWriter.flush();
         printWriter.close();
     }
@@ -252,16 +249,11 @@ public class Client extends Peer {
      * @throws IOException
      */
     protected void list(String command) throws IOException {
-        OutputStreamWriter outputStreamWriter = new OutputStreamWriter(clientSocket.getOutputStream(), AES.CHAR_SET);
-        PrintWriter printWriter = new PrintWriter(outputStreamWriter);
-        InputStreamReader inputStreamReader = new InputStreamReader(clientSocket.getInputStream(), AES.CHAR_SET);
-        Scanner serverInput = new Scanner(inputStreamReader);
+        PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
+        Scanner serverInput = new Scanner(new InputStreamReader(clientSocket.getInputStream()));
         String messageReceived = "";
 
-        command = Message.appendMessageSequence(++sequenceNumber, command);
-        command = AES.encrypt(command, encryptionKey);
-        System.out.println(command);
-        printWriter.println(command);
+        printWriter.println(Message.appendMessageSequence(++sequenceNumber, command));
         printWriter.flush();
 
         // lost message
@@ -271,7 +263,6 @@ public class Client extends Peer {
         }
 
         messageReceived = serverInput.nextLine();
-        messageReceived = AES.decrypt(messageReceived, encryptionKey);
 
         if (!Message.validateMessageSequenceNumber(++sequenceNumber, messageReceived)) {
             handleInvalidMessages();
@@ -378,9 +369,6 @@ public class Client extends Peer {
             }
             byte[] byteStream = byteArrayOutputStream.toByteArray();
 
-            // decrypt
-            byteStream = AES.decrypt(byteStream, encryptionKey);
-
             // validate sequence number
             if (!Message.validateMessageSequenceNumber(++sequenceNumber, byteStream)) {
                 handleInvalidMessages();
@@ -433,7 +421,7 @@ public class Client extends Peer {
             byteArray = Message.appendMessageSequence(++sequenceNumber, byteArray);
 
             try {
-                byteArray = AES.encrypt(byteArray, encryptionKey);
+                byteArray = AES.encrypt(byteArray, "1234567890123456");
             }
             catch (Exception e) {
                 throw new RuntimeException("Failed to create Pi Face Device", e);
@@ -590,14 +578,12 @@ public class Client extends Peer {
         }
         else if (!hasSentKey) {
             try {
-                String encryptedMasterKey = publicEncrypt(masterKey, serverPublicKey);
+                String masterKey2 = publicEncrypt(masterKey, serverPublicKey);
                 printWriter.println(Message.appendMessageSequence(++sequenceNumber, Long.toString(id)));
-                printWriter.flush();
-                printWriter.println(Message.appendMessageSequence(++sequenceNumber, encryptedMasterKey));
-                printWriter.flush();
+                printWriter.println(Message.appendMessageSequence(++sequenceNumber, masterKey2));
 
-                encryptionKey = AES.modifyKey(masterKey, 1);
-                signatureKey = AES.modifyKey(masterKey, 2);
+                encryptionKey = AES.increaseKey(masterKey, 1);
+                signatureKey = AES.increaseKey(masterKey, 2);
             }
             catch (Exception e) {
                 throw new RuntimeException("Failed to encrypt the key", e);
@@ -624,8 +610,8 @@ public class Client extends Peer {
         // has received certificate and has sent key
         else {
             // update keys
-            encryptionKey = AES.modifyKey(encryptionKey, 2);
-            signatureKey = AES.modifyKey(signatureKey, 2);
+            encryptionKey = AES.increaseKey(encryptionKey, 2);
+            signatureKey = AES.increaseKey(signatureKey, 2);
 
             printWriter.println(Message.appendMessageSequence(++sequenceNumber, Long.toString(id)));
             printWriter.flush();

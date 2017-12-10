@@ -181,18 +181,12 @@ public abstract class Peer {
     }
 
 
-    /***
-     * method: printKey
-     *
-     * display the all the keys to show how they change
-     * in each session (for debug only)
-     */
     protected void printKeys() {
-        System.out.println("<!--");
+        System.out.println("\n<!--");
         System.out.println("   MasterKey : " + masterKey);
         System.out.println("   Encryption: " + encryptionKey);
         System.out.println("   Signature : " + signatureKey);
-        System.out.println("-->\n");
+        System.out.println("-->");
     }
 
 }
