@@ -49,9 +49,9 @@ public class AES implements Printable {
         f_encrypted = new byte[message.length];
         System.arraycopy(temp, 0, f_encrypted, 0, f_encrypted.length); //Truncate to original length of plain text
 
-        if (IS_PRINTABLE) {
-            System.out.println("Cipher length: " + f_encrypted.length + " bytes");
-        }
+//        if (IS_PRINTABLE) {
+//            System.out.println("Cipher length: " + f_encrypted.length + " bytes");
+//        }
 
         return f_encrypted;
     }
@@ -110,9 +110,9 @@ public class AES implements Printable {
         f_decrypted = new byte[message.length];
         System.arraycopy(temp, 0, f_decrypted, 0, message.length);
 
-        if (IS_PRINTABLE) {
-            System.out.println("Message length: " + f_decrypted.length + " bytes");
-        }
+//        if (IS_PRINTABLE) {
+//            System.out.println("Message length: " + f_decrypted.length + " bytes");
+//        }
 
         return f_decrypted;
 
@@ -158,9 +158,9 @@ public class AES implements Printable {
             }
         }
 
-        if (IS_PRINTABLE) {
-            System.out.println("Number of cipher blocks: " + ret.length);
-        }
+//        if (IS_PRINTABLE) {
+//            System.out.println("Number of cipher blocks: " + ret.length);
+//        }
 
         return ret;
     }
@@ -330,11 +330,13 @@ public class AES implements Printable {
             c = modified.charAt(i);
             difference = i + (offset + 1) * buffer;
             temp = LANGUAGE.indexOf(c) - difference;
-            
-            if(temp >= 0) {
+
+            if(temp >= LANGUAGE.length()) {
+                // what to do here? but so far have not encounter yet
+            }
+            else if(temp >= 0) {
                 newPosition = temp;
             }
-            // temp < 0
             else {
                 difference -= LANGUAGE.indexOf(c);  // break here after "ion"
                 if(LANGUAGE.length() - difference >= 0) {

@@ -55,7 +55,7 @@ public class Client extends Peer {
 
             while (!stopCommunication) {
 
-                printKeys();
+//                printKeys();
 
                 // end if detect intruder
                 if (isIntruderDetected()) {

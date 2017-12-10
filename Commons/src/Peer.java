@@ -181,6 +181,11 @@ public abstract class Peer {
     }
 
 
+    /***
+     * method: printKeys
+     *
+     * display all keys to the screen
+     */
     protected void printKeys() {
         System.out.println("\n<!--");
         System.out.println("   MasterKey : " + masterKey);
