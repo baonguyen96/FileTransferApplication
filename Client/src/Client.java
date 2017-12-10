@@ -11,6 +11,7 @@ import java.security.cert.X509Certificate;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Date;
 import java.util.Scanner;
+import java.util.Arrays;
 
 
 public class Client extends Peer {
@@ -20,7 +21,7 @@ public class Client extends Peer {
     private boolean hasSentKey = false;
     private final String CERTIFICATION = "CA-certificate.crt";
     private PublicKey serverPublicKey = null;
-
+	private byte[] Mac = null;
 
     protected Client() {
         super(CLIENT);
@@ -417,8 +418,10 @@ public class Client extends Peer {
         String fileNameFormattedPath = fileName.replace("\\", "\\\\");
         File uploadedFile = new File(fileNameFormattedPath);
         byte[] byteArray = new byte[(int) uploadedFile.length()];
+		byte[] byteArray2= new byte[byteArray.length+20+7];
         FileInputStream fileInputStream = null;
         PrintWriter printWriter = new PrintWriter(outputStream, true);
+		byte[] temp=new byte[signatureKey.length()+byteArray.length+7];
 
         try {
             fileInputStream = new FileInputStream(uploadedFile);
@@ -434,16 +437,21 @@ public class Client extends Peer {
 
             bufferedInputStream.read(byteArray, 0, byteArray.length);
             byteArray = Message.appendMessageSequence(++sequenceNumber, byteArray);
+
+            try {
+                byteArray = AES.encrypt(byteArray, encryptionKey);
+				System.arraycopy(signatureKey.getBytes(),0,temp,0,signatureKey.length());
+				System.arraycopy(byteArray,0,temp,signatureKey.length(),byteArray.length);
+				Mac=AES.sha1(new String(temp));
+				System.arraycopy(Mac,0,byteArray2,0,Mac.length);
+				System.arraycopy(byteArray,0,byteArray2,20,byteArray.length);
+            }
+            catch (Exception e) {
+                throw new RuntimeException("Failed to encrypt file", e);
+            }
             byteArray = AES.encrypt(byteArray, encryptionKey);
 
-//            try {
-//                byteArray = AES.encrypt(byteArray, encryptionKey);
-//            }
-//            catch (Exception e) {
-//                throw new RuntimeException("Failed to create Pi Face Device", e);
-//            }
-
-            bufferedOutputStream.write(byteArray, 0, byteArray.length);
+            bufferedOutputStream.write(byteArray2, 0, byteArray2.length);
             bufferedOutputStream.flush();
             bufferedOutputStream.close();
 
