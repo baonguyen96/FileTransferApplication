@@ -19,7 +19,6 @@ public class Server extends Peer {
     private boolean hasReceivedKeys = false;
     private String clientId = null;
     private boolean detectsAttackOnAuthentication = false;
-	private byte[] Mac = new byte[20];
 
 
     protected Server() {
@@ -165,8 +164,6 @@ public class Server extends Peer {
 
         receivedCommand = receivedInput.nextLine();
         receivedCommand = AES.decrypt(receivedCommand);
-		System.out.println("success,hahaha");
-       // receivedCommand = AES.decrypt(receivedCommand, encryptionKey);
 
         // errors
         if (!Message.validateMessageSequenceNumber(++sequenceNumber, receivedCommand)) {
@@ -338,19 +335,20 @@ public class Server extends Peer {
         }
 
         byte[] byteArray = byteArrayOutputStream.toByteArray();
-		byte[] byteArray2=new byte[byteArray.length-20+signatureKey.length()];
-		byte[] byteArray3=new byte[byteArray.length-20];
+        byte[] byteArray2 = new byte[byteArray.length - 20 + signatureKey.length()];
+        byte[] byteArray3 = new byte[byteArray.length - 20];
         try {
-			System.arraycopy(byteArray,0,Mac,0,20);
-			System.arraycopy(signatureKey.getBytes(),0,byteArray2,0,signatureKey.length());
-			System.arraycopy(byteArray,20,byteArray2,signatureKey.length(),byteArray.length-20);
-			System.arraycopy(byteArray,20,byteArray3,0,byteArray.length-20);
-			if(Arrays.equals(Mac, AES.sha1(new String(byteArray2)))){
-				byteArray3 = AES.decrypt(byteArray3, encryptionKey);
-				System.out.println("The MAC value is true");
-			}else{
-				System.out.println("The MAC value is not true");
-			}
+            System.arraycopy(byteArray, 0, mac, 0, 20);
+            System.arraycopy(signatureKey.getBytes(), 0, byteArray2, 0, signatureKey.length());
+            System.arraycopy(byteArray, 20, byteArray2, signatureKey.length(), byteArray.length - 20);
+            System.arraycopy(byteArray, 20, byteArray3, 0, byteArray.length - 20);
+            if (Arrays.equals(mac, AES.sha1(new String(byteArray2)))) {
+                byteArray3 = AES.decrypt(byteArray3, encryptionKey);
+                System.out.println(">> Successfully verify MAC value");
+            }
+            else {
+                System.out.println(">> Oops! Something went wrong. Cannot verify MAC value");
+            }
         }
         catch (Exception e) {
             throw new RuntimeException("Failed to create Pi Face Device", e);
@@ -394,10 +392,12 @@ public class Server extends Peer {
             bufferedInputStream = new BufferedInputStream(fileInputStream);
 
             // confirm
-            printWriter.println(Message.appendMessageSequence(++sequenceNumber, "Sending certificate"));
+            String command = Message.appendMessageSequence(++sequenceNumber, "Sending certificate");
+            command = AES.encrypt(command);
+            printWriter.println(command);
             printWriter.flush();
 
-            // file transfer
+            // send unencrypted certificate, how to change it?
             bufferedInputStream.read(byteArray, 0, byteArray.length);
             byteArray = Message.appendMessageSequence(++sequenceNumber, byteArray);
 
@@ -407,7 +407,7 @@ public class Server extends Peer {
              * when displaying this message here, but for limited time that we have, this works.
              * We will try to clean up this later.
              */
-            if(detectsAttackOnAuthentication) {
+            if (detectsAttackOnAuthentication) {
                 System.out.println(SMALL_DIV);
                 System.out.println("Warning: authentication problem. Reset connection.");
                 System.out.println(SMALL_DIV);
@@ -419,7 +419,9 @@ public class Server extends Peer {
             bufferedOutputStream.close();
         }
         catch (FileNotFoundException e) {
-            printWriter.println(Message.appendMessageSequence(++sequenceNumber, "error"));
+            String message = Message.appendMessageSequence(++sequenceNumber, "error");
+            message = AES.encrypt(message);
+            printWriter.println(message);
             printWriter.flush();
             printWriter.close();
         }
@@ -440,15 +442,15 @@ public class Server extends Peer {
         final boolean AUTHENTICATE_SUCCESS = true;
         final boolean AUTHENTICATE_FAILURE = false;
         boolean authenticateSuccess = false;
-        OutputStream outputStream = clientSocket.getOutputStream();;
+        OutputStream outputStream = clientSocket.getOutputStream();
         PrintWriter printWriter = new PrintWriter(outputStream, true);
         InputStream inputStream = clientSocket.getInputStream();
         Scanner receivedInput = new Scanner(new InputStreamReader(inputStream));
         String clientMessage = null;
 
         // DDoS -> reset everything + set flag to detect attack
-        if(!receivedInput.hasNextLine()) {
-            if(hasSentCertificate && !hasReceivedKeys) {
+        if (!receivedInput.hasNextLine()) {
+            if (hasSentCertificate && !hasReceivedKeys) {
                 detectsAttackOnAuthentication = true;
                 hasSentCertificate = false;
                 masterKey = encryptionKey = signatureKey = null;
@@ -458,10 +460,12 @@ public class Server extends Peer {
         }
         else {
             clientMessage = receivedInput.nextLine();
+            clientMessage = AES.decrypt(clientMessage);
         }
 
         // first time connect -> certificate request + initial sequence number
         if (!hasSentCertificate) {
+
             if (clientMessage.matches("\\d+ \\| Request certificate")) {
                 sequenceNumber = Integer.parseInt(clientMessage.split(DELIMITER)[0]);
                 sendCertificate();

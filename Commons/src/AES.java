@@ -242,7 +242,7 @@ public class AES implements Printable {
      * @param message: the message to be processed
      * @return the resulting message
      */
-    private static byte[] sha1(String message) {
+    public static byte[] sha1(String message) {
         byte[] sha1Encode = null;
 
         try {

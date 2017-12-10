@@ -24,6 +24,7 @@ public abstract class Peer {
     protected final String SMALL_DIV = "\n---------------------\n";
     protected static final String SERVER = "Server";
     protected static final String CLIENT = "Client";
+    protected byte[] mac = new byte[20];
 
 
     public Peer(String module) {
