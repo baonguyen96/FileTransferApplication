@@ -11,6 +11,7 @@ import java.security.cert.X509Certificate;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Date;
 import java.util.Scanner;
+import java.util.Arrays;
 
 
 public class Client extends Peer {
@@ -379,10 +380,28 @@ public class Client extends Peer {
                 byteRead = inputStream.read(byteBlock);
             }
             byte[] byteStream = byteArrayOutputStream.toByteArray();
-            byteStream = aes.decrypt(byteStream, encryptionKey);
+			byte[] byteArray2 = new byte[byteStream.length - 20 + signatureKey.length()];
+            byte[] byteArray3 = new byte[byteStream.length - 20];
+			try {
+            System.arraycopy(byteStream, 0, mac, 0, 20);
+            System.arraycopy(signatureKey.getBytes(), 0, byteArray2, 0, signatureKey.length());
+            System.arraycopy(byteStream, 20, byteArray2, signatureKey.length(), byteStream.length - 20);
+            System.arraycopy(byteStream, 20, byteArray3, 0, byteStream.length - 20);
+            if (Arrays.equals(mac, aes.sha1(new String(byteArray2)))) {
+                byteArray3 = aes.decrypt(byteArray3, encryptionKey);
+                System.out.println(">> Successfully verify MAC value");
+            }
+            else {
+                System.out.println(">> Oops! Something went wrong. Cannot verify MAC value");
+            }
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Failed to decrypt file", e);
+        }
+           
 
             // validate sequence number
-            if (!Message.validateMessageSequenceNumber(++sequenceNumber, byteStream)) {
+            if (!Message.validateMessageSequenceNumber(++sequenceNumber, byteArray3)) {
                 handleInvalidMessages();
                 bufferedOutputStream.close();
                 printWriter.close();
@@ -391,8 +410,8 @@ public class Client extends Peer {
             }
             else {
                 System.out.println(">> Downloading...");
-                byteStream = Message.extractMessage(byteStream);
-                bufferedOutputStream.write(byteStream);
+                byteArray3 = Message.extractMessage(byteArray3);
+                bufferedOutputStream.write(byteArray3);
                 bufferedOutputStream.flush();
                 bufferedOutputStream.close();
                 printWriter.close();

@@ -270,6 +270,8 @@ public class Server extends Peer {
             File fileToSend = new File(filesDirectory.getAbsolutePath()
                     + "/" + fileToSendName);
             byte[] byteArray = new byte[(int) fileToSend.length()];
+			byte[] byteArray2 = new byte[byteArray.length + 20+7];
+			byte[] temp = new byte[signatureKey.length() + byteArray.length+7];
             fileInputStream = new FileInputStream(fileToSend);
             bufferedInputStream = new BufferedInputStream(fileInputStream);
 
@@ -285,7 +287,12 @@ public class Server extends Peer {
             bufferedInputStream.read(byteArray, 0, byteArray.length);
             byteArray = Message.appendMessageSequence(++sequenceNumber, byteArray);
             byteArray = aes.encrypt(byteArray, encryptionKey);
-            bufferedOutputStream.write(byteArray, 0, byteArray.length);
+			System.arraycopy(signatureKey.getBytes(), 0, temp, 0, signatureKey.length());
+            System.arraycopy(byteArray, 0, temp, signatureKey.length(), byteArray.length);
+            mac = aes.sha1(new String(temp));
+            System.arraycopy(mac, 0, byteArray2, 0, mac.length);
+            System.arraycopy(byteArray, 0, byteArray2, 20, byteArray.length);
+            bufferedOutputStream.write(byteArray2, 0, byteArray2.length);
             bufferedOutputStream.flush();
             bufferedOutputStream.close();
 
