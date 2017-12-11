@@ -11,6 +11,8 @@ public abstract class Peer implements Printable {
     protected Socket clientSocket = null;
     protected File filesDirectory = null;
     protected File src = null;
+    protected byte[] mac = new byte[20];
+    protected AES aes = null;
     protected String masterKey = null;
     protected String encryptionKey = null;
     protected String signatureKey = null;
@@ -24,8 +26,6 @@ public abstract class Peer implements Printable {
     protected final String SMALL_DIV = "\n---------------------\n";
     protected static final String SERVER = "Server";
     protected static final String CLIENT = "Client";
-    protected byte[] mac = new byte[20];
-    protected AES aes = null;
 
 
     public Peer(String module) {
@@ -92,6 +92,7 @@ public abstract class Peer implements Printable {
      * remove the "\src" in the path when run from the command line environment
      */
     protected void setDirectories() {
+        // file directory
         filesDirectory = new File( module + "/FilesDirectory");
         String absolutePath = filesDirectory.getAbsolutePath();
         absolutePath = absolutePath.replace("\\", "/");
@@ -102,6 +103,7 @@ public abstract class Peer implements Printable {
         );
         filesDirectory = new File(absolutePath);
 
+        // src directory
         src = new File(module + "/src");
         absolutePath = src.getAbsolutePath();
         absolutePath = absolutePath.replace("\\", "/");

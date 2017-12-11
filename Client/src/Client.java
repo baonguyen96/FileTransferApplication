@@ -602,14 +602,14 @@ public class Client extends Peer {
                 aes = new AES(language);
                 String encryptedLanguage = Message.appendMessageSequence(sequenceNumber, language);
                 encryptedLanguage = publicEncrypt(encryptedLanguage, serverPublicKey);
-                String eId = Message.appendMessageSequence(++sequenceNumber, Long.toString(id));
-                eId = aes.encrypt(eId);
+                String encryptedId = Message.appendMessageSequence(++sequenceNumber, Long.toString(id));
+                encryptedId = aes.encrypt(encryptedId);
                 masterKey = aes.getRandomString(16);
                 String encryptedMasterKey = Message.appendMessageSequence(++sequenceNumber, masterKey);
                 encryptedMasterKey = aes.encrypt(encryptedMasterKey);
 
                 printWriter.println(encryptedLanguage);
-                printWriter.println(eId);
+                printWriter.println(encryptedId);
                 printWriter.println(encryptedMasterKey);
 
                 encryptionKey = aes.increaseKey(masterKey, 1);
@@ -643,11 +643,12 @@ public class Client extends Peer {
             encryptionKey = aes.increaseKey(encryptionKey, 2);
             signatureKey = aes.increaseKey(signatureKey, 2);
 
-            String message = Message.appendMessageSequence(++sequenceNumber, Long.toString(id));
-            message = aes.encrypt(message);
-            printWriter.println(message);
+            String encryptedId = Message.appendMessageSequence(++sequenceNumber, Long.toString(id));
+            encryptedId = aes.encrypt(encryptedId);
+            printWriter.println(encryptedId);
             printWriter.flush();
 
+            // lost message
             if (!serverInput.hasNextLine()) {
                 return AUTHENTICATE_FAILURE;
             }
@@ -719,11 +720,11 @@ public class Client extends Peer {
             caPublicKey = stringToPublicKey(publicKey);
             cert.verify(caPublicKey);
             serverPublicKey = cert.getPublicKey();
-//            System.out.println("The Certificate is successfully verified.");
+//            System.out.println(">> The Certificate is successfully verified.");
         }
         catch (Exception e) {
             verifySuccess = false;
-//            System.out.println("The Certificate is not verified.");
+//            System.out.println(">> The Certificate is not verified.");
             e.printStackTrace();
         }
         finally {
@@ -731,7 +732,7 @@ public class Client extends Peer {
                 in.close();
             }
             catch (Exception e) {
-                System.out.println("Cannot close the Certificate.");
+                System.out.println(">> Cannot close the Certificate.");
             }
         }
 

@@ -1,12 +1,12 @@
 public class Main {
     public static void main(String[] args) {
-        testByte();
+        testAES();
     }
 
 
     private static void testAES() {
-        String key = "C:\\Users\\Bao\\Desktop\\Codes\\Java\\CS6349\\FileTransferApplication\\Assets\\Supplementals\\Authentication Protocol.txt";
-        String language = "gX.59z\\CbSFReQn:OZ\"GKlMoqPTBxVp1y4DH3N,|vsa78YEUmA6wJdti rLjhIW2cu0fk";
+        String key = "514 | stay";
+        String language = AES.generateLanguage();
         AES aes = new AES(language);
 
         System.out.println(key);
@@ -15,13 +15,13 @@ public class Main {
         String keyMod1 = aes.encrypt(key);
         System.out.println(keyMod1);
 
-        String keyMod2 = aes.increaseKey(key, 2);
+        String keyMod2 = aes.encrypt(key);
         System.out.println(keyMod2);
 
         String keyOrg1 = aes.decrypt(keyMod1);
         System.out.println(keyOrg1);
 
-        String keyOrg2 = aes.decreaseKey(keyMod2, 2);
+        String keyOrg2 = aes.decrypt(keyMod2);
         System.out.println(keyOrg2);
     }
 

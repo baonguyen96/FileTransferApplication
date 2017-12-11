@@ -2,6 +2,7 @@ import javax.crypto.ShortBufferException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
@@ -12,10 +13,6 @@ import static java.util.Arrays.copyOfRange;
 
 
 public class AES {
-    private final String DEFAULT_LANGUAGE = "gX.59z\\CbSFReQn:OZ\"GKlMoqPTBxVp1y4DH3N,|vsa78YEUmA6wJdti rLjhIW2cu0fk";
-    private final boolean IS_PRINTABLE = false;
-    private String language = null;
-    private byte[] iv = new byte[16];
     /*
      * different from Printable interface
      * IS_PRINTABLE == true:
@@ -26,13 +23,19 @@ public class AES {
      *      This is what user should see, as viewing these technical details
      *      is only meant for demonstration and debugging
      */
+    private final boolean IS_PRINTABLE = true;
+    private static final String DEFAULT_LANGUAGE = "gX.59z\\CbSFReQn:OZ\"GKlMoqPTBxVp1y4DH3N,|vsa78YEUmA6wJdti rLjhIW2cu0fk";
+    private static int encryptionOffset = 1;
+    private static int decryptionOffset = 1;
+    private String language = null;
+    private byte[] iv = new byte[16];
 
 
     /***
-     * create new AES
+     * create new AES with default language
      */
     public AES() {
-        this(generateLanguage());
+        this(DEFAULT_LANGUAGE);
     }
 
 
@@ -71,9 +74,29 @@ public class AES {
      * @param language: string
      */
     private void setLanguage(String language) {
-        this.language = (language == null ||
-                language.length() < DEFAULT_LANGUAGE.length())
-                ? DEFAULT_LANGUAGE : language;
+        this.language = isValidLanguage(language) ? language : DEFAULT_LANGUAGE;
+    }
+
+
+    /***
+     * method: isValidLanguage
+     *
+     * validate the parametized language against the language rule
+     *
+     * @see #generateLanguage() for rules
+     *
+     * @param language: string to check
+     *
+     * @return true if valid, false otherwise
+     */
+    private boolean isValidLanguage(String language) {
+        char[] languageAsChars = language.toCharArray();
+        char[] defaultLanguageAsChars = DEFAULT_LANGUAGE.toCharArray();
+
+        Arrays.sort(languageAsChars);
+        Arrays.sort(defaultLanguageAsChars);
+
+        return Arrays.equals(languageAsChars, defaultLanguageAsChars);
     }
 
 
@@ -174,7 +197,7 @@ public class AES {
 
         if(IS_PRINTABLE) {
             display(message, "Encrypt from");
-            display(f_encrypted, "Encrypt to");
+            display(f_encrypted, "Encrypt to  ");
         }
 
         return f_encrypted;
@@ -190,7 +213,7 @@ public class AES {
      * @return encrypted string
      */
     public String encrypt(String message) {
-        return increaseKey(message, 1);
+        return increaseKey(message, encryptionOffset++);
     }
 
 
@@ -235,7 +258,7 @@ public class AES {
 
         if(IS_PRINTABLE) {
             display(message, "Decrypt from");
-            display(f_decrypted, "Decrypt to");
+            display(f_decrypted, "Decrypt to  ");
         }
 
         return f_decrypted;
@@ -252,7 +275,7 @@ public class AES {
      * @return decrypted string
      */
     public String decrypt(String message) {
-        return decreaseKey(message, 1);
+        return decreaseKey(message, decryptionOffset++);
     }
 
 
@@ -415,6 +438,8 @@ public class AES {
         char c = 0;
         int difference = 0, newPosition = 0, buffer = language.length() / 5;
 
+        offset %= 10;
+
         for (int i = 0; i < original.length(); i++) {
             c = original.charAt(i);
             difference = i + (offset + 1) * buffer;
@@ -425,7 +450,7 @@ public class AES {
 
         if(IS_PRINTABLE) {
             display(original, "Encrypt from");
-            display(modified.toString(), "Encrypt to");
+            display(modified.toString(), "Encrypt to  ");
         }
 
         return modified.toString();
@@ -451,6 +476,8 @@ public class AES {
         StringBuilder original = new StringBuilder();
         char c = 0;
         int difference = 0, newPosition = 0, buffer = language.length() / 5, temp = 0;
+
+        offset %= 10;
 
         for (int i = 0; i < modified.length(); i++) {
             c = modified.charAt(i);
@@ -489,7 +516,7 @@ public class AES {
 
         if(IS_PRINTABLE) {
             display(modified, "Decrypt from");
-            display(original.toString(), "Decrypt to");
+            display(original.toString(), "Decrypt to  ");
         }
 
         return original.toString();
