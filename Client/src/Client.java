@@ -234,7 +234,7 @@ public class Client extends Peer {
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
 
         command = Message.appendMessageSequence(++sequenceNumber, command);
-        command = AES.encrypt(command);
+        command = aes.encrypt(command);
 
         printWriter.println(command);
         printWriter.flush();
@@ -257,7 +257,7 @@ public class Client extends Peer {
         String messageReceived = "";
 
         command = Message.appendMessageSequence(++sequenceNumber, command);
-        command = AES.encrypt(command);
+        command = aes.encrypt(command);
         printWriter.println(command);
         printWriter.flush();
 
@@ -268,7 +268,7 @@ public class Client extends Peer {
         }
 
         messageReceived = serverInput.nextLine();
-        messageReceived = AES.decrypt(messageReceived);
+        messageReceived = aes.decrypt(messageReceived);
 
         if (!Message.validateMessageSequenceNumber(++sequenceNumber, messageReceived)) {
             handleInvalidMessages();
@@ -316,7 +316,7 @@ public class Client extends Peer {
 
         // keep connection alive
         String message = Message.appendMessageSequence(++sequenceNumber, "stay");
-        message = AES.encrypt(message);
+        message = aes.encrypt(message);
         printWriter.println(message);
         printWriter.flush();
         printWriter.close();
@@ -345,7 +345,7 @@ public class Client extends Peer {
         String fileToDownloadName = commandComponents[1];
 
         command = Message.appendMessageSequence(++sequenceNumber, command);
-        command = AES.encrypt(command);
+        command = aes.encrypt(command);
         printWriter.println(command);
         printWriter.flush();
 
@@ -356,7 +356,7 @@ public class Client extends Peer {
 
         // confirmation message
         messageReceived = serverInput.nextLine();
-        messageReceived = AES.decrypt(messageReceived);
+        messageReceived = aes.decrypt(messageReceived);
 
         // errors on confirmation
         if (!Message.validateMessageSequenceNumber(++sequenceNumber, messageReceived)) {
@@ -379,7 +379,7 @@ public class Client extends Peer {
                 byteRead = inputStream.read(byteBlock);
             }
             byte[] byteStream = byteArrayOutputStream.toByteArray();
-            byteStream = AES.decrypt(byteStream, encryptionKey);
+            byteStream = aes.decrypt(byteStream, encryptionKey);
 
             // validate sequence number
             if (!Message.validateMessageSequenceNumber(++sequenceNumber, byteStream)) {
@@ -431,7 +431,7 @@ public class Client extends Peer {
             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
 
             command = Message.appendMessageSequence(++sequenceNumber, command);
-            command = AES.encrypt(command);
+            command = aes.encrypt(command);
             printWriter.println(command);
             printWriter.flush();
 
@@ -441,10 +441,10 @@ public class Client extends Peer {
             byteArray = Message.appendMessageSequence(++sequenceNumber, byteArray);
 
             try {
-                byteArray = AES.encrypt(byteArray, encryptionKey);
+                byteArray = aes.encrypt(byteArray, encryptionKey);
                 System.arraycopy(signatureKey.getBytes(), 0, temp, 0, signatureKey.length());
                 System.arraycopy(byteArray, 0, temp, signatureKey.length(), byteArray.length);
-                mac = AES.sha1(new String(temp));
+                mac = aes.sha1(new String(temp));
                 System.arraycopy(mac, 0, byteArray2, 0, mac.length);
                 System.arraycopy(byteArray, 0, byteArray2, 20, byteArray.length);
             }
@@ -464,7 +464,7 @@ public class Client extends Peer {
 
             // keep connection alive
             String message = Message.appendMessageSequence(++sequenceNumber, "stay");
-            message = AES.encrypt(message);
+            message = aes.encrypt(message);
             printWriter.println(message);
             printWriter.flush();
             printWriter.close();
@@ -541,7 +541,7 @@ public class Client extends Peer {
 
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
         String message = Message.appendMessageSequence(++sequenceNumber, "stay");
-        message = AES.encrypt(message);
+        message = aes.encrypt(message);
         printWriter.println(message);
         printWriter.flush();
         printWriter.close();
@@ -594,26 +594,26 @@ public class Client extends Peer {
         }
         else if (!hasSentKey) {
             try {
-                /* encrypt language using server's public key
+                /*
+                 * encrypt language using server's public key
                  * then encrypt master key and ID using newly set AES
                  */
-                // can try with "2xJ|IY84pWaZVt9.ez0H3ncw,EuGOhQP7CivA\"sdRDq:BrlUgFjo 6k1NM5XbfSLK\\yTm"
                 String language = AES.generateLanguage();
-                AES.setLanguage(language);
+                aes = new AES(language);
                 String encryptedLanguage = Message.appendMessageSequence(sequenceNumber, language);
                 encryptedLanguage = publicEncrypt(encryptedLanguage, serverPublicKey);
                 String eId = Message.appendMessageSequence(++sequenceNumber, Long.toString(id));
-                eId = AES.encrypt(eId);
-                masterKey = AES.getRandomString(16);
+                eId = aes.encrypt(eId);
+                masterKey = aes.getRandomString(16);
                 String encryptedMasterKey = Message.appendMessageSequence(++sequenceNumber, masterKey);
-                encryptedMasterKey = AES.encrypt(encryptedMasterKey);
+                encryptedMasterKey = aes.encrypt(encryptedMasterKey);
 
                 printWriter.println(encryptedLanguage);
                 printWriter.println(eId);
                 printWriter.println(encryptedMasterKey);
 
-                encryptionKey = AES.increaseKey(masterKey, 1);
-                signatureKey = AES.increaseKey(masterKey, 2);
+                encryptionKey = aes.increaseKey(masterKey, 1);
+                signatureKey = aes.increaseKey(masterKey, 2);
             }
             catch (Exception e) {
                 throw new RuntimeException("Failed to encrypt the key", e);
@@ -624,7 +624,7 @@ public class Client extends Peer {
                 return AUTHENTICATE_FAILURE;
             }
             serverResponse = serverInput.nextLine();
-            serverResponse = AES.decrypt(serverResponse);
+            serverResponse = aes.decrypt(serverResponse);
 
             if (!Message.validateMessageSequenceNumber(++sequenceNumber, serverResponse)) {
                 handleInvalidMessages();
@@ -640,11 +640,11 @@ public class Client extends Peer {
         // has received certificate and has sent key
         else {
             // update keys
-            encryptionKey = AES.increaseKey(encryptionKey, 2);
-            signatureKey = AES.increaseKey(signatureKey, 2);
+            encryptionKey = aes.increaseKey(encryptionKey, 2);
+            signatureKey = aes.increaseKey(signatureKey, 2);
 
             String message = Message.appendMessageSequence(++sequenceNumber, Long.toString(id));
-            message = AES.encrypt(message);
+            message = aes.encrypt(message);
             printWriter.println(message);
             printWriter.flush();
 
@@ -659,7 +659,7 @@ public class Client extends Peer {
                 return AUTHENTICATE_FAILURE;
             }
             else {
-                serverResponse = AES.decrypt(serverResponse);
+                serverResponse = aes.decrypt(serverResponse);
             }
 
             // more errors

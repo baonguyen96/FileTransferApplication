@@ -42,7 +42,7 @@ public class FakeServer extends Server implements Resynchronizable {
         }
 
         receivedCommand = receivedInput.nextLine();
-        receivedCommand = AES.decrypt(receivedCommand);
+        receivedCommand = aes.decrypt(receivedCommand);
 
         // errors
         if(!Message.validateMessageSequenceNumber(++sequenceNumber, receivedCommand)) {

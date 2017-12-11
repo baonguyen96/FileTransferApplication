@@ -163,7 +163,7 @@ public class Server extends Peer {
         }
 
         receivedCommand = receivedInput.nextLine();
-        receivedCommand = AES.decrypt(receivedCommand);
+        receivedCommand = aes.decrypt(receivedCommand);
 
         // errors
         if (!Message.validateMessageSequenceNumber(++sequenceNumber, receivedCommand)) {
@@ -242,7 +242,7 @@ public class Server extends Peer {
         System.out.println();
 
         String message = Message.appendMessageSequence(++sequenceNumber, messageToSend.toString());
-        message = AES.encrypt(message);
+        message = aes.encrypt(message);
         printWriter.println(message);
         printWriter.flush();
         printWriter.close();
@@ -277,14 +277,14 @@ public class Server extends Peer {
             String confirmationMessage = String.format("Sending \"%s\" ...", fileToSendName);
             System.out.println(">> " + confirmationMessage);
             confirmationMessage = Message.appendMessageSequence(++sequenceNumber, confirmationMessage);
-            confirmationMessage = AES.encrypt(confirmationMessage);
+            confirmationMessage = aes.encrypt(confirmationMessage);
             printWriter.println(confirmationMessage);
             printWriter.flush();
 
             // file transfer
             bufferedInputStream.read(byteArray, 0, byteArray.length);
             byteArray = Message.appendMessageSequence(++sequenceNumber, byteArray);
-            byteArray = AES.encrypt(byteArray, encryptionKey);
+            byteArray = aes.encrypt(byteArray, encryptionKey);
             bufferedOutputStream.write(byteArray, 0, byteArray.length);
             bufferedOutputStream.flush();
             bufferedOutputStream.close();
@@ -295,7 +295,7 @@ public class Server extends Peer {
             String error = "Error: requested file does not exist.";
             System.out.printf("[You]:    %s\n\n", error);
             error = Message.appendMessageSequence(++sequenceNumber, error);
-            error = AES.encrypt(error);
+            error = aes.encrypt(error);
             printWriter.println(error);
             printWriter.flush();
             printWriter.close();
@@ -342,8 +342,8 @@ public class Server extends Peer {
             System.arraycopy(signatureKey.getBytes(), 0, byteArray2, 0, signatureKey.length());
             System.arraycopy(byteArray, 20, byteArray2, signatureKey.length(), byteArray.length - 20);
             System.arraycopy(byteArray, 20, byteArray3, 0, byteArray.length - 20);
-            if (Arrays.equals(mac, AES.sha1(new String(byteArray2)))) {
-                byteArray3 = AES.decrypt(byteArray3, encryptionKey);
+            if (Arrays.equals(mac, aes.sha1(new String(byteArray2)))) {
+                byteArray3 = aes.decrypt(byteArray3, encryptionKey);
                 System.out.println(">> Successfully verify MAC value");
             }
             else {
@@ -488,14 +488,14 @@ public class Server extends Peer {
 
             // language
             String language = clientMessage.split(DELIMITER)[1];
-            AES.setLanguage(language);
+            aes = new AES(language);
 
             // id
             if(!receivedInput.hasNextLine()) {
                 return AUTHENTICATE_FAILURE;
             }
             clientMessage = receivedInput.nextLine();
-            clientMessage = AES.decrypt(clientMessage);
+            clientMessage = aes.decrypt(clientMessage);
 
             if (!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
                 handleInvalidMessages();
@@ -509,7 +509,7 @@ public class Server extends Peer {
                 return AUTHENTICATE_FAILURE;
             }
             clientMessage = receivedInput.nextLine();
-            clientMessage = AES.decrypt(clientMessage);
+            clientMessage = aes.decrypt(clientMessage);
 
             if (!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
                 handleInvalidMessages();
@@ -519,12 +519,12 @@ public class Server extends Peer {
             masterKey = clientMessage.split(DELIMITER)[1];
 
             // set encryption and signature key
-            encryptionKey = AES.increaseKey(masterKey, 1);
-            signatureKey = AES.increaseKey(masterKey, 2);
+            encryptionKey = aes.increaseKey(masterKey, 1);
+            signatureKey = aes.increaseKey(masterKey, 2);
 
             // send confirmation message
             String confirmation = Message.appendMessageSequence(++sequenceNumber, "ok");
-            confirmation = AES.encrypt(confirmation);
+            confirmation = aes.encrypt(confirmation);
             printWriter.println(confirmation);
             authenticateSuccess = AUTHENTICATE_SUCCESS;
             hasReceivedKeys = true;
@@ -532,10 +532,10 @@ public class Server extends Peer {
         // already send certificate and receive keys
         else {
             // update keys
-            encryptionKey = AES.increaseKey(encryptionKey, 2);
-            signatureKey = AES.increaseKey(signatureKey, 2);
+            encryptionKey = aes.increaseKey(encryptionKey, 2);
+            signatureKey = aes.increaseKey(signatureKey, 2);
 
-            clientMessage = AES.decrypt(clientMessage);
+            clientMessage = aes.decrypt(clientMessage);
 
             if (!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
                 handleInvalidMessages();
@@ -546,7 +546,7 @@ public class Server extends Peer {
             authenticateSuccess = id.equals(clientId);
             String confirmMessage = authenticateSuccess ? "ok" : "busy";
             confirmMessage = Message.appendMessageSequence(++sequenceNumber, confirmMessage);
-            confirmMessage = AES.encrypt(confirmMessage);
+            confirmMessage = aes.encrypt(confirmMessage);
             printWriter.println(confirmMessage);
             printWriter.flush();
         }

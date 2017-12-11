@@ -12,9 +12,10 @@ import static java.util.Arrays.copyOfRange;
 
 
 public class AES {
-    private static String language = null;
-    private static final byte[] IV = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6};
-    private static final boolean IS_PRINTABLE = true;
+    private final String DEFAULT_LANGUAGE = "gX.59z\\CbSFReQn:OZ\"GKlMoqPTBxVp1y4DH3N,|vsa78YEUmA6wJdti rLjhIW2cu0fk";
+    private final boolean IS_PRINTABLE = false;
+    private String language = null;
+    private byte[] iv = new byte[16];
     /*
      * different from Printable interface
      * IS_PRINTABLE == true:
@@ -28,8 +29,58 @@ public class AES {
 
 
     /***
+     * create new AES
+     */
+    public AES() {
+        this(generateLanguage());
+    }
+
+
+    /***
+     * create new AES with specified language
+     * and dynamically set the IV
+     *
+     * @param language: string of all possible characters
+     */
+    public AES(String language) {
+        setLanguage(language);
+        setIV();
+    }
+
+
+    /***
+     * method: setIV
+     *
+     * dynamically set the IV according to the value in the language
+     * language is valid (conforms to the language rule)
+     *
+     * @see #generateLanguage()
+     */
+    private void setIV() {
+        for(int i = 0; i < 16; i++) {
+            iv[i] = (byte) language.charAt(i);
+        }
+    }
+
+
+    /***
+     * method: setLanguage
+     *
+     * set this language to the parametized language
+     *
+     * @param language: string
+     */
+    private void setLanguage(String language) {
+        this.language = (language == null ||
+                language.length() < DEFAULT_LANGUAGE.length())
+                ? DEFAULT_LANGUAGE : language;
+    }
+
+
+    /***
      * method: generateLanguage
      *
+     * create a random language string
      * customizable combination of: {a-z} + {A-Z} + {0-9} + { |,.":\}
      *
      * @return a randomly generated language string
@@ -88,18 +139,6 @@ public class AES {
     }
 
 
-    /***
-     * method: setLanguage
-     *
-     * set the secrete language for poly-alphabetic AES cipher
-     *
-     * @param language: secret set of characters
-     */
-    public static void setLanguage(String language) {
-        AES.language = language;
-    }
-
-
     /**
      * Encrypt message given
      *
@@ -107,11 +146,7 @@ public class AES {
      * @param key     - Key for encryption
      * @return cipher text in a byte array
      */
-    public static byte[] encrypt(byte[] message, String key) {
-        if(IS_PRINTABLE) {
-            display(message, "Encrypt from");
-        }
-
+    public byte[] encrypt(byte[] message, String key) {
         byte[] originalKey = key.getBytes();
         byte[] f_encrypted = null;
         byte[][] pt = null, encrypted = null;   //Store plain text in block of 16 bytes
@@ -122,7 +157,7 @@ public class AES {
         encrypted = new byte[pt.length][20];
 
         System.arraycopy(originalKey, 0, first, 0, originalKey.length);
-        System.arraycopy(IV, 0, first, originalKey.length, IV.length);
+        System.arraycopy(iv, 0, first, originalKey.length, iv.length);
         String stringForSha1 = new String(first);
         encrypted[0] = xor(pt[0], sha1(stringForSha1));
 
@@ -138,6 +173,7 @@ public class AES {
         System.arraycopy(temp, 0, f_encrypted, 0, f_encrypted.length); //Truncate to original length of plain text
 
         if(IS_PRINTABLE) {
+            display(message, "Encrypt from");
             display(f_encrypted, "Encrypt to");
         }
 
@@ -153,7 +189,7 @@ public class AES {
      * @param message: string
      * @return encrypted string
      */
-    public static String encrypt(String message) {
+    public String encrypt(String message) {
         return increaseKey(message, 1);
     }
 
@@ -168,12 +204,8 @@ public class AES {
      *
      * @return the decrypted message in byte[]
      */
-    public static byte[] decrypt(byte[] message, String key) {
-        if(IS_PRINTABLE) {
-            display(message, "Decrypt from");
-        }
-
-        key = key.trim();
+    public byte[] decrypt(byte[] message, String key) {
+//        key = key.trim();
         byte[] f_decrypted = null;
         byte[][] ct, decrypted = null;
         byte[] first = new byte[32];
@@ -185,7 +217,7 @@ public class AES {
         decrypted = new byte[ct.length][20];
 
         System.arraycopy(decodedKey, 0, first, 0, decodedKey.length);
-        System.arraycopy(IV, 0, first, decodedKey.length, IV.length);
+        System.arraycopy(iv, 0, first, decodedKey.length, iv.length);
         String stringForSha1 = new String(first);
         decrypted[0] = xor(ct[0], sha1(stringForSha1));
 
@@ -202,6 +234,7 @@ public class AES {
         System.arraycopy(temp, 0, f_decrypted, 0, message.length);
 
         if(IS_PRINTABLE) {
+            display(message, "Decrypt from");
             display(f_decrypted, "Decrypt to");
         }
 
@@ -218,7 +251,7 @@ public class AES {
      * @param message: string
      * @return decrypted string
      */
-    public static String decrypt(String message) {
+    public String decrypt(String message) {
         return decreaseKey(message, 1);
     }
 
@@ -231,7 +264,7 @@ public class AES {
      *
      * @return a padded source byte[]
      */
-    private static byte[][] padBytes(byte[] source, int blockSize) {
+    private byte[][] padBytes(byte[] source, int blockSize) {
         byte[][] ret = new byte[(int) Math.ceil(source.length / (double) blockSize)][blockSize];
         int len = source.length % blockSize;
         int start = 0;
@@ -260,7 +293,7 @@ public class AES {
      *
      * @return 1D representation of arr
      */
-    private static byte[] flatten(byte[][] arr) {
+    private byte[] flatten(byte[][] arr) {
         List<Byte> list = new ArrayList<>();
         for (byte[] arr1 : arr) {
             for (byte anArr1 : arr1) {
@@ -283,7 +316,7 @@ public class AES {
      * @param array2: second array to XOR
      * @return XOR of the 2 arrays
      */
-    private static byte[] xor(byte[] array1, byte[] array2) {
+    private byte[] xor(byte[] array1, byte[] array2) {
         byte[] result = new byte[array1.length];
 
         for (int i = 0; i < array1.length; i++) {
@@ -306,8 +339,7 @@ public class AES {
      * @throws ShortBufferException if <code>in</code> is too small to hold
      *                              the padding bytes
      */
-    private static void padWithLen(byte[] in, int off, int len)
-            throws ShortBufferException {
+    private void padWithLen(byte[] in, int off, int len) throws ShortBufferException {
         if (in == null) {
             return;
         }
@@ -329,7 +361,7 @@ public class AES {
      * @param message: the message to be processed
      * @return the resulting message
      */
-    public static byte[] sha1(String message) {
+    public byte[] sha1(String message) {
         byte[] sha1Encode = null;
 
         try {
@@ -353,11 +385,7 @@ public class AES {
      * @param length: length of the random string to build
      * @return a random string
      */
-    public static String getRandomString(int length) {
-        if(language == null) {
-            throw new IllegalStateException("Language is not specified");
-        }
-
+    public String getRandomString(int length) {
         StringBuilder sb = new StringBuilder();
         int len = language.length();
         for (int i = 0; i < length; i++) {
@@ -382,11 +410,7 @@ public class AES {
      * @param offset: how far off the original key is the new key
      * @return the new key
      */
-    public static String increaseKey(String original, int offset) {
-        if(language == null) {
-            throw new IllegalStateException("Language is not specified");
-        }
-
+    public String increaseKey(String original, int offset) {
         StringBuilder modified = new StringBuilder();
         char c = 0;
         int difference = 0, newPosition = 0, buffer = language.length() / 5;
@@ -423,11 +447,7 @@ public class AES {
      * @param offset: how far off the original key is the new key
      * @return the original key
      */
-    public static String decreaseKey(String modified, int offset) {
-        if(language == null) {
-            throw new IllegalStateException("Language is not specified");
-        }
-
+    public String decreaseKey(String modified, int offset) {
         StringBuilder original = new StringBuilder();
         char c = 0;
         int difference = 0, newPosition = 0, buffer = language.length() / 5, temp = 0;
@@ -484,7 +504,7 @@ public class AES {
      * @param bytes: byte array
      * @param mode: encryption or decryption
      */
-    private static void display(byte[] bytes, String mode) {
+    private void display(byte[] bytes, String mode) {
         System.out.printf("AES: %s: ", mode);
         for(Byte b : bytes) {
             System.out.printf("%s ", b);
@@ -501,7 +521,7 @@ public class AES {
      * @param str: a string
      * @param mode: encryption or decryption
      */
-    private static void display(String str, String mode) {
+    private void display(String str, String mode) {
         System.out.printf("AES: %s: %s\n", mode, str);
     }
 }

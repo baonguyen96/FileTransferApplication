@@ -25,6 +25,7 @@ public abstract class Peer implements Printable {
     protected static final String SERVER = "Server";
     protected static final String CLIENT = "Client";
     protected byte[] mac = new byte[20];
+    protected AES aes = null;
 
 
     public Peer(String module) {
