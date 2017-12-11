@@ -14,7 +14,7 @@ import static java.util.Arrays.copyOfRange;
 public class AES {
     private static String language = null;
     private static final byte[] IV = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6};
-    private static final boolean IS_PRINTABLE = false;
+    private static final boolean IS_PRINTABLE = true;
     /*
      * different from Printable interface
      * IS_PRINTABLE == true:

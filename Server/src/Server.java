@@ -52,7 +52,7 @@ public class Server extends Peer {
             System.out.println("Waiting for connection...");
 
             ServerSocket serverSocket = new ServerSocket(1111);
-            serverSocket.setSoTimeout(60000);
+            serverSocket.setSoTimeout(120000);
 
             while (!stopCommunication) {
 
@@ -358,6 +358,7 @@ public class Server extends Peer {
             handleInvalidMessages();
             bufferedOutputStream.close();
             inputStream.close();
+            receivingFile.delete();
             System.out.printf(">> Oops! Something went wrong. Cannot save \"%s\"\n", uploadedFileName);
         }
         else {
@@ -473,9 +474,9 @@ public class Server extends Peer {
         else if (!hasReceivedKeys) {
             PrivateKey serverPrivateKey = null;
 
-            // language
+            // language + sequence number
             try {
-                serverPrivateKey = getPrivateKey(PRIVATE_KEY);
+                serverPrivateKey = stringToPrivateKey(PRIVATE_KEY);
                 clientMessage = privateDecrypt(clientMessage, serverPrivateKey);
             }
             catch (Exception e) {
@@ -555,14 +556,14 @@ public class Server extends Peer {
 
 
     /***
-     * method: getPrivateKey
+     * method: stringToPrivateKey
      *
      * Get Server's private key
      *
      * @param key: private key as String
      * @return private key object
      */
-    private static PrivateKey getPrivateKey(String key) throws Exception {
+    private static PrivateKey stringToPrivateKey(String key) throws Exception {
         byte[] keyBytes = java.util.Base64.getDecoder().decode(key);
         PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");

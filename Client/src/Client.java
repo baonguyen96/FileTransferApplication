@@ -384,6 +384,10 @@ public class Client extends Peer {
             // validate sequence number
             if (!Message.validateMessageSequenceNumber(++sequenceNumber, byteStream)) {
                 handleInvalidMessages();
+                bufferedOutputStream.close();
+                printWriter.close();
+                downloadedFile.delete();
+                System.out.printf(">> Oops! Something went wrong. Cannot save \"%s\"\n", commandComponents[1]);
             }
             else {
                 System.out.println(">> Downloading...");
