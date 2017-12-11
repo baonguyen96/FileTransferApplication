@@ -1,6 +1,19 @@
+import java.io.File;
+
+
 public class Main {
     public static void main(String[] args) {
-        testAES();
+        testByteArray();
+    }
+
+
+    private static void testByteArray() {
+        File file = new File("C:\\Users\\Bao\\Desktop\\Codes\\Java\\CS6349\\FileTransferApplication\\Assets\\Test Upload\\Notes1.txt");
+        byte[] byteArray1 = new byte[(int) file.length()];
+        byte[] byteArray2 = new byte[byteArray1.length + 20];
+
+        System.out.println("byteArray1.length = " + byteArray1.length);
+        System.out.println("byteArray2.length = " + byteArray2.length);
     }
 
 

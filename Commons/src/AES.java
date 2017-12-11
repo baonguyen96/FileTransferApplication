@@ -25,8 +25,8 @@ public class AES {
      */
     private final boolean IS_PRINTABLE = true;
     private static final String DEFAULT_LANGUAGE = "gX.59z\\CbSFReQn:OZ\"GKlMoqPTBxVp1y4DH3N,|vsa78YEUmA6wJdti rLjhIW2cu0fk";
-    private static int encryptionOffset = 1;
-    private static int decryptionOffset = 1;
+    private int encryptionOffset = 1;
+    private int decryptionOffset = 1;
     private String language = null;
     private byte[] iv = new byte[16];
 
