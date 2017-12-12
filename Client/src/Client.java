@@ -508,7 +508,9 @@ public class Client extends Peer {
         FileOutputStream fileOutputStream = null;
         BufferedOutputStream bufferedOutputStream = null;
 
-        printWriter.println("Request certificate");
+        String message = "Request certificate";
+        System.out.println(message.concat("........"));
+        printWriter.println(message);
         printWriter.flush();
 
         if (!serverInput.hasNextLine()) {

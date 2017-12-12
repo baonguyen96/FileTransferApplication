@@ -47,17 +47,19 @@ b. To run program in the command line environment:
         Open terminal and navigate to Common/src folder
         Type: javac *.java
         Navigate to Server/src folder
-        Type: javac -cp ..\..\Commons\src Server.java
+        Type: javac -cp ..\..\Commons\src *.java
         Type: java -cp ..\..\Commons\src:. Server
         Open another terminal and navigate to Client/src folder
-        Type: javac -cp ..\..\Commons\src Client.java
+        Type: javac -cp ..\..\Commons\src *.java
         Type: java -cp ..\..\Commons\src:. Client
     For Windows:
         Open CMD (NOT PowerShell) and navigate to Common/src folder
         Type: javac *.java
         Navigate to Server/src folder
-        Type: javac -cp ..\..\Commons\src Server.java
+        Type: javac -cp ..\..\Commons\src *.java
         Type: java -cp ..\..\Commons\src;. Server
         Open another CMD window and navigate to Client/src folder
-        Type: javac -cp ..\..\Commons\src Client.java
+        Type: javac -cp ..\..\Commons\src *.java
         Type: java -cp ..\..\Commons\src;. Client
+
+NOTE: FakeClient and FakeServer are for testing and demo only.
