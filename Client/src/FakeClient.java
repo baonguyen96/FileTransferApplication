@@ -37,6 +37,7 @@ public class FakeClient extends Client implements Resynchronizable {
         if(isAbleToMessUpSynchronization) {
             sequenceNumber--;
             isAbleToMessUpSynchronization = !IS_RESYNCHRONIZABLE;
+            aes.adjustOffset(-1);
         }
 
         if (commandComponents[0].equalsIgnoreCase("quit")) {

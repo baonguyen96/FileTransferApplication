@@ -64,6 +64,7 @@ public class FakeServer extends Server implements Resynchronizable {
         if(isAbleToMessUpSynchronization) {
             sequenceNumber--;
             isAbleToMessUpSynchronization = !IS_RESYNCHRONIZABLE;
+            aes.adjustOffset(-1);
         }
 
         // switch

@@ -126,6 +126,7 @@ public abstract class Peer implements Printable {
      * decrease the sequence number to rollback
      */
     protected void handleInvalidMessages() {
+        System.out.println("handle invalid message");
         totalInvalidMessagesReceived++;
         sequenceNumber--;
         aes.adjustOffset(-1);

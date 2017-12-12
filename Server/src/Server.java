@@ -394,22 +394,23 @@ public class Server extends Peer {
 
         try {
             String certificatePath = src.getAbsolutePath() + "/CA-certificate.crt";
+            String message = "Sending certificate";
             File fileToSend = new File(certificatePath);
             byte[] byteArray = new byte[(int) fileToSend.length()];
             fileInputStream = new FileInputStream(fileToSend);
             bufferedInputStream = new BufferedInputStream(fileInputStream);
 
             // confirm
-            printWriter.println("Sending certificate");
+            printWriter.println(message);
             printWriter.flush();
 
             bufferedInputStream.read(byteArray, 0, byteArray.length);
 
             /*
-             * Has to do a println here to flush the buffer if something is still left
+             * has to do a println here to flush the buffer if something is still left
              * from the SYN flood attack. It is not perfect to track the program
              * when displaying this message here, but for limited time that we have, this works.
-             * We will try to clean up this later.
+             * NOTE: to be improved
              */
             if (detectsAttackOnAuthentication) {
                 System.out.println(SMALL_DIV);
@@ -418,10 +419,17 @@ public class Server extends Peer {
                 detectsAttackOnAuthentication = false;
             }
 
-//            for(Byte b : byteArray) {
-//                System.out.printf("%s ", b);
-//            }
-//            System.out.println();
+            /*
+             * MAC (and maybe linux?) cannot read from the inputstream unless
+             * the sender print out the first 8 bytes of the buffer -> why?
+             */
+            System.out.print(message);
+            for(int i = 0; i < 8; i++) {
+                char c = (char) byteArray[i];
+                c = '.';
+                System.out.print(c);
+            }
+            System.out.println();
 
             bufferedOutputStream.write(byteArray, 0, byteArray.length);
             bufferedOutputStream.flush();

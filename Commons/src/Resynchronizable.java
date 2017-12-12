@@ -12,5 +12,5 @@
  */
 
 public interface Resynchronizable {
-    boolean IS_RESYNCHRONIZABLE = false;
+    boolean IS_RESYNCHRONIZABLE = true;
 }
