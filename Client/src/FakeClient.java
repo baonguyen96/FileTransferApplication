@@ -34,7 +34,7 @@ public class FakeClient extends Client implements Resynchronizable {
         final boolean CONTINUE_CONNECTION_AFTER_THIS = false;
 
         // isAbleToMessUpSynchronization is opposite of IS_RESYNCHRONIZABLE
-        if(isAbleToMessUpSynchronization) {
+        if (isAbleToMessUpSynchronization) {
             sequenceNumber--;
             isAbleToMessUpSynchronization = !IS_RESYNCHRONIZABLE;
             aes.adjustOffset(-1);
@@ -110,9 +110,10 @@ public class FakeClient extends Client implements Resynchronizable {
 
             return status;
         }
-        else {
-            // do not send anything -> keep the server waiting
-        }
+        /*
+         * suppose to send encrypted info here, but do not send anything
+         * -> keep the server waiting (DoS)
+         */
         return AUTHENTICATE_SUCCESS;
     }
 

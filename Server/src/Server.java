@@ -270,8 +270,8 @@ public class Server extends Peer {
             File fileToSend = new File(filesDirectory.getAbsolutePath()
                     + "/" + fileToSendName);
             byte[] byteArray = new byte[(int) fileToSend.length()];
-			byte[] byteArray2 = new byte[byteArray.length + 20 + 7];
-			byte[] temp = new byte[signatureKey.length() + byteArray.length + 7];
+            byte[] byteArray2 = new byte[byteArray.length + 20 + 7];
+            byte[] temp = new byte[signatureKey.length() + byteArray.length + 7];
             fileInputStream = new FileInputStream(fileToSend);
             bufferedInputStream = new BufferedInputStream(fileInputStream);
 
@@ -287,7 +287,7 @@ public class Server extends Peer {
             bufferedInputStream.read(byteArray, 0, byteArray.length);
             byteArray = Message.appendMessageSequence(++sequenceNumber, byteArray);
             byteArray = aes.encrypt(byteArray, encryptionKey);
-			System.arraycopy(signatureKey.getBytes(), 0, temp, 0, signatureKey.length());
+            System.arraycopy(signatureKey.getBytes(), 0, temp, 0, signatureKey.length());
             System.arraycopy(byteArray, 0, temp, signatureKey.length(), byteArray.length);
             mac = aes.sha1(new String(temp));
             System.arraycopy(mac, 0, byteArray2, 0, mac.length);
@@ -424,7 +424,7 @@ public class Server extends Peer {
              * the sender print out the first 8 bytes of the buffer -> why?
              */
             System.out.print(message);
-            for(int i = 0; i < 8; i++) {
+            for (int i = 0; i < 8; i++) {
                 char c = (char) byteArray[i];
                 c = '.';
                 System.out.print(c);
@@ -510,7 +510,7 @@ public class Server extends Peer {
             aes = new AES(language);
 
             // id
-            if(!receivedInput.hasNextLine()) {
+            if (!receivedInput.hasNextLine()) {
                 return AUTHENTICATE_FAILURE;
             }
             clientMessage = receivedInput.nextLine();
@@ -524,7 +524,7 @@ public class Server extends Peer {
             clientId = clientMessage.split(DELIMITER)[1];
 
             // master key
-            if(!receivedInput.hasNextLine()) {
+            if (!receivedInput.hasNextLine()) {
                 return AUTHENTICATE_FAILURE;
             }
             clientMessage = receivedInput.nextLine();

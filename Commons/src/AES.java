@@ -60,7 +60,7 @@ public class AES {
      * @see #generateLanguage()
      */
     private void setIV() {
-        for(int i = 0; i < 16; i++) {
+        for (int i = 0; i < 16; i++) {
             iv[i] = (byte) language.charAt(i);
         }
     }
@@ -112,17 +112,17 @@ public class AES {
         StringBuilder stringBuilder = new StringBuilder();
 
         // {a-z}
-        for(char c = 'a'; c <= 'z'; c++) {
+        for (char c = 'a'; c <= 'z'; c++) {
             stringBuilder.append(c);
         }
 
         // {A - Z}
-        for(char c = 'A'; c <= 'Z'; c++) {
+        for (char c = 'A'; c <= 'Z'; c++) {
             stringBuilder.append(c);
         }
 
         // {0 - 9}
-        for(char c = '0'; c <= '9'; c++) {
+        for (char c = '0'; c <= '9'; c++) {
             stringBuilder.append(c);
         }
 
@@ -209,7 +209,7 @@ public class AES {
         f_encrypted = new byte[message.length];
         System.arraycopy(temp, 0, f_encrypted, 0, f_encrypted.length); //Truncate to original length of plain text
 
-        if(IS_PRINTABLE) {
+        if (IS_PRINTABLE) {
             display(message, "Encrypt from");
             display(f_encrypted, "Encrypt to  ");
         }
@@ -270,7 +270,7 @@ public class AES {
         f_decrypted = new byte[message.length];
         System.arraycopy(temp, 0, f_decrypted, 0, message.length);
 
-        if(IS_PRINTABLE) {
+        if (IS_PRINTABLE) {
             display(message, "Decrypt from");
             display(f_decrypted, "Decrypt to  ");
         }
@@ -460,7 +460,7 @@ public class AES {
             modified.append(c);
         }
 
-        if(IS_PRINTABLE) {
+        if (IS_PRINTABLE) {
             display(original, "Encrypt from");
             display(modified.toString(), "Encrypt to  ");
         }
@@ -514,7 +514,7 @@ public class AES {
                     newPosition = language.length() - difference;
 
                     // wrap around
-                    while(newPosition < 0) {
+                    while (newPosition < 0) {
                         newPosition += language.length();
                     }
                 }
@@ -524,7 +524,7 @@ public class AES {
             original.append(c);
         }
 
-        if(IS_PRINTABLE) {
+        if (IS_PRINTABLE) {
             display(modified, "Decrypt from");
             display(original.toString(), "Decrypt to  ");
         }
@@ -543,7 +543,7 @@ public class AES {
      */
     private void display(byte[] bytes, String mode) {
         System.out.printf("AES: %s: ", mode);
-        for(Byte b : bytes) {
+        for (Byte b : bytes) {
             System.out.printf("%s ", b);
         }
         System.out.println();

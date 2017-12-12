@@ -48,7 +48,7 @@ public abstract class Peer implements Printable {
      * @return not initial connection
      */
     protected boolean notifyConnectionSuccess(boolean initialSession) {
-        if(!initialSession) {
+        if (!initialSession) {
             date = new Date();
             System.out.println("Connection established at " + dateFormat.format(date));
             System.out.println(SMALL_DIV);
@@ -74,7 +74,6 @@ public abstract class Peer implements Printable {
     }
 
 
-
     /***
      * method: isIntruderDetected
      *
@@ -96,7 +95,7 @@ public abstract class Peer implements Printable {
      */
     protected void setDirectories() {
         // file directory
-        filesDirectory = new File( module + "/FilesDirectory");
+        filesDirectory = new File(module + "/FilesDirectory");
         String absolutePath = filesDirectory.getAbsolutePath();
         absolutePath = absolutePath.replace("\\", "/");
         absolutePath = absolutePath.replace("/src", "");
@@ -118,12 +117,11 @@ public abstract class Peer implements Printable {
     }
 
 
-
     /***
      * method: handleInvalidMessages
      *
      * increase the total invalid messages received count
-     * decrease the sequence number to rollback
+     * decrease the sequence number and aes.offset to rollback
      */
     protected void handleInvalidMessages() {
         totalInvalidMessagesReceived++;
@@ -141,9 +139,9 @@ public abstract class Peer implements Printable {
      * @return key as string
      */
     protected String getKey(String keyFileName) {
-		
+
         File file = new File(keyFileName);
-        if(!file.exists()) {
+        if (!file.exists()) {
             String path = String.format("%s/src/%s", module, keyFileName);
             file = new File(path);
         }
@@ -151,7 +149,7 @@ public abstract class Peer implements Printable {
 
         try {
             Scanner scanner = new Scanner(file);
-            while(scanner.hasNextLine()) {
+            while (scanner.hasNextLine()) {
                 key.append(scanner.nextLine());
             }
         }
@@ -162,7 +160,6 @@ public abstract class Peer implements Printable {
 
         return key == null ? null : key.toString();
     }
-
 
 
     /***
@@ -178,10 +175,10 @@ public abstract class Peer implements Printable {
 
         System.out.printf("[%s]: ", module.equals(SERVER) ? CLIENT : SERVER);
 
-        for(int i = 1; i < messageTokens.length; i++) {
+        for (int i = 1; i < messageTokens.length; i++) {
             System.out.print(messageTokens[i]);
 
-            if(i != messageTokens.length - 1) {
+            if (i != messageTokens.length - 1) {
                 System.out.print(" | ");
             }
         }
@@ -195,7 +192,7 @@ public abstract class Peer implements Printable {
      * display all keys to the screen
      */
     protected void printKeys() {
-        if(IS_PRINTABLE) {
+        if (IS_PRINTABLE) {
             System.out.println("\n<!--");
             System.out.println("   MasterKey : " + masterKey);
             System.out.println("   Encryption: " + encryptionKey);

@@ -1,19 +1,6 @@
-import java.io.File;
-
-
 public class Main {
     public static void main(String[] args) {
         testAES();
-    }
-
-
-    private static void testByteArray() {
-        File file = new File("C:\\Users\\Bao\\Desktop\\Codes\\Java\\CS6349\\FileTransferApplication\\Assets\\Test Upload\\Notes1.txt");
-        byte[] byteArray1 = new byte[(int) file.length()];
-        byte[] byteArray2 = new byte[byteArray1.length + 20];
-
-        System.out.println("byteArray1.length = " + byteArray1.length);
-        System.out.println("byteArray2.length = " + byteArray2.length);
     }
 
 
@@ -25,7 +12,7 @@ public class Main {
         String mod = "";
 
         System.out.println(language);
-        for(int i = 1; i < 100; i++) {
+        for (int i = 1; i < 100; i++) {
             mod = aesEncrypt.encrypt(key);
             aesDecrypt.decrypt(mod);
             System.out.println();

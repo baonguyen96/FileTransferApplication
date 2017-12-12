@@ -1,6 +1,7 @@
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
+
 public class Message implements Printable {
 
     /***
@@ -15,7 +16,7 @@ public class Message implements Printable {
     public static String appendMessageSequence(int sequence, String message) {
         String newMessage = String.format("%d | %s", sequence, message);
 
-        if(IS_PRINTABLE) {
+        if (IS_PRINTABLE) {
             displayMessage(newMessage);
         }
 
@@ -45,7 +46,7 @@ public class Message implements Printable {
         // original message
         System.arraycopy(message, 0, newMessage, 7, message.length);
 
-        if(IS_PRINTABLE) {
+        if (IS_PRINTABLE) {
             displayMessage(newMessage);
         }
 
@@ -67,11 +68,11 @@ public class Message implements Printable {
         int actualSequenceNumber = 0;
         String seq = null;
 
-        if(IS_PRINTABLE) {
+        if (IS_PRINTABLE) {
             displayMessage(message);
         }
 
-        if(!message.contains(" ")) {
+        if (!message.contains(" ")) {
             return false;
         }
 
@@ -104,7 +105,7 @@ public class Message implements Printable {
         ByteBuffer byteBuffer = null;
 
         // first 7 bytes are for sequence and delimiter -> length has to be at least 8
-        if(message.length <= 7) {
+        if (message.length <= 7) {
             return false;
         }
 
@@ -134,7 +135,7 @@ public class Message implements Printable {
      * @return the actual message as byte array without the sequence number and delimiter
      */
     public static byte[] extractMessage(byte[] messageWithSequence) {
-        if(IS_PRINTABLE) {
+        if (IS_PRINTABLE) {
             displayMessage(messageWithSequence);
         }
 
@@ -168,16 +169,16 @@ public class Message implements Printable {
         ByteBuffer byteBuffer = null;
         byte[] integer = new byte[4];
 
-        for(int i = 0; i < 8; i++) {
-            if(i < 4) {
+        for (int i = 0; i < 8; i++) {
+            if (i < 4) {
                 integer[i] = message[i];
             }
-            else if(i == 4) {
+            else if (i == 4) {
                 byteBuffer = ByteBuffer.wrap(integer);
                 System.out.print(byteBuffer.getInt());
                 System.out.printf("%c", message[i]);
             }
-            else if(i <= 6){
+            else if (i <= 6) {
                 System.out.printf("%c", message[i]);
             }
             else {

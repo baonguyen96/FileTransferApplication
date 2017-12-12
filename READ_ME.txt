@@ -1,3 +1,7 @@
+Authors:
+Bao Nguyen - BCN140030
+Mofan Li - MXL162930
+
 Program coded using Java in IntelliJ and Eclipse.
 
 1. CONFIGURATION:
