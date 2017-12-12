@@ -23,8 +23,9 @@ public class AES {
      *      This is what user should see, as viewing these technical details
      *      is only meant for demonstration and debugging
      */
-    private final boolean IS_PRINTABLE = false;
-    private static final String DEFAULT_LANGUAGE = "gX.59z\\CbSFReQn:OZ\"GKlMoqPTBxVp1y4DH3N,|vsa78YEUmA6wJdti rLjhIW2cu0fk";
+    private final boolean IS_PRINTABLE = true;
+    private static final String DEFAULT_LANGUAGE = "gX.59z\\CbSFReQn:OZ\"GKlMoqPTB/xVp1y4DH3N,|vsa78YE_UmA6wJdti " +
+            "rLjhIW2cu0fk";
     private int encryptionOffset = 1;
     private int decryptionOffset = 1;
     private String language = null;
@@ -104,7 +105,7 @@ public class AES {
      * method: generateLanguage
      *
      * create a random language string
-     * customizable combination of: {a-z} + {A-Z} + {0-9} + { |,.":\}
+     * customizable combination of: {a-z} + {A-Z} + {0-9} + { |,.":\/_}
      *
      * @return a randomly generated language string
      */
@@ -126,7 +127,7 @@ public class AES {
             stringBuilder.append(c);
         }
 
-        // { |,.":\}
+        // symbols
         stringBuilder.append(' ');
         stringBuilder.append('|');
         stringBuilder.append(',');
@@ -134,6 +135,8 @@ public class AES {
         stringBuilder.append('"');
         stringBuilder.append(':');
         stringBuilder.append('\\');
+        stringBuilder.append('/');
+        stringBuilder.append('_');
 
         // randomize
         char[] chars = stringBuilder.toString().toCharArray();
@@ -438,8 +441,6 @@ public class AES {
         char c = 0;
         int difference = 0, newPosition = 0, buffer = language.length() / 5;
 
-        offset %= 10;
-
         for (int i = 0; i < original.length(); i++) {
             c = original.charAt(i);
             difference = i + (offset + 1) * buffer;
@@ -477,8 +478,6 @@ public class AES {
         char c = 0;
         int difference = 0, newPosition = 0, buffer = language.length() / 5, temp = 0;
 
-        offset %= 10;
-
         for (int i = 0; i < modified.length(); i++) {
             c = modified.charAt(i);
             difference = i + (offset + 1) * buffer;
@@ -504,7 +503,7 @@ public class AES {
                     newPosition = language.length() - difference;
 
                     // wrap around
-                    if(newPosition < 0) {
+                    while(newPosition < 0) {
                         newPosition += language.length();
                     }
                 }

@@ -3,7 +3,7 @@ import java.io.File;
 
 public class Main {
     public static void main(String[] args) {
-        testByteArray();
+        testAES();
     }
 
 
@@ -18,24 +18,32 @@ public class Main {
 
 
     private static void testAES() {
-        String key = "514 | stay";
+        String key = "816 | READ2ME.txt, powerpoint presentation.pptx, Flow Diagram.pdf, Fall2017 Project Derscription Initial Draft.pdf, DSC04877.JPG, Notes2.txt, upload.txt, Notes1.txt";
         String language = AES.generateLanguage();
         AES aes = new AES(language);
+        String mod = "";
 
-        System.out.println(key);
         System.out.println(language);
+        for(int i = 1; i < 100; i++) {
+            mod = aes.increaseKey(key, i);
+            aes.decreaseKey(mod, i);
+        }
 
-        String keyMod1 = aes.encrypt(key);
-        System.out.println(keyMod1);
 
-        String keyMod2 = aes.encrypt(key);
-        System.out.println(keyMod2);
+//        System.out.println(key);
+//        System.out.println(language);
+//
+//        String keyMod1 = aes.increaseKey(key, 6);
+//        System.out.println(keyMod1);
 
-        String keyOrg1 = aes.decrypt(keyMod1);
-        System.out.println(keyOrg1);
+//        String keyMod2 = aes.encrypt(key);
+//        System.out.println(keyMod2);
+//
+//        String keyOrg1 = aes.decreaseKey(keyMod1, 6);
+//        System.out.println(keyOrg1);
 
-        String keyOrg2 = aes.decrypt(keyMod2);
-        System.out.println(keyOrg2);
+//        String keyOrg2 = aes.decrypt(keyMod2);
+//        System.out.println(keyOrg2);
     }
 
 

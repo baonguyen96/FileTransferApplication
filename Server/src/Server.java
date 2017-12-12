@@ -418,6 +418,11 @@ public class Server extends Peer {
                 detectsAttackOnAuthentication = false;
             }
 
+//            for(Byte b : byteArray) {
+//                System.out.printf("%s ", b);
+//            }
+//            System.out.println();
+
             bufferedOutputStream.write(byteArray, 0, byteArray.length);
             bufferedOutputStream.flush();
             bufferedOutputStream.close();
@@ -466,7 +471,6 @@ public class Server extends Peer {
 
         // first time connect -> certificate request + initial sequence number
         if (!hasSentCertificate) {
-
             if (clientMessage.equals("Request certificate")) {
                 sendCertificate();
                 hasSentCertificate = true;

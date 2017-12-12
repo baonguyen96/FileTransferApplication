@@ -627,6 +627,7 @@ public class Client extends Peer {
                 String encryptedMasterKey = Message.appendMessageSequence(++sequenceNumber, masterKey);
                 encryptedMasterKey = aes.encrypt(encryptedMasterKey);
 
+                System.out.println(language);
                 printWriter.println(encryptedLanguage);
                 printWriter.println(encryptedId);
                 printWriter.println(encryptedMasterKey);
