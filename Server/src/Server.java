@@ -270,8 +270,8 @@ public class Server extends Peer {
             File fileToSend = new File(filesDirectory.getAbsolutePath()
                     + "/" + fileToSendName);
             byte[] byteArray = new byte[(int) fileToSend.length()];
-			byte[] byteArray2 = new byte[byteArray.length + 20+7];
-			byte[] temp = new byte[signatureKey.length() + byteArray.length+7];
+			byte[] byteArray2 = new byte[byteArray.length + 20 + 7];
+			byte[] temp = new byte[signatureKey.length() + byteArray.length + 7];
             fileInputStream = new FileInputStream(fileToSend);
             bufferedInputStream = new BufferedInputStream(fileInputStream);
 

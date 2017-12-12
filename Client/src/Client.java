@@ -373,6 +373,8 @@ public class Client extends Peer {
             fileOutputStream = new FileOutputStream(downloadedFile);
             bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
 
+            System.out.println(">> Downloading...");
+
             // read the byte stream of file, appending with the sequence number
             int byteRead = inputStream.read(byteBlock, 0, byteBlock.length);
             while (byteRead >= 0) {
@@ -380,25 +382,24 @@ public class Client extends Peer {
                 byteRead = inputStream.read(byteBlock);
             }
             byte[] byteStream = byteArrayOutputStream.toByteArray();
-			byte[] byteArray2 = new byte[byteStream.length - 20 + signatureKey.length()];
+            byte[] byteArray2 = new byte[byteStream.length - 20 + signatureKey.length()];
             byte[] byteArray3 = new byte[byteStream.length - 20];
-			try {
-            System.arraycopy(byteStream, 0, mac, 0, 20);
-            System.arraycopy(signatureKey.getBytes(), 0, byteArray2, 0, signatureKey.length());
-            System.arraycopy(byteStream, 20, byteArray2, signatureKey.length(), byteStream.length - 20);
-            System.arraycopy(byteStream, 20, byteArray3, 0, byteStream.length - 20);
-            if (Arrays.equals(mac, aes.sha1(new String(byteArray2)))) {
-                byteArray3 = aes.decrypt(byteArray3, encryptionKey);
-                System.out.println(">> Successfully verify MAC value");
+            try {
+                System.arraycopy(byteStream, 0, mac, 0, 20);
+                System.arraycopy(signatureKey.getBytes(), 0, byteArray2, 0, signatureKey.length());
+                System.arraycopy(byteStream, 20, byteArray2, signatureKey.length(), byteStream.length - 20);
+                System.arraycopy(byteStream, 20, byteArray3, 0, byteStream.length - 20);
+                if (Arrays.equals(mac, aes.sha1(new String(byteArray2)))) {
+                    byteArray3 = aes.decrypt(byteArray3, encryptionKey);
+                    System.out.println(">> Successfully verify MAC value");
+                }
+                else {
+                    System.out.println(">> Oops! Something went wrong. Cannot verify MAC value");
+                }
             }
-            else {
-                System.out.println(">> Oops! Something went wrong. Cannot verify MAC value");
+            catch (Exception e) {
+                throw new RuntimeException("Failed to decrypt file", e);
             }
-        }
-        catch (Exception e) {
-            throw new RuntimeException("Failed to decrypt file", e);
-        }
-           
 
             // validate sequence number
             if (!Message.validateMessageSequenceNumber(++sequenceNumber, byteArray3)) {
@@ -409,7 +410,6 @@ public class Client extends Peer {
                 System.out.printf(">> Oops! Something went wrong. Cannot save \"%s\"\n", commandComponents[1]);
             }
             else {
-                System.out.println(">> Downloading...");
                 byteArray3 = Message.extractMessage(byteArray3);
                 bufferedOutputStream.write(byteArray3);
                 bufferedOutputStream.flush();
@@ -518,7 +518,7 @@ public class Client extends Peer {
         // confirmation message
         messageReceived = serverInput.nextLine();
 
-        if(!messageReceived.equals("Sending certificate")) {
+        if (!messageReceived.equals("Sending certificate")) {
             throw new InvalidMessageException();
         }
         else {

@@ -23,7 +23,7 @@ public class AES {
      *      This is what user should see, as viewing these technical details
      *      is only meant for demonstration and debugging
      */
-    private final boolean IS_PRINTABLE = true;
+    private final boolean IS_PRINTABLE = false;
     private static final String DEFAULT_LANGUAGE = "gX.59z\\CbSFReQn:OZ\"GKlMoqPTBxVp1y4DH3N,|vsa78YEUmA6wJdti rLjhIW2cu0fk";
     private int encryptionOffset = 1;
     private int decryptionOffset = 1;
