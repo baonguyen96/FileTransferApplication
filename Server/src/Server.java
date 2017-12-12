@@ -52,7 +52,7 @@ public class Server extends Peer {
             System.out.println("Waiting for connection...");
 
             ServerSocket serverSocket = new ServerSocket(1111);
-            serverSocket.setSoTimeout(120000);
+            serverSocket.setSoTimeout(TIME_OUT);
 
             while (!stopCommunication) {
 

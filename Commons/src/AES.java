@@ -26,8 +26,7 @@ public class AES {
     private final boolean IS_PRINTABLE = true;
     private static final String DEFAULT_LANGUAGE = "gX.59z\\CbSFReQn:OZ\"GKlMoqPTB/xVp1y4DH3N,|vsa78YE_UmA6wJdti " +
             "rLjhIW2cu0fk";
-    private int encryptionOffset = 1;
-    private int decryptionOffset = 1;
+    private int offset = 1;
     private String language = null;
     private byte[] iv = new byte[16];
 
@@ -165,6 +164,18 @@ public class AES {
     }
 
 
+    /***
+     * method: adjustOffset
+     *
+     * shift the offset by amount
+     *
+     * @param amount: how much to shift the offset
+     */
+    public void adjustOffset(int amount) {
+        offset += amount;
+    }
+
+
     /**
      * Encrypt message given
      *
@@ -216,7 +227,7 @@ public class AES {
      * @return encrypted string
      */
     public String encrypt(String message) {
-        return increaseKey(message, encryptionOffset++);
+        return increaseKey(message, offset++);
     }
 
 
@@ -278,7 +289,7 @@ public class AES {
      * @return decrypted string
      */
     public String decrypt(String message) {
-        return decreaseKey(message, decryptionOffset++);
+        return decreaseKey(message, offset++);
     }
 
 

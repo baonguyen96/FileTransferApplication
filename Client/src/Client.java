@@ -65,7 +65,7 @@ public class Client extends Peer {
                 }
 
                 clientSocket = new Socket(serverIPAddress, 1111);
-                clientSocket.setSoTimeout(30000);
+                clientSocket.setSoTimeout(TIME_OUT);
 
                 // authentication
                 if (!authenticate()) {

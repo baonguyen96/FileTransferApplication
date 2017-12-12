@@ -20,13 +20,15 @@ public class Main {
     private static void testAES() {
         String key = "816 | READ2ME.txt, powerpoint presentation.pptx, Flow Diagram.pdf, Fall2017 Project Derscription Initial Draft.pdf, DSC04877.JPG, Notes2.txt, upload.txt, Notes1.txt";
         String language = AES.generateLanguage();
-        AES aes = new AES(language);
+        AES aesEncrypt = new AES(language);
+        AES aesDecrypt = new AES(language);
         String mod = "";
 
         System.out.println(language);
         for(int i = 1; i < 100; i++) {
-            mod = aes.increaseKey(key, i);
-            aes.decreaseKey(mod, i);
+            mod = aesEncrypt.encrypt(key);
+            aesDecrypt.decrypt(mod);
+            System.out.println();
         }
 
 

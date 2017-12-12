@@ -5,6 +5,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
+
 
 public abstract class Peer implements Printable {
     private String module = null;
@@ -26,6 +28,7 @@ public abstract class Peer implements Printable {
     protected final String SMALL_DIV = "\n---------------------\n";
     protected static final String SERVER = "Server";
     protected static final String CLIENT = "Client";
+    protected static final int TIME_OUT = (int) TimeUnit.MINUTES.toMillis(5);
 
 
     public Peer(String module) {
@@ -125,6 +128,7 @@ public abstract class Peer implements Printable {
     protected void handleInvalidMessages() {
         totalInvalidMessagesReceived++;
         sequenceNumber--;
+        aes.adjustOffset(-1);
     }
 
 
