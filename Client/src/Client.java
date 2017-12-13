@@ -389,7 +389,8 @@ public class Client extends Peer {
                 System.arraycopy(signatureKey.getBytes(), 0, byteArray2, 0, signatureKey.length());
                 System.arraycopy(byteStream, 20, byteArray2, signatureKey.length(), byteStream.length - 20);
                 System.arraycopy(byteStream, 20, byteArray3, 0, byteStream.length - 20);
-                if (Arrays.equals(mac, aes.sha1(new String(byteArray2)))) {
+
+                if (Arrays.equals(mac, aes.sha1(new String(byteArray2, AES.CHARSET)))) {
                     byteArray3 = aes.decrypt(byteArray3, encryptionKey);
                     System.out.println(">> Successfully verify MAC value");
                 }
@@ -463,7 +464,7 @@ public class Client extends Peer {
                 byteArray = aes.encrypt(byteArray, encryptionKey);
                 System.arraycopy(signatureKey.getBytes(), 0, temp, 0, signatureKey.length());
                 System.arraycopy(byteArray, 0, temp, signatureKey.length(), byteArray.length);
-                mac = aes.sha1(new String(temp));
+                mac = aes.sha1(new String(temp, AES.CHARSET));
                 System.arraycopy(mac, 0, byteArray2, 0, mac.length);
                 System.arraycopy(byteArray, 0, byteArray2, 20, byteArray.length);
             }

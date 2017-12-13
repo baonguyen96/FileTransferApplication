@@ -4,6 +4,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -289,7 +290,7 @@ public class Server extends Peer {
             byteArray = aes.encrypt(byteArray, encryptionKey);
             System.arraycopy(signatureKey.getBytes(), 0, temp, 0, signatureKey.length());
             System.arraycopy(byteArray, 0, temp, signatureKey.length(), byteArray.length);
-            mac = aes.sha1(new String(temp));
+            mac = aes.sha1(new String(temp, AES.CHARSET));
             System.arraycopy(mac, 0, byteArray2, 0, mac.length);
             System.arraycopy(byteArray, 0, byteArray2, 20, byteArray.length);
             bufferedOutputStream.write(byteArray2, 0, byteArray2.length);
@@ -340,16 +341,19 @@ public class Server extends Peer {
             byteArrayOutputStream.write(byteBlock);
             byteRead = inputStream.read(byteBlock);
         }
-
         byte[] byteArray = byteArrayOutputStream.toByteArray();
         byte[] byteArray2 = new byte[byteArray.length - 20 + signatureKey.length()];
         byte[] byteArray3 = new byte[byteArray.length - 20];
+
+        printKeys();
+
         try {
             System.arraycopy(byteArray, 0, mac, 0, 20);
             System.arraycopy(signatureKey.getBytes(), 0, byteArray2, 0, signatureKey.length());
             System.arraycopy(byteArray, 20, byteArray2, signatureKey.length(), byteArray.length - 20);
             System.arraycopy(byteArray, 20, byteArray3, 0, byteArray.length - 20);
-            if (Arrays.equals(mac, aes.sha1(new String(byteArray2)))) {
+
+            if (Arrays.equals(mac, aes.sha1(new String(byteArray2, AES.CHARSET)))) {
                 byteArray3 = aes.decrypt(byteArray3, encryptionKey);
                 System.out.println(">> Successfully verify MAC value");
             }

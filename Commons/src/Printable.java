@@ -10,5 +10,5 @@
  */
 
 public interface Printable {
-    boolean IS_PRINTABLE = false;
+    boolean IS_PRINTABLE = true;
 }
