@@ -4,12 +4,10 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Scanner;
-import java.util.Arrays;
 
 
 public class Server extends Peer {
@@ -290,7 +288,9 @@ public class Server extends Peer {
             byteArray = aes.encrypt(byteArray, encryptionKey);
             System.arraycopy(signatureKey.getBytes(), 0, temp, 0, signatureKey.length());
             System.arraycopy(byteArray, 0, temp, signatureKey.length(), byteArray.length);
-            mac = aes.sha1(new String(temp, AES.CHARSET));
+
+            // append mac
+            byte[] mac = aes.sha1(new String(temp, AES.CHARSET));
             System.arraycopy(mac, 0, byteArray2, 0, mac.length);
             System.arraycopy(byteArray, 0, byteArray2, 20, byteArray.length);
             bufferedOutputStream.write(byteArray2, 0, byteArray2.length);
@@ -336,45 +336,36 @@ public class Server extends Peer {
 
         System.out.printf(">> Receiving \"%s\" ...\n", uploadedFileName);
 
+        // file + mac
         int byteRead = inputStream.read(byteBlock, 0, byteBlock.length);
         while (byteRead >= 0) {
             byteArrayOutputStream.write(byteBlock);
             byteRead = inputStream.read(byteBlock);
         }
-        byte[] byteArray = byteArrayOutputStream.toByteArray();
-        byte[] byteArray2 = new byte[byteArray.length - 20 + signatureKey.length()];
-        byte[] byteArray3 = new byte[byteArray.length - 20];
+        byte[] fileWithMacAsByteArray = byteArrayOutputStream.toByteArray();
 
-        printKeys();
-
-        try {
-            System.arraycopy(byteArray, 0, mac, 0, 20);
-            System.arraycopy(signatureKey.getBytes(), 0, byteArray2, 0, signatureKey.length());
-            System.arraycopy(byteArray, 20, byteArray2, signatureKey.length(), byteArray.length - 20);
-            System.arraycopy(byteArray, 20, byteArray3, 0, byteArray.length - 20);
-
-            if (Arrays.equals(mac, aes.sha1(new String(byteArray2, AES.CHARSET)))) {
-                byteArray3 = aes.decrypt(byteArray3, encryptionKey);
-                System.out.println(">> Successfully verify MAC value");
-            }
-            else {
-                System.out.println(">> Oops! Something went wrong. Cannot verify MAC value");
-            }
+        if (validateMAC(fileWithMacAsByteArray)) {
+            System.out.println(">> Successfully verify MAC value");
         }
-        catch (Exception e) {
-            throw new RuntimeException("Failed to create Pi Face Device", e);
+        else {
+            System.out.println(">> Oops! Something went wrong. Cannot verify MAC value");
         }
 
-        if (!Message.validateMessageSequenceNumber(++sequenceNumber, byteArray3)) {
-            handleInvalidMessages();
+        // file only
+        byte[] fileAsByteArray = new byte[fileWithMacAsByteArray.length - 20];
+        System.arraycopy(fileWithMacAsByteArray, 20, fileAsByteArray, 0, fileWithMacAsByteArray.length - 20);
+        fileAsByteArray = aes.decrypt(fileAsByteArray, encryptionKey);
+
+        if (!Message.validateMessageSequenceNumber(++sequenceNumber, fileAsByteArray)) {
+            handleInvalidMessages(false);
             bufferedOutputStream.close();
             inputStream.close();
             receivingFile.delete();
             System.out.printf(">> Oops! Something went wrong. Cannot save \"%s\"\n", uploadedFileName);
         }
         else {
-            byteArray3 = Message.extractMessage(byteArray3);
-            bufferedOutputStream.write(byteArray3);
+            fileAsByteArray = Message.extractMessage(fileAsByteArray);
+            bufferedOutputStream.write(fileAsByteArray);
             bufferedOutputStream.flush();
             bufferedOutputStream.close();
             inputStream.close();
@@ -424,7 +415,7 @@ public class Server extends Peer {
             }
 
             /*
-             * MAC (and maybe linux?) cannot read from the inputstream unless
+             * MAC (and maybe linux?) cannot read from the input stream unless
              * the sender print out the first 8 bytes of the buffer -> why?
              */
             System.out.print(message);

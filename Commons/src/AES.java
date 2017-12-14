@@ -26,8 +26,8 @@ public class AES {
      *      is only meant for demonstration and debugging
      */
     private final boolean IS_PRINTABLE = true;
-    private static final String DEFAULT_LANGUAGE = "gX.59z\\CbSFReQn:OZ\"GKlMoqPTB/xVp1y4DH3N,|vsa78YE_UmA6wJdti " +
-            "rLjhIW2cu0fk";
+    private static final String DEFAULT_LANGUAGE =
+            "gX.59z\\CbSFReQn:OZ\"GKlMoqPTB/xVp1y4DH3N,|vsa78YE_UmA6wJdti rLjhIW2cu0fk";
     private int offset = 1;
     private String language = null;
     private byte[] iv = new byte[16];
@@ -206,8 +206,8 @@ public class AES {
             System.arraycopy(encrypted[i - 1], 0, second, originalKey.length, encrypted[i - 1].length);
             String stringForSha12 = new String(second);
             encrypted[i] = xor(pt[i], sha1(stringForSha12));
-
         }
+
         byte[] temp = flatten(encrypted);
         f_encrypted = new byte[message.length];
         System.arraycopy(temp, 0, f_encrypted, 0, f_encrypted.length); //Truncate to original length of plain text
@@ -245,7 +245,6 @@ public class AES {
      * @return the decrypted message in byte[]
      */
     public byte[] decrypt(byte[] message, String key) {
-//        key = key.trim();
         byte[] f_decrypted = null;
         byte[][] ct, decrypted = null;
         byte[] first = new byte[32];
@@ -260,7 +259,6 @@ public class AES {
         System.arraycopy(iv, 0, first, decodedKey.length, iv.length);
         String stringForSha1 = new String(first);
         decrypted[0] = xor(ct[0], sha1(stringForSha1));
-
 
         for (int i = 1; i < ct.length; i++) {
             System.arraycopy(decodedKey, 0, second, 0, decodedKey.length);

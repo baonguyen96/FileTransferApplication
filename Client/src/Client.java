@@ -11,7 +11,6 @@ import java.security.cert.X509Certificate;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Date;
 import java.util.Scanner;
-import java.util.Arrays;
 
 
 public class Client extends Peer {
@@ -382,37 +381,30 @@ public class Client extends Peer {
                 byteRead = inputStream.read(byteBlock);
             }
             byte[] byteStream = byteArrayOutputStream.toByteArray();
-            byte[] byteArray2 = new byte[byteStream.length - 20 + signatureKey.length()];
-            byte[] byteArray3 = new byte[byteStream.length - 20];
-            try {
-                System.arraycopy(byteStream, 0, mac, 0, 20);
-                System.arraycopy(signatureKey.getBytes(), 0, byteArray2, 0, signatureKey.length());
-                System.arraycopy(byteStream, 20, byteArray2, signatureKey.length(), byteStream.length - 20);
-                System.arraycopy(byteStream, 20, byteArray3, 0, byteStream.length - 20);
 
-                if (Arrays.equals(mac, aes.sha1(new String(byteArray2, AES.CHARSET)))) {
-                    byteArray3 = aes.decrypt(byteArray3, encryptionKey);
-                    System.out.println(">> Successfully verify MAC value");
-                }
-                else {
-                    System.out.println(">> Oops! Something went wrong. Cannot verify MAC value");
-                }
+            if(validateMAC(byteStream)) {
+                System.out.println(">> Successfully verify MAC value");
             }
-            catch (Exception e) {
-                throw new RuntimeException("Failed to decrypt file", e);
+            else {
+                System.out.println(">> Oops! Something went wrong. Cannot verify MAC value\n");
+                return;
             }
+
+            byte[] decryptedFileAsByteArray = new byte[byteStream.length - 20];
+            System.arraycopy(byteStream, 20, decryptedFileAsByteArray, 0, byteStream.length - 20);
+            decryptedFileAsByteArray = aes.decrypt(decryptedFileAsByteArray, encryptionKey);
 
             // validate sequence number
-            if (!Message.validateMessageSequenceNumber(++sequenceNumber, byteArray3)) {
-                handleInvalidMessages();
+            if (!Message.validateMessageSequenceNumber(++sequenceNumber, decryptedFileAsByteArray)) {
+                handleInvalidMessages(false);
                 bufferedOutputStream.close();
                 printWriter.close();
                 downloadedFile.delete();
                 System.out.printf(">> Oops! Something went wrong. Cannot save \"%s\"\n", commandComponents[1]);
             }
             else {
-                byteArray3 = Message.extractMessage(byteArray3);
-                bufferedOutputStream.write(byteArray3);
+                decryptedFileAsByteArray = Message.extractMessage(decryptedFileAsByteArray);
+                bufferedOutputStream.write(decryptedFileAsByteArray);
                 bufferedOutputStream.flush();
                 bufferedOutputStream.close();
                 printWriter.close();
@@ -439,17 +431,18 @@ public class Client extends Peer {
         String fileName = commandComponents[1];
         String fileNameFormattedPath = fileName.replace("\\", "\\\\");
         File uploadedFile = new File(fileNameFormattedPath);
-        byte[] byteArray = new byte[(int) uploadedFile.length()];
-        byte[] byteArray2 = new byte[byteArray.length + 20 + 7];
+        byte[] fileAsByteArray = new byte[(int) uploadedFile.length()];
+        byte[] fileWithMacAsByteArray = new byte[fileAsByteArray.length + 20 + 7];
         FileInputStream fileInputStream = null;
         PrintWriter printWriter = new PrintWriter(outputStream, true);
-        byte[] temp = new byte[signatureKey.length() + byteArray.length + 7];
+        byte[] temp = new byte[signatureKey.length() + fileAsByteArray.length + 7];
 
         try {
             fileInputStream = new FileInputStream(uploadedFile);
             BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
 
+            // upload command
             command = Message.appendMessageSequence(++sequenceNumber, command);
             command = aes.encrypt(command);
             printWriter.println(command);
@@ -457,22 +450,20 @@ public class Client extends Peer {
 
             System.out.printf(">> Uploading \"%s\" ...\n", fileName);
 
-            bufferedInputStream.read(byteArray, 0, byteArray.length);
-            byteArray = Message.appendMessageSequence(++sequenceNumber, byteArray);
+            // file
+            bufferedInputStream.read(fileAsByteArray, 0, fileAsByteArray.length);
+            fileAsByteArray = Message.appendMessageSequence(++sequenceNumber, fileAsByteArray);
 
-            try {
-                byteArray = aes.encrypt(byteArray, encryptionKey);
-                System.arraycopy(signatureKey.getBytes(), 0, temp, 0, signatureKey.length());
-                System.arraycopy(byteArray, 0, temp, signatureKey.length(), byteArray.length);
-                mac = aes.sha1(new String(temp, AES.CHARSET));
-                System.arraycopy(mac, 0, byteArray2, 0, mac.length);
-                System.arraycopy(byteArray, 0, byteArray2, 20, byteArray.length);
-            }
-            catch (Exception e) {
-                throw new RuntimeException("Failed to encrypt file", e);
-            }
+            fileAsByteArray = aes.encrypt(fileAsByteArray, encryptionKey);
+            System.arraycopy(signatureKey.getBytes(), 0, temp, 0, signatureKey.length());
+            System.arraycopy(fileAsByteArray, 0, temp, signatureKey.length(), fileAsByteArray.length);
 
-            bufferedOutputStream.write(byteArray2, 0, byteArray2.length);
+            // append mac
+            byte[] mac = aes.sha1(new String(temp, AES.CHARSET));
+            System.arraycopy(mac, 0, fileWithMacAsByteArray, 0, mac.length);
+            System.arraycopy(fileAsByteArray, 0, fileWithMacAsByteArray, 20, fileAsByteArray.length);
+
+            bufferedOutputStream.write(fileWithMacAsByteArray, 0, fileWithMacAsByteArray.length);
             bufferedOutputStream.flush();
             bufferedOutputStream.close();
 

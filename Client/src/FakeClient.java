@@ -1,12 +1,14 @@
-import java.io.IOException;
+import java.io.*;
+import java.net.Socket;
 
 
 public class FakeClient extends Client implements Resynchronizable {
     private boolean isAbleToMessUpSynchronization = true;
     private final boolean IS_ABLE_TO_MESS_UP_AUTHENTICATION = false;
+    private final boolean IS_BYPASSING_AUTHENTICATION_TO_FAKE_UPLOAD = true;
 
 
-    private FakeClient() {
+    protected FakeClient() {
         super();
     }
 
@@ -14,6 +16,69 @@ public class FakeClient extends Client implements Resynchronizable {
     public static void main(String[] args) {
         FakeClient fakeClient = new FakeClient();
         fakeClient.exec();
+    }
+
+
+    /***
+     * method: exec
+     *
+     * execute the Client and control the flow of the program
+     * if bypassing authentication:
+     *      simply send the upload command and the file
+     */
+    @Override
+    protected void exec() {
+        if(!IS_BYPASSING_AUTHENTICATION_TO_FAKE_UPLOAD) {
+            super.exec();
+        }
+        else {
+            try {
+                clientSocket = new Socket("localhost", 1111);
+                aes = new AES();
+                OutputStream outputStream = clientSocket.getOutputStream();
+                PrintWriter printWriter = new PrintWriter(outputStream);
+                BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
+                String fileName = new File("").getAbsolutePath();
+                fileName = fileName.concat("\\Assets\\Test Upload\\fake.txt");
+                File fileToSend = new File(fileName);
+                byte[] byteArray = new byte[(int) fileToSend.length()];
+                byte[] byteArray2 = new byte[byteArray.length + 20 + 7];
+                byte[] temp = new byte[20 + byteArray.length + 7];
+                FileInputStream fileInputStream = new FileInputStream(fileToSend);
+                BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+                sequenceNumber = 478;     // set sequence number here
+                signatureKey = "randomSignature";
+                encryptionKey = "randomEncryption";
+
+                // confirmation message
+                String confirmationMessage = String.format("Sending \"%s\" ...", fileName);
+                System.out.println(">> " + confirmationMessage);
+                confirmationMessage = Message.appendMessageSequence(++sequenceNumber, confirmationMessage);    // replace 1 with the actual ongoing sequence
+                confirmationMessage = aes.encrypt(confirmationMessage);
+                printWriter.println(confirmationMessage);
+                printWriter.flush();
+
+                // file transfer
+                bufferedInputStream.read(byteArray, 0, byteArray.length);
+                byteArray = Message.appendMessageSequence(++sequenceNumber, byteArray);
+                byteArray = aes.encrypt(byteArray, encryptionKey);
+                System.arraycopy(signatureKey.getBytes(), 0, temp, 0, signatureKey.length());
+                System.arraycopy(byteArray, 0, temp, signatureKey.length(), byteArray.length);
+
+                // append mac
+                byte[] mac = aes.sha1(new String(temp, AES.CHARSET));
+                System.arraycopy(mac, 0, byteArray2, 0, mac.length);
+                System.arraycopy(byteArray, 0, byteArray2, 20, byteArray.length);
+                bufferedOutputStream.write(byteArray2, 0, byteArray2.length);
+                bufferedOutputStream.flush();
+                bufferedOutputStream.close();
+
+                System.out.printf(">> Complete sending \"%s\"\n\n", fileName);
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 

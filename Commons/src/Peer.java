@@ -3,6 +3,7 @@ import java.io.FileNotFoundException;
 import java.net.Socket;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
@@ -13,7 +14,6 @@ public abstract class Peer implements Printable {
     protected Socket clientSocket = null;
     protected File filesDirectory = null;
     protected File src = null;
-    protected byte[] mac = new byte[20];
     protected AES aes = null;
     protected String masterKey = null;
     protected String encryptionKey = null;
@@ -120,13 +120,50 @@ public abstract class Peer implements Printable {
     /***
      * method: handleInvalidMessages
      *
-     * increase the total invalid messages received count
-     * decrease the sequence number and aes.offset to rollback
+     * handle the invalid message
      */
     protected void handleInvalidMessages() {
+        handleInvalidMessages(true);
+    }
+
+
+    /***
+     * method: handleInvalidMessages
+     *
+     * increase the total invalid messages received count
+     *
+     * if the message is string (just commands):
+     *      decrease the sequence number
+     *      decrease aes.offset to rollback
+     * if the message is a file:
+     *       do not adjust anything
+     */
+    protected void handleInvalidMessages(boolean isInvalidString) {
         totalInvalidMessagesReceived++;
-        sequenceNumber--;
-        aes.adjustOffset(-1);
+        if(isInvalidString) {
+            sequenceNumber--;
+            aes.adjustOffset(-1);
+        }
+    }
+
+
+    /***
+     * method: validateMAC
+     *
+     * validate MAC code in the byte array
+     *
+     * @param byteStream: file with MAC as byte array
+     * @return true if valid MAC, false otherwise
+     */
+    protected boolean validateMAC(byte[] byteStream) {
+        byte[] byteArray = new byte[byteStream.length - 20 + signatureKey.length()];
+        byte[] mac = new byte[20];
+
+        System.arraycopy(byteStream, 0, mac, 0, 20);
+        System.arraycopy(signatureKey.getBytes(), 0, byteArray, 0, signatureKey.length());
+        System.arraycopy(byteStream, 20, byteArray, signatureKey.length(), byteStream.length - 20);
+
+        return Arrays.equals(mac, aes.sha1(new String(byteArray, AES.CHARSET)));
     }
 
 
