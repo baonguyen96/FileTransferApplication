@@ -114,7 +114,7 @@ public class Server extends Peer {
     /***
      * method: isValidCommand
      *
-     * validate the command (in term of client's terminology)
+     * validate the command's syntax (in term of client's terminology)
      * commands are appended with the sequence number in the front
      *
      * @param clientCommand: client's command
@@ -122,15 +122,15 @@ public class Server extends Peer {
      */
     protected boolean isValidCommand(String clientCommand) {
         String[] commandTokens = clientCommand.split(DELIMITER);
-        boolean isQuit = commandTokens.length == 2 &&
+        boolean isQuit = commandTokens.length >= 2 &&
                 commandTokens[1].equalsIgnoreCase("quit");
-        boolean isList = commandTokens.length == 2 &&
+        boolean isList = commandTokens.length >= 2 &&
                 commandTokens[1].equalsIgnoreCase("list");
-        boolean isStay = commandTokens.length == 2 &&
+        boolean isStay = commandTokens.length >= 2 &&
                 commandTokens[1].equalsIgnoreCase("stay");
-        boolean isDownload = commandTokens.length == 3 &&
+        boolean isDownload = commandTokens.length >= 3 &&
                 commandTokens[1].equalsIgnoreCase("download");
-        boolean isUpload = commandTokens.length == 3 &&
+        boolean isUpload = commandTokens.length >= 3 &&
                 commandTokens[1].equalsIgnoreCase("upload");
 
         return isQuit || isList || isStay || isDownload || isUpload;
@@ -487,14 +487,27 @@ public class Server extends Peer {
         // get keys
         else if (!hasReceivedKeys) {
             PrivateKey serverPrivateKey = null;
+            String clientMessageAsIs = clientMessage;
 
-            // language + sequence number
+            /*
+             * message shall be [sequence | language]MasterKey
+             * if exception from decryption
+             *      client fails to verify certificate AND
+             *      new request from another client
+             *      check to make sure if it is a new request
+             */
             try {
                 serverPrivateKey = stringToPrivateKey(PRIVATE_KEY);
                 clientMessage = privateDecrypt(clientMessage, serverPrivateKey);
             }
             catch (Exception e) {
-                throw new RuntimeException("Failed to decrypt the key", e);
+                if(clientMessageAsIs.equals("Request certificate")) {
+                    sendCertificate();
+                    return AUTHENTICATE_SUCCESS;
+                }
+                else {
+                    throw new RuntimeException("Failed to decrypt the key", e);
+                }
             }
 
             // sequence number

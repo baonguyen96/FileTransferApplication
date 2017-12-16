@@ -14,8 +14,9 @@ public class Main {
         System.out.println(language);
         for (int i = 1; i < 100; i++) {
             mod = aesEncrypt.encrypt(key);
-            aesDecrypt.decrypt(mod);
-            System.out.println();
+            System.out.printf("Repeat: %d\n\n", testRepeat(key, mod));
+//            aesDecrypt.decrypt(mod);
+//            System.out.println();
         }
 
 
@@ -33,6 +34,16 @@ public class Main {
 
 //        String keyOrg2 = aes.decrypt(keyMod2);
 //        System.out.println(keyOrg2);
+    }
+
+
+    private static int testRepeat(String plain, String cipher) {
+        for(int i = 0; i < plain.length(); i++) {
+            if(plain.charAt(i) == cipher.charAt(i)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
 

@@ -20,6 +20,7 @@ public class Message implements Printable {
             displayMessage(newMessage);
         }
 
+//        newMessage = appendPadding(newMessage, message);
         return newMessage;
     }
 
@@ -51,6 +52,22 @@ public class Message implements Printable {
         }
 
         return newMessage;
+    }
+
+
+    private static String appendPadding(String messageWithSequence, String originalMessage) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(messageWithSequence);
+
+        if(stringBuilder.length() < 70) {
+            stringBuilder.append(" | ");
+        }
+
+        while(stringBuilder.length() < 70) {
+            stringBuilder.append(originalMessage);
+        }
+
+        return stringBuilder.toString();
     }
 
 

@@ -6,6 +6,7 @@ import java.net.UnknownHostException;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.X509EncodedKeySpec;
@@ -592,11 +593,11 @@ public class Client extends Peer {
                     status = AUTHENTICATE_SUCCESS;
                 }
             }
-            catch (IOException e) {
-                status = AUTHENTICATE_FAILURE;
-            }
             catch (InvalidMessageException e) {
                 handleInvalidMessages();
+                status = AUTHENTICATE_FAILURE;
+            }
+            catch (Exception e) {
                 status = AUTHENTICATE_FAILURE;
             }
             finally {
@@ -715,8 +716,6 @@ public class Client extends Peer {
      * @return true if the verify succeeds, false if not
      */
     protected boolean verifyCertificate() {
-        Certificate cert = null;
-        PublicKey caPublicKey = null;
         boolean verifySuccess = true;
         FileInputStream in = null;
 
@@ -724,20 +723,24 @@ public class Client extends Peer {
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
             File certificate = new File(src.getAbsolutePath() + "/" + CERTIFICATION);
             in = new FileInputStream(certificate);
-            cert = cf.generateCertificate(in);
+            Certificate cert = cf.generateCertificate(in);
             in.close();
-            X509Certificate t = (X509Certificate) cert;
-            Date timeNow = new Date();
-            t.checkValidity(timeNow);
+
+            /*
+             * if having CertificateExpiredException:
+             *      comment out the following 2 lines if don't know how to generate new certificate OR
+             *      generate new certificate as "CA-certificate.crt" and save in Server/src folder
+             */
+//            X509Certificate t = (X509Certificate) cert;
+//            t.checkValidity(new Date());
+
             String publicKey = getKey("CAPublicKey.txt");
-            caPublicKey = stringToPublicKey(publicKey);
+            PublicKey caPublicKey = stringToPublicKey(publicKey);
             cert.verify(caPublicKey);
             serverPublicKey = cert.getPublicKey();
-//            System.out.println(">> The Certificate is successfully verified.");
         }
         catch (Exception e) {
             verifySuccess = false;
-//            System.out.println(">> The Certificate is not verified.");
             e.printStackTrace();
         }
         finally {
