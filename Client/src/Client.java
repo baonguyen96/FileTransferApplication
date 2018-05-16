@@ -410,7 +410,8 @@ public class Client extends Peer {
                 bufferedOutputStream.close();
                 printWriter.close();
 
-                System.out.printf(">> New file saved at \"%s\"\n", downloadedFile.getAbsolutePath());
+                System.out.printf(">> Complete saving \"%s\"\n", downloadedFile.getName());
+//                System.out.printf(">> New file saved at \"%s\"\n", downloadedFile.getAbsolutePath());
             }
         }
         System.out.println();

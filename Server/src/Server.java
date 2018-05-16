@@ -216,11 +216,11 @@ public class Server extends Peer {
         PrintWriter printWriter = new PrintWriter(outputStream, true);
 
         if (files == null) {
-            messageToSend.append("Error: Cannot find files filesDirectory.");
+            messageToSend.append("Error: Cannot find files directory.");
             System.out.println(">> " + messageToSend.toString());
         }
         else if (files.length == 0) {
-            messageToSend.append("Empty files filesDirectory.");
+            messageToSend.append("Empty files directory.");
             System.out.println(">> " + messageToSend.toString());
         }
         else {
