@@ -3,3 +3,5 @@ Client/backup/
 Server/backup/
 Commons/backup/
 Test/
+/.idea/workspace.xml
+/Commons/Commons.iml

@@ -43,7 +43,7 @@ public class FakeServer extends Server implements Resynchronizable {
         }
 
         receivedCommand = receivedInput.nextLine();
-        receivedCommand = aes.decrypt(receivedCommand);
+        receivedCommand = cryptor.decrypt(receivedCommand);
 
         // errors
         if (!Message.validateMessageSequenceNumber(++sequenceNumber, receivedCommand)) {
@@ -65,7 +65,7 @@ public class FakeServer extends Server implements Resynchronizable {
         if (isAbleToMessUpSynchronization) {
             sequenceNumber--;
             isAbleToMessUpSynchronization = !IS_RESYNCHRONIZABLE;
-            aes.adjustOffset(-1);
+            cryptor.adjustOffset(-1);
         }
 
         // switch

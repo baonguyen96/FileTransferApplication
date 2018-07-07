@@ -34,7 +34,7 @@ public class FakeClient extends Client implements Resynchronizable {
         else {
             try {
                 clientSocket = new Socket("localhost", 1111);
-                aes = new AES();
+                cryptor = new Cryptor();
                 OutputStream outputStream = clientSocket.getOutputStream();
                 PrintWriter printWriter = new PrintWriter(outputStream);
                 BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
@@ -54,19 +54,19 @@ public class FakeClient extends Client implements Resynchronizable {
                 String confirmationMessage = String.format("Sending \"%s\" ...", fileName);
                 System.out.println(">> " + confirmationMessage);
                 confirmationMessage = Message.appendMessageSequence(++sequenceNumber, confirmationMessage);    // replace 1 with the actual ongoing sequence
-                confirmationMessage = aes.encrypt(confirmationMessage);
+                confirmationMessage = cryptor.encrypt(confirmationMessage);
                 printWriter.println(confirmationMessage);
                 printWriter.flush();
 
                 // file transfer
                 bufferedInputStream.read(byteArray, 0, byteArray.length);
                 byteArray = Message.appendMessageSequence(++sequenceNumber, byteArray);
-                byteArray = aes.encrypt(byteArray, encryptionKey);
+                byteArray = cryptor.encrypt(byteArray, encryptionKey);
                 System.arraycopy(signatureKey.getBytes(), 0, temp, 0, signatureKey.length());
                 System.arraycopy(byteArray, 0, temp, signatureKey.length(), byteArray.length);
 
                 // append mac
-                byte[] mac = aes.sha1(new String(temp, AES.CHARSET));
+                byte[] mac = cryptor.sha1(new String(temp, Cryptor.CHARSET));
                 System.arraycopy(mac, 0, byteArray2, 0, mac.length);
                 System.arraycopy(byteArray, 0, byteArray2, 20, byteArray.length);
                 bufferedOutputStream.write(byteArray2, 0, byteArray2.length);
@@ -102,7 +102,7 @@ public class FakeClient extends Client implements Resynchronizable {
         if (isAbleToMessUpSynchronization) {
             sequenceNumber--;
             isAbleToMessUpSynchronization = !IS_RESYNCHRONIZABLE;
-            aes.adjustOffset(-1);
+            cryptor.adjustOffset(-1);
         }
 
         if (commandComponents[0].equalsIgnoreCase("quit")) {

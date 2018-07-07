@@ -14,7 +14,7 @@ public abstract class Peer implements Printable {
     protected Socket clientSocket = null;
     protected File filesDirectory = null;
     protected File src = null;
-    protected AES aes = null;
+    protected Cryptor cryptor = null;
     protected String masterKey = null;
     protected String encryptionKey = null;
     protected String signatureKey = null;
@@ -134,7 +134,7 @@ public abstract class Peer implements Printable {
      *
      * if the message is string (just commands):
      *      decrease the sequence number
-     *      decrease aes.offset to rollback
+     *      decrease cryptor.offset to rollback
      * if the message is a file:
      *       do not adjust anything
      */
@@ -142,7 +142,7 @@ public abstract class Peer implements Printable {
         totalInvalidMessagesReceived++;
         if(isInvalidString) {
             sequenceNumber--;
-            aes.adjustOffset(-1);
+            cryptor.adjustOffset(-1);
         }
     }
 
@@ -163,7 +163,7 @@ public abstract class Peer implements Printable {
         System.arraycopy(signatureKey.getBytes(), 0, byteArray, 0, signatureKey.length());
         System.arraycopy(byteStream, 20, byteArray, signatureKey.length(), byteStream.length - 20);
 
-        return Arrays.equals(mac, aes.sha1(new String(byteArray, AES.CHARSET)));
+        return Arrays.equals(mac, cryptor.sha1(new String(byteArray, Cryptor.CHARSET)));
     }
 
 

@@ -21,7 +21,7 @@ The core modules structure by default - and must not be changed - is ([] denotes
         |----- FakeClient.java
 [] Commons
 |----- [] src
-        |----- AES.java
+        |----- Cryptor.java
         |----- InvalidMessageException.java
         |----- Message.java
         |----- Peer.java

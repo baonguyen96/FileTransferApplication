@@ -14,12 +14,13 @@ import java.util.logging.Logger;
 import static java.util.Arrays.copyOfRange;
 
 
-public class AES {
+public class Cryptor {
+
     /*
      * different from Printable interface
      * IS_PRINTABLE == true:
      *      Display the encryption/decryption from/to and vice versa
-     *      To show the effect of AES
+     *      To show the effect of Cryptor
      * IS_PRINTABLE == false:
      *      Do not display how the message is encrypted/decrypted
      *      This is what user should see, as viewing these technical details
@@ -35,20 +36,20 @@ public class AES {
 
 
     /***
-     * create new AES with default language
+     * create new Cryptor with default language
      */
-    public AES() {
+    public Cryptor() {
         this(DEFAULT_LANGUAGE);
     }
 
 
     /***
-     * create new AES with specified language
+     * create new Cryptor with specified language
      * and dynamically set the IV
      *
      * @param language: string of all possible characters
      */
-    public AES(String language) {
+    public Cryptor(String language) {
         setLanguage(language);
         setIV();
     }
@@ -316,7 +317,7 @@ public class AES {
                 padWithLen(ret[ret.length - 1], len, blockSize - len);
             }
             catch (ShortBufferException ex) {
-                Logger.getLogger(AES.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Cryptor.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
@@ -543,7 +544,7 @@ public class AES {
      * @param mode: encryption or decryption
      */
     private void display(byte[] bytes, String mode) {
-        System.out.printf("AES: %s: ", mode);
+        System.out.printf("Cryptor: %s: ", mode);
         for (Byte b : bytes) {
             System.out.printf("%s ", b);
         }
@@ -560,6 +561,6 @@ public class AES {
      * @param mode: encryption or decryption
      */
     private void display(String str, String mode) {
-        System.out.printf("AES: %s: %s\n", mode, str);
+        System.out.printf("Cryptor: %s: %s\n", mode, str);
     }
 }

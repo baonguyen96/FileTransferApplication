@@ -6,11 +6,8 @@ import java.net.UnknownHostException;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Date;
 import java.util.Scanner;
 
 
@@ -235,7 +232,7 @@ public class Client extends Peer {
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
 
         command = Message.appendMessageSequence(++sequenceNumber, command);
-        command = aes.encrypt(command);
+        command = cryptor.encrypt(command);
 
         printWriter.println(command);
         printWriter.flush();
@@ -258,7 +255,7 @@ public class Client extends Peer {
         String messageReceived = "";
 
         command = Message.appendMessageSequence(++sequenceNumber, command);
-        command = aes.encrypt(command);
+        command = cryptor.encrypt(command);
         printWriter.println(command);
         printWriter.flush();
 
@@ -269,7 +266,7 @@ public class Client extends Peer {
         }
 
         messageReceived = serverInput.nextLine();
-        messageReceived = aes.decrypt(messageReceived);
+        messageReceived = cryptor.decrypt(messageReceived);
 
         if (!Message.validateMessageSequenceNumber(++sequenceNumber, messageReceived)) {
             handleInvalidMessages();
@@ -317,7 +314,7 @@ public class Client extends Peer {
 
         // keep connection alive
         String message = Message.appendMessageSequence(++sequenceNumber, "stay");
-        message = aes.encrypt(message);
+        message = cryptor.encrypt(message);
         printWriter.println(message);
         printWriter.flush();
         printWriter.close();
@@ -346,7 +343,7 @@ public class Client extends Peer {
         String fileToDownloadName = commandComponents[1];
 
         command = Message.appendMessageSequence(++sequenceNumber, command);
-        command = aes.encrypt(command);
+        command = cryptor.encrypt(command);
         printWriter.println(command);
         printWriter.flush();
 
@@ -357,7 +354,7 @@ public class Client extends Peer {
 
         // confirmation message
         messageReceived = serverInput.nextLine();
-        messageReceived = aes.decrypt(messageReceived);
+        messageReceived = cryptor.decrypt(messageReceived);
 
         // errors on confirmation
         if (!Message.validateMessageSequenceNumber(++sequenceNumber, messageReceived)) {
@@ -393,7 +390,7 @@ public class Client extends Peer {
 
             byte[] decryptedFileAsByteArray = new byte[byteStream.length - 20];
             System.arraycopy(byteStream, 20, decryptedFileAsByteArray, 0, byteStream.length - 20);
-            decryptedFileAsByteArray = aes.decrypt(decryptedFileAsByteArray, encryptionKey);
+            decryptedFileAsByteArray = cryptor.decrypt(decryptedFileAsByteArray, encryptionKey);
 
             // validate sequence number
             if (!Message.validateMessageSequenceNumber(++sequenceNumber, decryptedFileAsByteArray)) {
@@ -446,7 +443,7 @@ public class Client extends Peer {
 
             // upload command
             command = Message.appendMessageSequence(++sequenceNumber, command);
-            command = aes.encrypt(command);
+            command = cryptor.encrypt(command);
             printWriter.println(command);
             printWriter.flush();
 
@@ -456,12 +453,12 @@ public class Client extends Peer {
             bufferedInputStream.read(fileAsByteArray, 0, fileAsByteArray.length);
             fileAsByteArray = Message.appendMessageSequence(++sequenceNumber, fileAsByteArray);
 
-            fileAsByteArray = aes.encrypt(fileAsByteArray, encryptionKey);
+            fileAsByteArray = cryptor.encrypt(fileAsByteArray, encryptionKey);
             System.arraycopy(signatureKey.getBytes(), 0, temp, 0, signatureKey.length());
             System.arraycopy(fileAsByteArray, 0, temp, signatureKey.length(), fileAsByteArray.length);
 
             // append mac
-            byte[] mac = aes.sha1(new String(temp, AES.CHARSET));
+            byte[] mac = cryptor.sha1(new String(temp, Cryptor.CHARSET));
             System.arraycopy(mac, 0, fileWithMacAsByteArray, 0, mac.length);
             System.arraycopy(fileAsByteArray, 0, fileWithMacAsByteArray, 20, fileAsByteArray.length);
 
@@ -477,7 +474,7 @@ public class Client extends Peer {
 
             // keep connection alive
             String message = Message.appendMessageSequence(++sequenceNumber, "stay");
-            message = aes.encrypt(message);
+            message = cryptor.encrypt(message);
             printWriter.println(message);
             printWriter.flush();
             printWriter.close();
@@ -556,7 +553,7 @@ public class Client extends Peer {
 
         PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
         String message = Message.appendMessageSequence(++sequenceNumber, "stay");
-        message = aes.encrypt(message);
+        message = cryptor.encrypt(message);
         printWriter.println(message);
         printWriter.flush();
         printWriter.close();
@@ -611,24 +608,24 @@ public class Client extends Peer {
             try {
                 /*
                  * encrypt language using server's public key
-                 * then encrypt master key and ID using newly set AES
+                 * then encrypt master key and ID using newly set Cryptor
                  */
-                String language = AES.generateLanguage();
-                aes = new AES(language);
+                String language = Cryptor.generateLanguage();
+                cryptor = new Cryptor(language);
                 String encryptedLanguage = Message.appendMessageSequence(sequenceNumber, language);
                 encryptedLanguage = publicEncrypt(encryptedLanguage, serverPublicKey);
                 String encryptedId = Message.appendMessageSequence(++sequenceNumber, Long.toString(id));
-                encryptedId = aes.encrypt(encryptedId);
-                masterKey = aes.getRandomString(16);
+                encryptedId = cryptor.encrypt(encryptedId);
+                masterKey = cryptor.getRandomString(16);
                 String encryptedMasterKey = Message.appendMessageSequence(++sequenceNumber, masterKey);
-                encryptedMasterKey = aes.encrypt(encryptedMasterKey);
+                encryptedMasterKey = cryptor.encrypt(encryptedMasterKey);
 
                 printWriter.println(encryptedLanguage);
                 printWriter.println(encryptedId);
                 printWriter.println(encryptedMasterKey);
 
-                encryptionKey = aes.increaseKey(masterKey, 1);
-                signatureKey = aes.increaseKey(masterKey, 2);
+                encryptionKey = cryptor.increaseKey(masterKey, 1);
+                signatureKey = cryptor.increaseKey(masterKey, 2);
             }
             catch (Exception e) {
                 throw new RuntimeException("Failed to encrypt the key", e);
@@ -639,7 +636,7 @@ public class Client extends Peer {
                 return AUTHENTICATE_FAILURE;
             }
             serverResponse = serverInput.nextLine();
-            serverResponse = aes.decrypt(serverResponse);
+            serverResponse = cryptor.decrypt(serverResponse);
 
             if (!Message.validateMessageSequenceNumber(++sequenceNumber, serverResponse)) {
                 handleInvalidMessages();
@@ -655,11 +652,11 @@ public class Client extends Peer {
         // has received certificate and has sent key
         else {
             // update keys
-            encryptionKey = aes.increaseKey(encryptionKey, 2);
-            signatureKey = aes.increaseKey(signatureKey, 2);
+            encryptionKey = cryptor.increaseKey(encryptionKey, 2);
+            signatureKey = cryptor.increaseKey(signatureKey, 2);
 
             String encryptedId = Message.appendMessageSequence(++sequenceNumber, Long.toString(id));
-            encryptedId = aes.encrypt(encryptedId);
+            encryptedId = cryptor.encrypt(encryptedId);
             printWriter.println(encryptedId);
             printWriter.flush();
 
@@ -675,7 +672,7 @@ public class Client extends Peer {
                 return AUTHENTICATE_FAILURE;
             }
             else {
-                serverResponse = aes.decrypt(serverResponse);
+                serverResponse = cryptor.decrypt(serverResponse);
             }
 
             // more errors

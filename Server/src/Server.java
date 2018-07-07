@@ -162,7 +162,7 @@ public class Server extends Peer {
         }
 
         receivedCommand = receivedInput.nextLine();
-        receivedCommand = aes.decrypt(receivedCommand);
+        receivedCommand = cryptor.decrypt(receivedCommand);
 
         // errors
         if (!Message.validateMessageSequenceNumber(++sequenceNumber, receivedCommand)) {
@@ -241,7 +241,7 @@ public class Server extends Peer {
         System.out.println();
 
         String message = Message.appendMessageSequence(++sequenceNumber, messageToSend.toString());
-        message = aes.encrypt(message);
+        message = cryptor.encrypt(message);
         printWriter.println(message);
         printWriter.flush();
         printWriter.close();
@@ -278,19 +278,19 @@ public class Server extends Peer {
             String confirmationMessage = String.format("Sending \"%s\" ...", fileToSendName);
             System.out.println(">> " + confirmationMessage);
             confirmationMessage = Message.appendMessageSequence(++sequenceNumber, confirmationMessage);
-            confirmationMessage = aes.encrypt(confirmationMessage);
+            confirmationMessage = cryptor.encrypt(confirmationMessage);
             printWriter.println(confirmationMessage);
             printWriter.flush();
 
             // file transfer
             bufferedInputStream.read(byteArray, 0, byteArray.length);
             byteArray = Message.appendMessageSequence(++sequenceNumber, byteArray);
-            byteArray = aes.encrypt(byteArray, encryptionKey);
+            byteArray = cryptor.encrypt(byteArray, encryptionKey);
             System.arraycopy(signatureKey.getBytes(), 0, temp, 0, signatureKey.length());
             System.arraycopy(byteArray, 0, temp, signatureKey.length(), byteArray.length);
 
             // append mac
-            byte[] mac = aes.sha1(new String(temp, AES.CHARSET));
+            byte[] mac = cryptor.sha1(new String(temp, Cryptor.CHARSET));
             System.arraycopy(mac, 0, byteArray2, 0, mac.length);
             System.arraycopy(byteArray, 0, byteArray2, 20, byteArray.length);
             bufferedOutputStream.write(byteArray2, 0, byteArray2.length);
@@ -303,7 +303,7 @@ public class Server extends Peer {
             String error = "Error: requested file does not exist.";
             System.out.printf("[You]:    %s\n\n", error);
             error = Message.appendMessageSequence(++sequenceNumber, error);
-            error = aes.encrypt(error);
+            error = cryptor.encrypt(error);
             printWriter.println(error);
             printWriter.flush();
             printWriter.close();
@@ -354,7 +354,7 @@ public class Server extends Peer {
         // file only
         byte[] fileAsByteArray = new byte[fileWithMacAsByteArray.length - 20];
         System.arraycopy(fileWithMacAsByteArray, 20, fileAsByteArray, 0, fileWithMacAsByteArray.length - 20);
-        fileAsByteArray = aes.decrypt(fileAsByteArray, encryptionKey);
+        fileAsByteArray = cryptor.decrypt(fileAsByteArray, encryptionKey);
 
         if (!Message.validateMessageSequenceNumber(++sequenceNumber, fileAsByteArray)) {
             handleInvalidMessages(false);
@@ -515,14 +515,14 @@ public class Server extends Peer {
 
             // language
             String language = clientMessage.split(DELIMITER)[1];
-            aes = new AES(language);
+            cryptor = new Cryptor(language);
 
             // id
             if (!receivedInput.hasNextLine()) {
                 return AUTHENTICATE_FAILURE;
             }
             clientMessage = receivedInput.nextLine();
-            clientMessage = aes.decrypt(clientMessage);
+            clientMessage = cryptor.decrypt(clientMessage);
 
             if (!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
                 handleInvalidMessages();
@@ -536,7 +536,7 @@ public class Server extends Peer {
                 return AUTHENTICATE_FAILURE;
             }
             clientMessage = receivedInput.nextLine();
-            clientMessage = aes.decrypt(clientMessage);
+            clientMessage = cryptor.decrypt(clientMessage);
 
             if (!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
                 handleInvalidMessages();
@@ -546,12 +546,12 @@ public class Server extends Peer {
             masterKey = clientMessage.split(DELIMITER)[1];
 
             // set encryption and signature key
-            encryptionKey = aes.increaseKey(masterKey, 1);
-            signatureKey = aes.increaseKey(masterKey, 2);
+            encryptionKey = cryptor.increaseKey(masterKey, 1);
+            signatureKey = cryptor.increaseKey(masterKey, 2);
 
             // send confirmation message
             String confirmation = Message.appendMessageSequence(++sequenceNumber, "ok");
-            confirmation = aes.encrypt(confirmation);
+            confirmation = cryptor.encrypt(confirmation);
             printWriter.println(confirmation);
             authenticateSuccess = AUTHENTICATE_SUCCESS;
             hasReceivedKeys = true;
@@ -559,10 +559,10 @@ public class Server extends Peer {
         // already send certificate and receive keys
         else {
             // update keys
-            encryptionKey = aes.increaseKey(encryptionKey, 2);
-            signatureKey = aes.increaseKey(signatureKey, 2);
+            encryptionKey = cryptor.increaseKey(encryptionKey, 2);
+            signatureKey = cryptor.increaseKey(signatureKey, 2);
 
-            clientMessage = aes.decrypt(clientMessage);
+            clientMessage = cryptor.decrypt(clientMessage);
 
             if (!Message.validateMessageSequenceNumber(++sequenceNumber, clientMessage)) {
                 handleInvalidMessages();
@@ -573,7 +573,7 @@ public class Server extends Peer {
             authenticateSuccess = id.equals(clientId);
             String confirmMessage = authenticateSuccess ? "ok" : "busy";
             confirmMessage = Message.appendMessageSequence(++sequenceNumber, confirmMessage);
-            confirmMessage = aes.encrypt(confirmMessage);
+            confirmMessage = cryptor.encrypt(confirmMessage);
             printWriter.println(confirmMessage);
             printWriter.flush();
         }
