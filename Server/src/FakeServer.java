@@ -1,3 +1,6 @@
+import message.translation.Message;
+import utils.Resynchronizable;
+
 import java.io.*;
 import java.util.Scanner;
 

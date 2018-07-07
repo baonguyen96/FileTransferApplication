@@ -21,12 +21,12 @@ The core modules structure by default - and must not be changed - is ([] denotes
         |----- FakeClient.java
 [] Commons
 |----- [] src
-        |----- Cryptor.java
-        |----- InvalidMessageException.java
-        |----- Message.java
-        |----- Peer.java
-        |----- Printable.java
-        |----- Resynchronizable.java
+        |----- message.translation.Cryptor.java
+        |----- utils.InvalidMessageException.java
+        |----- message.translation.Message.java
+        |----- peer.Peer.java
+        |----- utils.Printable.java
+        |----- utils.Resynchronizable.java
 [] Server
 |----- [] FilesDirectory
 |----- [] src

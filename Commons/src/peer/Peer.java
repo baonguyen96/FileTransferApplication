@@ -1,3 +1,8 @@
+package peer;
+
+import message.translation.Cryptor;
+import utils.Printable;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.Socket;

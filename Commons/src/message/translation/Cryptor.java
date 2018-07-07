@@ -1,3 +1,5 @@
+package message.translation;
+
 import javax.crypto.ShortBufferException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -17,17 +19,17 @@ import static java.util.Arrays.copyOfRange;
 public class Cryptor {
 
     /*
-     * different from Printable interface
+     * different from utils.Printable interface
      * IS_PRINTABLE == true:
      *      Display the encryption/decryption from/to and vice versa
-     *      To show the effect of Cryptor
+     *      To show the effect of message.translation.Cryptor
      * IS_PRINTABLE == false:
      *      Do not display how the message is encrypted/decrypted
      *      This is what user should see, as viewing these technical details
      *      is only meant for demonstration and debugging
      */
     private final boolean IS_PRINTABLE = false;
-    private static final String DEFAULT_LANGUAGE =
+    static final String DEFAULT_LANGUAGE =
             "gX.59z\\CbSFReQn:OZ\"GKlMoqPTB/xVp1y4DH3N,|vsa78YE_UmA6wJdti rLjhIW2cu0fk";
     private int offset = 1;
     private String language = null;
@@ -36,7 +38,7 @@ public class Cryptor {
 
 
     /***
-     * create new Cryptor with default language
+     * create new message.translation.Cryptor with default language
      */
     public Cryptor() {
         this(DEFAULT_LANGUAGE);
@@ -44,7 +46,7 @@ public class Cryptor {
 
 
     /***
-     * create new Cryptor with specified language
+     * create new message.translation.Cryptor with specified language
      * and dynamically set the IV
      *
      * @param language: string of all possible characters
@@ -544,7 +546,7 @@ public class Cryptor {
      * @param mode: encryption or decryption
      */
     private void display(byte[] bytes, String mode) {
-        System.out.printf("Cryptor: %s: ", mode);
+        System.out.printf("message.translation.Cryptor: %s: ", mode);
         for (Byte b : bytes) {
             System.out.printf("%s ", b);
         }
@@ -561,6 +563,6 @@ public class Cryptor {
      * @param mode: encryption or decryption
      */
     private void display(String str, String mode) {
-        System.out.printf("Cryptor: %s: %s\n", mode, str);
+        System.out.printf("message.translation.Cryptor: %s: %s\n", mode, str);
     }
 }

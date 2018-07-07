@@ -1,5 +1,7 @@
+package utils;
+
 /***
- * Printable interface
+ * utils.Printable interface
  *
  * When it is set to true:
  *      Display every messages sent between client and server

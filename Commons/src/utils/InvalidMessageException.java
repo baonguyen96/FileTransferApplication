@@ -1,3 +1,5 @@
+package utils;
+
 public class InvalidMessageException extends Exception {
 
     public InvalidMessageException() {

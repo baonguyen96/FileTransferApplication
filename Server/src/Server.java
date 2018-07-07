@@ -1,3 +1,7 @@
+import message.translation.Cryptor;
+import message.translation.Message;
+import peer.Peer;
+
 import javax.crypto.Cipher;
 import java.io.*;
 import java.net.InetAddress;
@@ -245,6 +249,7 @@ public class Server extends Peer {
         printWriter.println(message);
         printWriter.flush();
         printWriter.close();
+
     }
 
 

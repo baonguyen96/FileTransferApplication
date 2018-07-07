@@ -1,5 +1,7 @@
+package utils;
+
 /***
- * Resynchronizable interface
+ * utils.Resynchronizable interface
  *
  * Implemented by FakeServer and FakeClient
  *

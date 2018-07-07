@@ -1,3 +1,8 @@
+import message.translation.Cryptor;
+import message.translation.Message;
+import peer.Peer;
+import utils.InvalidMessageException;
+
 import javax.crypto.Cipher;
 import java.io.*;
 import java.net.Socket;
@@ -608,7 +613,7 @@ public class Client extends Peer {
             try {
                 /*
                  * encrypt language using server's public key
-                 * then encrypt master key and ID using newly set Cryptor
+                 * then encrypt master key and ID using newly set message.translation.Cryptor
                  */
                 String language = Cryptor.generateLanguage();
                 cryptor = new Cryptor(language);

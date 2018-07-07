@@ -1,8 +1,21 @@
+package message.translation;
+
+import message.translation.Cryptor;
+import utils.Printable;
+
+import utils.*;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
 
 public class Message implements Printable {
+
+    private static final int MINIMUM_MESSAGE_LENGTH = 70;
+
+    public static final String END_OF_MESSAGE_DELIMITER_STRING = "<EndOfMessage/>";
+    public static final byte[] END_OF_MESSAGE_DELIMITER_BYTES = END_OF_MESSAGE_DELIMITER_STRING.getBytes(Cryptor
+            .CHARSET);
+
 
     /***
      * method: appendMessageSequence
@@ -16,11 +29,10 @@ public class Message implements Printable {
     public static String appendMessageSequence(int sequence, String message) {
         String newMessage = String.format("%d | %s", sequence, message);
 
-        if (IS_PRINTABLE) {
+        if (Printable.IS_PRINTABLE) {
             displayMessage(newMessage);
         }
 
-//        newMessage = appendPadding(newMessage, message);
         return newMessage;
     }
 
@@ -47,7 +59,7 @@ public class Message implements Printable {
         // original message
         System.arraycopy(message, 0, newMessage, 7, message.length);
 
-        if (IS_PRINTABLE) {
+        if (Printable.IS_PRINTABLE) {
             displayMessage(newMessage);
         }
 
@@ -55,19 +67,54 @@ public class Message implements Printable {
     }
 
 
-    private static String appendPadding(String messageWithSequence, String originalMessage) {
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(messageWithSequence);
+    private static String increaseMessageLength(String messageWithSequence) {
+        int numberOfAdditionalCharactersRequired = MINIMUM_MESSAGE_LENGTH - messageWithSequence.length();
 
-        if(stringBuilder.length() < 70) {
-            stringBuilder.append(" | ");
+        if(numberOfAdditionalCharactersRequired <= 0) {
+            return messageWithSequence;
         }
+        else {
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append(messageWithSequence);
+            stringBuilder.append(END_OF_MESSAGE_DELIMITER_STRING);
 
-        while(stringBuilder.length() < 70) {
-            stringBuilder.append(originalMessage);
+            for(int i = 0; i < numberOfAdditionalCharactersRequired; i++) {
+                int randomIndex = (int)(Math.random() * Cryptor.DEFAULT_LANGUAGE.length());
+                stringBuilder.append(Cryptor.DEFAULT_LANGUAGE.charAt(randomIndex));
+            }
+
+            return stringBuilder.toString();
         }
+    }
 
-        return stringBuilder.toString();
+
+    private static byte[] increaseMessageLength(byte[] messageWithSequence) {
+        int numberOfAdditionalCharactersRequired = MINIMUM_MESSAGE_LENGTH - messageWithSequence.length;
+
+        if(numberOfAdditionalCharactersRequired <= 0) {
+            return messageWithSequence;
+        }
+        else {
+            byte[] newMessage = new byte[
+                    messageWithSequence.length + END_OF_MESSAGE_DELIMITER_BYTES.length +
+                    numberOfAdditionalCharactersRequired];
+            int currentIndex = 0;
+
+            for(byte b : messageWithSequence) {
+                newMessage[currentIndex++] = b;
+            }
+
+            for(byte b : END_OF_MESSAGE_DELIMITER_BYTES) {
+                newMessage[currentIndex++] = b;
+            }
+
+            for(int i = 0; i < numberOfAdditionalCharactersRequired; i++) {
+                int randomIndex = (int)(Math.random() * Cryptor.DEFAULT_LANGUAGE.length());
+                newMessage[currentIndex++] = (byte) Cryptor.DEFAULT_LANGUAGE.charAt(randomIndex);
+            }
+
+            return newMessage;
+        }
     }
 
 
@@ -85,7 +132,7 @@ public class Message implements Printable {
         int actualSequenceNumber = 0;
         String seq = null;
 
-        if (IS_PRINTABLE) {
+        if (Printable.IS_PRINTABLE) {
             displayMessage(message);
         }
 
@@ -152,7 +199,7 @@ public class Message implements Printable {
      * @return the actual message as byte array without the sequence number and delimiter
      */
     public static byte[] extractMessage(byte[] messageWithSequence) {
-        if (IS_PRINTABLE) {
+        if (Printable.IS_PRINTABLE) {
             displayMessage(messageWithSequence);
         }
 
