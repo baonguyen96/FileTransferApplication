@@ -8,9 +8,8 @@ import java.nio.ByteBuffer;
 
 public class Message implements Printable {
 
-    private static final int MINIMUM_MESSAGE_LENGTH = 70;
-
-    public static final String END_OF_MESSAGE_DELIMITER_STRING = "<EndOfMessage/>";
+    private static final int MINIMUM_MESSAGE_LENGTH = 128;
+    public static final String END_OF_MESSAGE_DELIMITER_STRING = "<<End><Of><Message>>";
     public static final byte[] END_OF_MESSAGE_DELIMITER_BYTES = END_OF_MESSAGE_DELIMITER_STRING.getBytes(Cryptor
             .CHARSET);
 
