@@ -19,6 +19,7 @@ public abstract class Peer implements Printable {
     protected Socket clientSocket = null;
     protected File filesDirectory = null;
     protected File src = null;
+    protected File keysDirectory = null;
     protected Cryptor cryptor = null;
     protected String masterKey = null;
     protected String encryptionKey = null;
@@ -110,6 +111,17 @@ public abstract class Peer implements Printable {
         );
         filesDirectory = new File(absolutePath);
 
+        // keys directory
+        keysDirectory = new File(module + "/Keys");
+        absolutePath = keysDirectory.getAbsolutePath();
+        absolutePath = absolutePath.replace("\\", "/");
+        absolutePath = absolutePath.replace("/src", "");
+        absolutePath = absolutePath.replace(
+                String.format("/%s/%s", module, module),
+                String.format("/%s", module)
+        );
+        keysDirectory = new File(absolutePath);
+
         // src directory
         src = new File(module + "/src");
         absolutePath = src.getAbsolutePath();
@@ -182,9 +194,9 @@ public abstract class Peer implements Printable {
      */
     protected String getKey(String keyFileName) {
 
-        File file = new File(keyFileName);
+        File file = new File("./Keys/" + keyFileName);
         if (!file.exists()) {
-            String path = String.format("%s/src/%s", module, keyFileName);
+            String path = String.format("%s/Keys/%s", module, keyFileName);
             file = new File(path);
         }
         StringBuilder key = new StringBuilder();

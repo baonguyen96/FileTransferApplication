@@ -393,7 +393,7 @@ public class Server extends Peer {
         BufferedInputStream bufferedInputStream = null;
 
         try {
-            String certificatePath = src.getAbsolutePath() + "/CA-certificate.crt";
+            String certificatePath = keysDirectory.getAbsolutePath() + "/CA-certificate.crt";
             String message = "Sending certificate";
             File fileToSend = new File(certificatePath);
             byte[] byteArray = new byte[(int) fileToSend.length()];
@@ -431,7 +431,12 @@ public class Server extends Peer {
             }
             System.out.println();
 
+            System.out.println(byteArray.length);
+
             bufferedOutputStream.write(byteArray, 0, byteArray.length);
+
+            System.out.println(bufferedInputStream.available());
+
             bufferedOutputStream.flush();
             bufferedOutputStream.close();
         }

@@ -520,7 +520,7 @@ public class Client extends Peer {
             throw new InvalidMessageException();
         }
         else {
-            String certificatePath = src.getAbsolutePath() + "/" + CERTIFICATION;
+            String certificatePath = keysDirectory.getAbsolutePath() + "/" + CERTIFICATION;
             File certificate = new File(certificatePath);
             fileOutputStream = new FileOutputStream(certificate);
             bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
@@ -530,6 +530,8 @@ public class Client extends Peer {
                 byteArrayOutputStream.write(byteBlock);
                 byteRead = inputStream.read(byteBlock);
             }
+
+            System.out.println(byteArrayOutputStream.toByteArray().length);
 
             bufferedOutputStream.write(byteArrayOutputStream.toByteArray());
             bufferedOutputStream.flush();
@@ -588,6 +590,7 @@ public class Client extends Peer {
             try {
                 deleteCertificate();
                 requestCertificate();
+
                 if (!verifyCertificate()) {
                     status = AUTHENTICATE_FAILURE;
                 }
@@ -724,7 +727,7 @@ public class Client extends Peer {
 
         try {
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            File certificate = new File(src.getAbsolutePath() + "/" + CERTIFICATION);
+            File certificate = new File(keysDirectory.getAbsolutePath() + "/" + CERTIFICATION);
             in = new FileInputStream(certificate);
             Certificate cert = cf.generateCertificate(in);
             in.close();
@@ -766,7 +769,7 @@ public class Client extends Peer {
      * to prevent break-in attack
      */
     protected void deleteCertificate() {
-        File certificate = new File(src.getAbsolutePath() + "/" + CERTIFICATION);
+        File certificate = new File(keysDirectory.getAbsolutePath() + "/" + CERTIFICATION);
 
         if (certificate.exists() && !certificate.delete()) {
             System.out.println("Cannot delete certificate");
