@@ -10,38 +10,6 @@ We use Java to build this program. We create 2 different projects/modules, a mai
 There are several commands that allows the client to communicate to the server. The server does not initiate any message. It waits for the commands from the client and sends responses. The client can request server to view all the files the server contains, to download files from the server, or to upload files from local host to store in the server. All messages transported over the network shall be secured with respect to Authentication, Confidentiality, and Integrity.
 Build on top of my [Chatroom](https://github.com/baonguyen96/Chatroom) project.
 
-## Configuration
-
-All required files must be in this structure:
-<pre>
-[] main.Client
-|----- [] FilesDirectory
-|----- [] src
-        |----- CAPublicKey.txt
-        |----- main.Client.java
-        |----- attack.FakeClient.java
-[] Commons
-|----- [] src
-        |----- main.java.Cryptoror.java
-        |----- main.java.utils.InvalidMessageException.java
-        |----- main.java.translationava
-        |----- app.Peer.peer.Peer.java
-        |----- main.java.utils.Printable.java
-        |----- main.java.utils.Resynchronizable.java
-[] main.Server
-|----- [] FilesDirectory
-|----- [] src
-        |----- CA-Certificate.crt
-        |----- CAPublicKey.txt
-        |----- attack.FakeServer.java
-        |----- PrivateKey.txt
-        |----- PublicKey.txt
-        |----- main.Server.java
-</pre>
-
-All the files that client uploads reside in main.Server/FilesDirectory folder.
-
-All the files that client downloads from the server reside in main.Client/FilesDirectory folder.
 
 ## Execution
 
