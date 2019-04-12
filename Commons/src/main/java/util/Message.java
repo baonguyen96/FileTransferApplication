@@ -1,12 +1,11 @@
-package message.translation;
-
-import utils.Printable;
+package util;
 
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
 
-public class Message implements Printable {
+
+public class Message implements util.Printable {
 
     private static final int MINIMUM_MESSAGE_LENGTH = 128;
     public static final String END_OF_MESSAGE_DELIMITER_STRING = "<<End><Of><Message>>";
@@ -26,7 +25,7 @@ public class Message implements Printable {
     public static String appendMessageSequence(int sequence, String message) {
         String newMessage = String.format("%d | %s", sequence, message);
 
-        if (Printable.IS_PRINTABLE) {
+        if (IS_PRINTABLE) {
             displayMessage(newMessage);
         }
 
@@ -56,7 +55,7 @@ public class Message implements Printable {
         // original message
         System.arraycopy(message, 0, newMessage, 7, message.length);
 
-        if (Printable.IS_PRINTABLE) {
+        if (IS_PRINTABLE) {
             displayMessage(newMessage);
         }
 
@@ -129,7 +128,7 @@ public class Message implements Printable {
         int actualSequenceNumber = 0;
         String seq = null;
 
-        if (Printable.IS_PRINTABLE) {
+        if (IS_PRINTABLE) {
             displayMessage(message);
         }
 
@@ -196,7 +195,7 @@ public class Message implements Printable {
      * @return the actual message as byte array without the sequence number and delimiter
      */
     public static byte[] extractMessage(byte[] messageWithSequence) {
-        if (Printable.IS_PRINTABLE) {
+        if (IS_PRINTABLE) {
             displayMessage(messageWithSequence);
         }
 

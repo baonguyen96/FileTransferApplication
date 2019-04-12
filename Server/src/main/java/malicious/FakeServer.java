@@ -1,5 +1,8 @@
-import message.translation.Message;
-import utils.Resynchronizable;
+package malicious;
+
+import benign.Server;
+import util.Message;
+import util.Resynchronizable;
 
 import java.io.*;
 import java.util.Scanner;

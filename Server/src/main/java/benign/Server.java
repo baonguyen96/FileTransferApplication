@@ -1,7 +1,9 @@
-import message.translation.Cryptor;
-import message.translation.Message;
-import peer.Peer;
+package benign;
 
+
+import util.Cryptor;
+import util.Message;
+import app.Peer;
 import javax.crypto.Cipher;
 import java.io.*;
 import java.net.InetAddress;
@@ -38,7 +40,7 @@ public class Server extends Peer {
     /***
      * method: exec
      *
-     * execute the Server and control the flow of the program
+     * execute the main.Server and control the flow of the program
      */
     protected void exec() {
         // error with keys then stop
@@ -394,6 +396,7 @@ public class Server extends Peer {
 
         try {
             String certificatePath = keysDirectory.getAbsolutePath() + "/CA-certificate.crt";
+
             String message = "Sending certificate";
             File fileToSend = new File(certificatePath);
             byte[] byteArray = new byte[(int) fileToSend.length()];
@@ -499,6 +502,8 @@ public class Server extends Peer {
             PrivateKey serverPrivateKey = null;
             String clientMessageAsIs = clientMessage;
 
+//            System.out.println(clientMessageAsIs);
+
             /*
              * message shall be [sequence | language]MasterKey
              * if exception from decryption
@@ -595,7 +600,7 @@ public class Server extends Peer {
     /***
      * method: stringToPrivateKey
      *
-     * Get Server's private key
+     * Get main.Server's private key
      *
      * @param key: private key as String
      * @return private key object
@@ -611,7 +616,7 @@ public class Server extends Peer {
     /***
      * method: privateDecrypt
      *
-     * Use Server's private key to decrypt the master key.
+     * Use main.Server's private key to decrypt the master key.
      *
      * @param cipherText: encrypted message
      * @param privateKey: server's private key

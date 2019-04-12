@@ -1,7 +1,10 @@
-import message.translation.Cryptor;
-import message.translation.Message;
-import utils.InvalidMessageException;
-import utils.Resynchronizable;
+package malicious;
+
+import benign.Client;
+import util.Cryptor;
+import util.InvalidMessageException;
+import util.Message;
+import util.Resynchronizable;
 
 import java.io.*;
 import java.net.Socket;
@@ -27,7 +30,7 @@ public class FakeClient extends Client implements Resynchronizable {
     /***
      * method: exec
      *
-     * execute the Client and control the flow of the program
+     * execute the main.Client and control the flow of the program
      * if bypassing authentication:
      *      simply send the upload command and the file
      */

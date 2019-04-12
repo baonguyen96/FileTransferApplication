@@ -1,7 +1,10 @@
-import message.translation.Cryptor;
-import message.translation.Message;
-import peer.Peer;
-import utils.InvalidMessageException;
+package benign;
+
+
+import util.Cryptor;
+import util.InvalidMessageException;
+import util.Message;
+import app.Peer;
 
 import javax.crypto.Cipher;
 import java.io.*;
@@ -40,7 +43,7 @@ public class Client extends Peer {
     /***
      * method: exec
      *
-     * execute the Client and control the flow of the program
+     * execute the main.Client and control the flow of the program
      */
     protected void exec() {
         boolean stopCommunication = false;
@@ -616,7 +619,7 @@ public class Client extends Peer {
             try {
                 /*
                  * encrypt language using server's public key
-                 * then encrypt master key and ID using newly set message.translation.Cryptor
+                 * then encrypt master key and ID using newly set main.java.Cryptoror
                  */
                 String language = Cryptor.generateLanguage();
                 cryptor = new Cryptor(language);

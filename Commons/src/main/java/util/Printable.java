@@ -1,7 +1,7 @@
-package utils;
+package util;
 
 /***
- * utils.Printable interface
+ * main.java.util.Printable interface
  *
  * When it is set to true:
  *      Display every messages sent between client and server

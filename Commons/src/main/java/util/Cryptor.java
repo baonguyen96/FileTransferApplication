@@ -1,4 +1,4 @@
-package message.translation;
+package util;
 
 import javax.crypto.ShortBufferException;
 import java.nio.charset.Charset;
@@ -19,10 +19,10 @@ import static java.util.Arrays.copyOfRange;
 public class Cryptor {
 
     /*
-     * different from utils.Printable interface
+     * different from main.java.utils.Printable interface
      * IS_PRINTABLE == true:
      *      Display the encryption/decryption from/to and vice versa
-     *      To show the effect of message.translation.Cryptor
+     *      To show the effect of main.java.Cryptoror
      * IS_PRINTABLE == false:
      *      Do not display how the message is encrypted/decrypted
      *      This is what user should see, as viewing these technical details
@@ -38,7 +38,7 @@ public class Cryptor {
 
 
     /***
-     * create new message.translation.Cryptor with default language
+     * create new main.java.Cryptoror with default language
      */
     public Cryptor() {
         this(DEFAULT_LANGUAGE);
@@ -46,7 +46,7 @@ public class Cryptor {
 
 
     /***
-     * create new message.translation.Cryptor with specified language
+     * create new main.java.Cryptoror with specified language
      * and dynamically set the IV
      *
      * @param language: string of all possible characters
@@ -546,7 +546,7 @@ public class Cryptor {
      * @param mode: encryption or decryption
      */
     private void display(byte[] bytes, String mode) {
-        System.out.printf("message.translation.Cryptor: %s: ", mode);
+        System.out.printf("main.java.translation%s: ", mode);
         for (Byte b : bytes) {
             System.out.printf("%s ", b);
         }
@@ -563,6 +563,6 @@ public class Cryptor {
      * @param mode: encryption or decryption
      */
     private void display(String str, String mode) {
-        System.out.printf("message.translation.Cryptor: %s: %s\n", mode, str);
+        System.out.printf("main.java.translation%s: %s\n", mode, str);
     }
 }

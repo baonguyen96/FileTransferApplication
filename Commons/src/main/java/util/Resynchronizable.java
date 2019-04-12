@@ -1,7 +1,7 @@
-package utils;
+package util;
 
 /***
- * utils.Resynchronizable interface
+ * main.java.utils.Resynchronizable interface
  *
  * Implemented by FakeServer and FakeClient
  *

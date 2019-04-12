@@ -1,6 +1,6 @@
-/target/
-Client/backup/
-Server/backup/
+*/target/
+main.Client/backup/
+main.Server/backup/
 Commons/backup/
 Test/
 /.idea/workspace.xml
@@ -87,8 +87,8 @@ fabric.properties
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 
-Client/target/generated-sources/
+main.Client/target/generated-sources/
 Commons/target/generated-sources/
-Server/target/generated-sources/
-Server/target/generated-test-sources/
-Server/target/test-classes/
+main.Server/target/generated-sources/
+main.Server/target/generated-test-sources/
+main.Server/target/test-classes/

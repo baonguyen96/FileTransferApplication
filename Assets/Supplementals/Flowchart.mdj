@@ -68,7 +68,7 @@
 													"height": 39,
 													"autoResize": false,
 													"underline": false,
-													"text": "Server creates sockets",
+													"text": "main.Server creates sockets",
 													"horizontalAlignment": 2,
 													"verticalAlignment": 5,
 													"wordWrap": true
@@ -124,7 +124,7 @@
 													"height": 39,
 													"autoResize": false,
 													"underline": false,
-													"text": "Client creates sockets",
+													"text": "main.Client creates sockets",
 													"horizontalAlignment": 2,
 													"verticalAlignment": 5,
 													"wordWrap": true
@@ -2963,7 +2963,7 @@
 									"_parent": {
 										"$ref": "AAAAAAFeoRHB2TFXkHg="
 									},
-									"name": "Server creates sockets",
+									"name": "main.Server creates sockets",
 									"ownedElements": [
 										{
 											"_type": "FCFlow",
@@ -2986,7 +2986,7 @@
 									"_parent": {
 										"$ref": "AAAAAAFeoRHB2TFXkHg="
 									},
-									"name": "Client creates sockets",
+									"name": "main.Client creates sockets",
 									"ownedElements": [
 										{
 											"_type": "FCFlow",

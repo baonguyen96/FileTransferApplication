@@ -1,6 +1,6 @@
 To validate same client over multiple sessions:
 
-Client:
+main.Client:
     When the client is created, its creation time is its ID.
     Create random initial master key R
     Create encryption key E = R + 1
@@ -11,8 +11,8 @@ Client:
 
     For authentication:
         Session 0:
-            Request CA Certificate to verify if valid Server
-            Encrypt R using Server's public key to get R'
+            Request CA Certificate to verify if valid main.Server
+            Encrypt R using main.Server's public key to get R'
             Encrypt ID using E to get ID'
             Send R' and ID'
         Session 1 -> n:
@@ -20,7 +20,7 @@ Client:
             Send ID'
 
 
-Server:
+main.Server:
     Create encryption key E, signature key S (for client)
     In each session from 1 -> n, update:
             E = E + 2

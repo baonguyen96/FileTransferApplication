@@ -1,11 +1,13 @@
-package peer;
+package app;
 
-import message.translation.Cryptor;
-import utils.Printable;
+import util.Cryptor;
+import util.Printable;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -18,7 +20,7 @@ public abstract class Peer implements Printable {
     private String module = null;
     protected Socket clientSocket = null;
     protected File filesDirectory = null;
-    protected File src = null;
+//    protected File src = null;
     protected File keysDirectory = null;
     protected Cryptor cryptor = null;
     protected String masterKey = null;
@@ -101,36 +103,25 @@ public abstract class Peer implements Printable {
      */
     protected void setDirectories() {
         // file directory
-        filesDirectory = new File(module + "/FilesDirectory");
-        String absolutePath = filesDirectory.getAbsolutePath();
-        absolutePath = absolutePath.replace("\\", "/");
-        absolutePath = absolutePath.replace("/src", "");
-        absolutePath = absolutePath.replace(
-                String.format("/%s/%s", module, module),
-                String.format("/%s", module)
-        );
-        filesDirectory = new File(absolutePath);
+        filesDirectory = new File(module + "/src/main/resources/FilesDirectory");
+        if(!Files.exists(Paths.get(filesDirectory.getAbsolutePath())))
+        {
+            filesDirectory = new File("../src/main/resources/FilesDirectory");
+        }
 
         // keys directory
-        keysDirectory = new File(module + "/Keys");
-        absolutePath = keysDirectory.getAbsolutePath();
-        absolutePath = absolutePath.replace("\\", "/");
-        absolutePath = absolutePath.replace("/src", "");
-        absolutePath = absolutePath.replace(
-                String.format("/%s/%s", module, module),
-                String.format("/%s", module)
-        );
-        keysDirectory = new File(absolutePath);
+        keysDirectory = new File(module + "/src/main/resources/Keys");
+        if(!Files.exists(Paths.get(keysDirectory.getAbsolutePath())))
+        {
+            keysDirectory = new File("../src/main/resources/Keys");
+        }
 
         // src directory
-        src = new File(module + "/src");
-        absolutePath = src.getAbsolutePath();
-        absolutePath = absolutePath.replace("\\", "/");
-        absolutePath = absolutePath.replace(
-                String.format("/%s/src/%s/src", module, module),
-                String.format("/%s/src", module)
-        );
-        src = new File(absolutePath);
+//        src = new File(module + "/src/main/java");
+//        if(!Files.exists(Paths.get(src.getAbsolutePath())))
+//        {
+//            src = new File("../src/main/java");
+//        }
     }
 
 
@@ -194,11 +185,13 @@ public abstract class Peer implements Printable {
      */
     protected String getKey(String keyFileName) {
 
-        File file = new File("./Keys/" + keyFileName);
+        File file = new File(String.format("%s/src/main/resources/Keys/%s", module, keyFileName));
+
         if (!file.exists()) {
-            String path = String.format("%s/Keys/%s", module, keyFileName);
+            String path = String.format("../src/main/resources/Keys/%s",  keyFileName);
             file = new File(path);
         }
+
         StringBuilder key = new StringBuilder();
 
         try {
@@ -219,10 +212,10 @@ public abstract class Peer implements Printable {
     /***
      * method: displayPeerMessage
      *
-     * print the peer's message/command to the screen
+     * print the main.java.peer's message/command to the screen
      * without the message sequence
      *
-     * @param message: peer's message
+     * @param message: main.java.peer's message
      */
     protected void displayPeerMessage(String message) {
         String[] messageTokens = message.split(DELIMITER);
