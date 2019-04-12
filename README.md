@@ -54,26 +54,9 @@ All the files that client downloads from the server reside in main.Client/FilesD
 
 ### To run program in the command line environment
 
-*For MAC and Linux:*
-
-1. Open terminal and navigate to [Commons/src](./Commons/src/) folder
-2. Type: `javac *.java`
-3. Navigate to [main.Server/src](./main.Server/src/) folder
-4. Type: `javac -cp ..\..\Commons\src *.java`
-5. Type: `java -cp ..\..\Commons\src:. main.Server`
-6. Open another terminal and navigate to [main.Client/src](./main.Client/src/) folder
-7. Type: `javac -cp ..\..\Commons\src *.java`
-8. Type: `java -cp ..\..\Commons\src:. main.Client`
-
-*For Windows:*
-
-1. Open CMD (NOT PowerShell) and navigate to [Commons/src](./Commons/src/) folder
-2. Type: `javac *.java`
-3. Navigate to [main.Server/src](./main.Server/src/) folder
-4. Type: `javac -cp ..\..\Commons\src *.java`
-5. Type: `java -cp ..\..\Commons\src;. main.Server`
-6. Open another CMD window and navigate to [main.Client/src](./main.Client/src/) folder
-7. Type: `javac -cp ..\..\Commons\src *.java`
-8. Type: `java -cp ..\..\Commons\src;. main.Client`
+1. Navigate to [Shell](./Shell) directory
+2. Run `./build.windows.ps1`
+3. Run `./start-server.ps1`
+4. Run `./start-client.ps1`
 
 *NOTE*: `attack.FakeClient` and `attack.FakeServer` are for testing and demo only.
