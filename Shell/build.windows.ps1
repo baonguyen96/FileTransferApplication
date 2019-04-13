@@ -1,10 +1,11 @@
 "Building..."
+Write-Host
 
 $start = Get-Date
 $thisDirectory = "$PSScriptRoot"
 
 Set-Location ..
-mvn dependency:purge-local-repository
+#mvn dependency:purge-local-repository
 mvn clean install -U
 mvn package
 Set-Location $thisDirectory
@@ -12,4 +13,5 @@ Set-Location $thisDirectory
 $end = Get-Date
 $duration = New-TimeSpan -Start $start -End $end
 
+Write-Host
 "Finished after " + $duration.Minutes + " minute(s) " + ($duration.Seconds % 60) + " second(s)"
