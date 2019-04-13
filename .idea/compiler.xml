@@ -10,6 +10,7 @@
         <module name="Commons" />
         <module name="Message" />
         <module name="Server" />
+        <module name="Test" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
@@ -19,7 +20,7 @@
       <module name="FileTransferApplication" target="1.8" />
       <module name="Message" target="1.5" />
       <module name="Server" target="1.8" />
-      <module name="Test" target="1.7" />
+      <module name="Test" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

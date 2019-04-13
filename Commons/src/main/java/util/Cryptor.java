@@ -30,7 +30,7 @@ public class Cryptor {
      */
     private final boolean IS_PRINTABLE = true;
     static final String DEFAULT_LANGUAGE =
-            "gX.59z\\CbSFReQn:OZ\"GKlMoqPTB/xVp1y4DH3N,|vsa78YE_UmA6wJdti rLjhIW2cu0fk";
+            "g:,rsP`^y7C|]e[Rmt+/3'41z5-;?FAH@SWNpY\\Gb)xEfo~Z&X*B_2uOhI\"Kv(/0c9=T!JQklij}{LVdU8<$%qw#*nD.6>Ma";
     private int offset = 1;
     private String language = null;
     private byte[] iv = new byte[16];
@@ -110,7 +110,7 @@ public class Cryptor {
      * method: generateLanguage
      *
      * create a random language string
-     * customizable combination of: {a-z} + {A-Z} + {0-9} + { |,.":\/_}
+     * customizable combination of printable characters
      *
      * @return a randomly generated language string
      */
@@ -133,15 +133,9 @@ public class Cryptor {
         }
 
         // symbols
-        stringBuilder.append(' ');
-        stringBuilder.append('|');
-        stringBuilder.append(',');
-        stringBuilder.append('.');
-        stringBuilder.append('"');
-        stringBuilder.append(':');
-        stringBuilder.append('\\');
-        stringBuilder.append('/');
-        stringBuilder.append('_');
+        for (char c : "`~!@#$%^&*()/*-+_=[]{}\\|;:'\",./<>?".toCharArray()) {
+            stringBuilder.append(c);
+        }
 
         // randomize
         char[] chars = stringBuilder.toString().toCharArray();

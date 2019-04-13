@@ -1,10 +1,10 @@
 package benign;
 
 
+import app.Peer;
 import util.Cryptor;
 import util.InvalidMessageException;
 import util.Message;
-import app.Peer;
 
 import javax.crypto.Cipher;
 import java.io.*;
@@ -619,7 +619,7 @@ public class Client extends Peer {
             try {
                 /*
                  * encrypt language using server's public key
-                 * then encrypt master key and ID using newly set main.java.Cryptoror
+                 * then encrypt master key and ID using newly set cryptor
                  */
                 String language = Cryptor.generateLanguage();
                 cryptor = new Cryptor(language);

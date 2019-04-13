@@ -8,6 +8,7 @@
         <module>Client</module>
         <module>Server</module>
         <module>Commons</module>
+        <module>Test</module>
     </modules>
     <build>
         <plugins>

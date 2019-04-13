@@ -434,11 +434,11 @@ public class Server extends Peer {
             }
             System.out.println();
 
-            System.out.println(byteArray.length);
+//            System.out.println(byteArray.length);
 
             bufferedOutputStream.write(byteArray, 0, byteArray.length);
 
-            System.out.println(bufferedInputStream.available());
+//            System.out.println(bufferedInputStream.available());
 
             bufferedOutputStream.flush();
             bufferedOutputStream.close();
