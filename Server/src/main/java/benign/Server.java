@@ -25,6 +25,9 @@ public class Server extends Peer {
     private String clientId = null;
     private boolean detectsAttackOnAuthentication = false;
 
+//    protected String masterKey = null;
+//    protected String encryptionKey = null;
+//    protected String signatureKey = null;
 
     protected Server() {
         super(SERVER);
@@ -398,6 +401,10 @@ public class Server extends Peer {
             String certificatePath = keysDirectory.getAbsolutePath() + "/CA-certificate.crt";
 
             String message = "Sending certificate";
+
+            System.out.println(message);
+            System.out.println(certificatePath);
+
             File fileToSend = new File(certificatePath);
             byte[] byteArray = new byte[(int) fileToSend.length()];
             fileInputStream = new FileInputStream(fileToSend);
@@ -408,6 +415,7 @@ public class Server extends Peer {
             printWriter.flush();
 
             bufferedInputStream.read(byteArray, 0, byteArray.length);
+
 
             /*
              * has to do a println here to flush the buffer if something is still left
@@ -502,7 +510,7 @@ public class Server extends Peer {
             PrivateKey serverPrivateKey = null;
             String clientMessageAsIs = clientMessage;
 
-//            System.out.println(clientMessageAsIs);
+            System.out.println(clientMessageAsIs);
 
             /*
              * message shall be [sequence | language]MasterKey
@@ -530,6 +538,9 @@ public class Server extends Peer {
 
             // language
             String language = clientMessage.split(DELIMITER)[1];
+
+//            System.out.println(language);
+
             cryptor = new Cryptor(language);
 
             // id
@@ -563,6 +574,8 @@ public class Server extends Peer {
             // set encryption and signature key
             encryptionKey = cryptor.increaseKey(masterKey, 1);
             signatureKey = cryptor.increaseKey(masterKey, 2);
+
+            printKeys();
 
             // send confirmation message
             String confirmation = Message.appendMessageSequence(++sequenceNumber, "ok");

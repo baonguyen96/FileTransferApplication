@@ -241,9 +241,10 @@ public abstract class Peer implements Printable {
     protected void printKeys() {
         if (IS_PRINTABLE) {
             System.out.println("\n<!--");
-            System.out.println("   MasterKey : " + masterKey);
-            System.out.println("   Encryption: " + encryptionKey);
-            System.out.println("   Signature : " + signatureKey);
+            System.out.println("   MasterKey      : " + masterKey);
+            System.out.println("   Encryption     : " + encryptionKey);
+            System.out.println("   Signature      : " + signatureKey);
+            System.out.println("   SequenceNumber : " + sequenceNumber);
             System.out.println("-->\n");
         }
     }

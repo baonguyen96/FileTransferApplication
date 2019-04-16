@@ -27,6 +27,9 @@ public class Client extends Peer {
     private final String CERTIFICATION = "CA-certificate.crt";
     private PublicKey serverPublicKey = null;
 
+//    protected String masterKey = null;
+//    protected String encryptionKey = null;
+//    protected String signatureKey = null;
 
     protected Client() {
         super(CLIENT);
@@ -519,6 +522,8 @@ public class Client extends Peer {
         // confirmation message
         messageReceived = serverInput.nextLine();
 
+        System.out.println(messageReceived);
+
         if (!messageReceived.equals("Sending certificate")) {
             throw new InvalidMessageException();
         }
@@ -621,7 +626,11 @@ public class Client extends Peer {
                  * encrypt language using server's public key
                  * then encrypt master key and ID using newly set cryptor
                  */
-                String language = Cryptor.generateLanguage();
+//                String language = Cryptor.generateLanguage();
+                String language = Cryptor.DEFAULT_LANGUAGE;
+
+//                System.out.println(language);
+
                 cryptor = new Cryptor(language);
                 String encryptedLanguage = Message.appendMessageSequence(sequenceNumber, language);
                 encryptedLanguage = publicEncrypt(encryptedLanguage, serverPublicKey);
@@ -637,6 +646,8 @@ public class Client extends Peer {
 
                 encryptionKey = cryptor.increaseKey(masterKey, 1);
                 signatureKey = cryptor.increaseKey(masterKey, 2);
+
+                printKeys();
             }
             catch (Exception e) {
                 throw new RuntimeException("Failed to encrypt the key", e);

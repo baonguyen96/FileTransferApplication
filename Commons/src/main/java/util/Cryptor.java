@@ -29,8 +29,8 @@ public class Cryptor {
      *      is only meant for demonstration and debugging
      */
     private final boolean IS_PRINTABLE = true;
-    static final String DEFAULT_LANGUAGE =
-            "g:,rsP`^y7C|]e[Rmt+/3'41z5-;?FAH@SWNpY\\Gb)xEfo~Z&X*B_2uOhI\"Kv(/0c9=T!JQklij}{LVdU8<$%qw#*nD.6>Ma";
+    public static final String DEFAULT_LANGUAGE =
+            "gX.59z\\CbSFReQn:OZ\"GKlMoqPTB/xVp1y4DH3N,|vsa78YE_UmA6wJdti rLjhIW2cu0fk";
     private int offset = 1;
     private String language = null;
     private byte[] iv = new byte[16];
@@ -133,9 +133,17 @@ public class Cryptor {
         }
 
         // symbols
-        for (char c : "`~!@#$%^&*()/*-+_=[]{}\\|;:'\",./<>?".toCharArray()) {
-            stringBuilder.append(c);
-        }
+        stringBuilder.append(' ');
+        stringBuilder.append('|');
+        stringBuilder.append(',');
+        stringBuilder.append('.');
+        stringBuilder.append('"');
+        stringBuilder.append(':');
+        stringBuilder.append('\\');
+        stringBuilder.append('/');
+        stringBuilder.append('_');
+
+        System.out.println(stringBuilder.toString());
 
         // randomize
         char[] chars = stringBuilder.toString().toCharArray();
@@ -540,7 +548,7 @@ public class Cryptor {
      * @param mode: encryption or decryption
      */
     private void display(byte[] bytes, String mode) {
-        System.out.printf("main.java.translation%s: ", mode);
+        System.out.printf("Cryptor %s: ", mode);
         for (Byte b : bytes) {
             System.out.printf("%s ", b);
         }
@@ -557,6 +565,6 @@ public class Cryptor {
      * @param mode: encryption or decryption
      */
     private void display(String str, String mode) {
-        System.out.printf("main.java.translation%s: %s\n", mode, str);
+        System.out.printf("Cryptor %s: %s\n", mode, str);
     }
 }

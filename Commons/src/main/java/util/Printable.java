@@ -12,5 +12,5 @@ package util;
  */
 
 public interface Printable {
-    boolean IS_PRINTABLE = true;
+    boolean IS_PRINTABLE = false;
 }
