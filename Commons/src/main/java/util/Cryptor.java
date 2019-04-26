@@ -467,8 +467,8 @@ public class Cryptor {
         }
 
         if (IS_PRINTABLE) {
-            display(original, "Encrypt from");
-            display(modified.toString(), "Encrypt to  ");
+            display(original, "Increase key from");
+            display(modified.toString(), "Increase key to  ");
         }
 
         return modified.toString();
@@ -531,8 +531,8 @@ public class Cryptor {
         }
 
         if (IS_PRINTABLE) {
-            display(modified, "Decrypt from");
-            display(original.toString(), "Decrypt to  ");
+            display(modified, "Decrease key from");
+            display(original.toString(), "Decrease key to  ");
         }
 
         return original.toString();

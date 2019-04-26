@@ -116,12 +116,6 @@ public abstract class Peer implements Printable {
             keysDirectory = new File("../src/main/resources/Keys");
         }
 
-        // src directory
-//        src = new File(module + "/src/main/java");
-//        if(!Files.exists(Paths.get(src.getAbsolutePath())))
-//        {
-//            src = new File("../src/main/java");
-//        }
     }
 
 

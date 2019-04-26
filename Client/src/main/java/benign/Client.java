@@ -636,7 +636,7 @@ public class Client extends Peer {
                 encryptedLanguage = publicEncrypt(encryptedLanguage, serverPublicKey);
                 String encryptedId = Message.appendMessageSequence(++sequenceNumber, Long.toString(id));
                 encryptedId = cryptor.encrypt(encryptedId);
-                masterKey = cryptor.getRandomString(16);
+                masterKey = cryptor.getRandomString(32);
                 String encryptedMasterKey = Message.appendMessageSequence(++sequenceNumber, masterKey);
                 encryptedMasterKey = cryptor.encrypt(encryptedMasterKey);
 
